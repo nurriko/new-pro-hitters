@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.nurriko.twa",
+        "sha256_cert_fingerprints": ["A1:95:A2:7F:5D:BD:A4:4A:1A:DC:BF:8D:54:03:77:D5:EE:61:F9:48:D7:88:43:3E:C1:B1:11:93:DD:3D:C0:28"]
+      }
+    }]
