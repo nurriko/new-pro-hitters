@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4361ee">
+    
+    <title>Pro Hitters - Tennis & Padel</title>
+    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary: #4361ee; --accent: #f72585; --success: #10b981; --warning: #f59e0b;
+            --dark: #0f172a; --glass: rgba(255, 255, 255, 0.95);
+            --card-bg: #ffffff; --text-main: #1e293b; --text-muted: #64748b;
+            --input-bg: #f8fafc; --border-color: #e2e8f0;
+            --bg-grad: linear-gradient(135deg, #8BC6EC 0%, #9599E2 100%);
+            --dock-bg: #ffffff;
+            --gold: #FFD700; --silver: #C0C0C0; --bronze: #CD7F32;
+        }
+
+        [data-theme="dark"] {
+            --primary: #4cc9f0; --accent: #f72585; --success: #059669; --warning: #d97706;
+            --dark: #f8fafc; --glass: rgba(15, 23, 42, 0.98);
+            --card-bg: #1e293b; --text-main: #f1f5f9; --text-muted: #94a3b8;
+            --input-bg: #0f172a; --border-color: #334155;
+            --bg-grad: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --dock-bg: #1e293b;
+        }
+
+        body { font-family: 'Outfit', sans-serif; background: var(--bg-grad); margin: 0; padding: 0; min-height: 100vh; color: var(--text-main); overflow-x: hidden; user-select: none; transition: background 0.3s, color 0.3s; }
+
+        /* --- ANIMASI WELCOME SCREEN (NEON BOUNCE) --- */
+        #welcomeScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-grad); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: opacity 0.5s ease, visibility 0.5s; }
+        #welcomeScreen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        
+        .hero-anim-container { position: relative; width: 240px; height: 120px; margin-bottom: 40px; display: flex; justify-content: center; align-items: flex-end; }
+        .hero-net { position: absolute; width: 5px; height: 70px; background: linear-gradient(to top, rgba(255,255,255,0.9), transparent); bottom: 0; border-radius: 3px; box-shadow: 0 0 15px rgba(255,255,255,0.5); z-index: 2; }
+        .hero-ball { position: absolute; bottom: 0; width: 22px; height: 22px; background: #ccff00; border-radius: 50%; box-shadow: 0 0 20px #ccff00, 0 0 40px #ccff00, inset -2px -2px 6px rgba(0,0,0,0.2); animation: proRally 1.4s infinite alternate cubic-bezier(0.4, 0, 0.2, 1); z-index: 3; }
+        .hero-shadow { position: absolute; bottom: -10px; width: 30px; height: 8px; background: rgba(0, 0, 0, 0.5); border-radius: 50%; filter: blur(4px); animation: shadowTrack 1.4s infinite alternate cubic-bezier(0.4, 0, 0.2, 1); }
+
+        @keyframes proRally { 0% { transform: translate(-100px, 0) scaleY(0.8); } 5% { transform: translate(-90px, -20px) scaleY(1); } 50% { transform: translate(0, -110px) scaleY(1); } 95% { transform: translate(90px, -20px) scaleY(1); } 100% { transform: translate(100px, 0) scaleY(0.8); } }
+        @keyframes shadowTrack { 0% { transform: translateX(-100px) scale(1); opacity: 0.7; } 50% { transform: translateX(0) scale(0.3); opacity: 0.1; } 100% { transform: translateX(100px) scale(1); opacity: 0.7; } }
+        @keyframes flashAlert { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
+
+        .welcome-title { font-size: 26px; font-weight: 900; color: white; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .btn-enter { background: white; color: var(--primary); padding: 15px 35px; border: none; border-radius: 50px; font-size: 18px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-family: 'Outfit', sans-serif; transition: transform 0.2s; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-enter:active { transform: scale(0.95); }
+
+        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); display: flex; flex-direction: column; position: relative; opacity: 0; transition: opacity 0.5s; }
+        .app-container.visible { opacity: 1; }
+        
+        header { padding: 15px 20px; display:flex; justify-content:space-between; align-items:center; background: var(--glass); position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        h1 { margin: 0; font-size: 20px; font-weight: 900; color: var(--primary); letter-spacing: -0.5px; text-transform: uppercase; }
+        
+        .sound-toggle { background: var(--input-bg); border: 1px solid var(--border-color); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); cursor: pointer; transition: 0.2s; }
+        .content { padding: 20px 20px 120px 20px; display: none; animation: fadeIn 0.3s ease; }
+        .content.active { display: block; }
+        
+        .card { background: var(--card-bg); border-radius: 18px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border-color); transition: 0.3s; }
+        .btn { width: 100%; border: none; padding: 14px; border-radius: 12px; font-weight: 700; cursor: pointer; font-family:'Outfit'; display:flex; align-items:center; justify-content:center; gap:8px; font-size:15px; transition: 0.2s; }
+        .btn:active { transform: scale(0.95); }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-ghost { background: var(--input-bg); color: var(--text-muted); border: 1px solid var(--border-color); }
+        
+        input, select { width: 100%; padding: 12px; border-radius: 12px; border: 2px solid var(--border-color); margin-bottom: 10px; font-family: 'Outfit'; box-sizing: border-box; outline:none; background: var(--input-bg); color: var(--text-main); font-weight: 500;}
+        select { cursor: pointer; }
+        
+        .p-item { display: flex; align-items: center; gap: 12px; }
+        .p-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #eee; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        .segmented-control { display:flex; gap:5px; background:var(--input-bg); padding:5px; border-radius:12px; margin-bottom:15px; border: 1px solid var(--border-color); }
+        .seg-btn { flex:1; padding:10px; border-radius:8px; border:none; background:transparent; cursor:pointer; font-weight:bold; color:var(--text-muted); transition: all 0.3s; font-family: 'Outfit'; font-size: 14px;}
+        .seg-btn.active { background:var(--card-bg); color:var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .seg-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .gender-select { display:flex; gap:8px; margin-bottom:10px; }
+        .g-btn { flex:1; padding:10px; border-radius:10px; border:2px solid var(--border-color); background:var(--card-bg); cursor:pointer; font-weight:bold; color:var(--text-muted); transition: 0.2s;}
+        .g-btn.active-m { border-color: var(--primary); color: var(--primary); background: rgba(67, 97, 238, 0.1); }
+        .g-btn.active-f { border-color: var(--accent); color: var(--accent); background: rgba(247, 37, 133, 0.1); }
+
+        /* CUSTOM NOTIFICATIONS */
+        #customDialog { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); animation: fadeIn 0.2s; }
+        .dialog-box { background: var(--card-bg); width: 85%; max-width: 320px; border-radius: 20px; padding: 25px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.4); border: 1px solid var(--border-color); transform: scale(0.9); animation: popIn 0.3s forwards; }
+        .dialog-icon { font-size: 40px; margin-bottom: 15px; }
+        .dialog-icon.success { color: var(--success); }
+        .dialog-icon.warning { color: var(--warning); }
+        .dialog-icon.error { color: #ef4444; }
+        .dialog-icon.info { color: var(--primary); }
+        .dialog-title { font-size: 20px; font-weight: 900; margin-bottom: 10px; color: var(--text-main); }
+        .dialog-msg { font-size: 14px; color: var(--text-muted); margin-bottom: 25px; line-height: 1.5; }
+        .dialog-actions { display: flex; gap: 10px; }
+
+        /* LIVE SCOREBOARD */
+        .live-scoreboard { display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
+        .score-row { display: flex; justify-content: space-between; align-items: center; background: var(--input-bg); padding: 15px; border-radius: 16px; border: 1px solid var(--border-color); }
+        .score-team-info { display: flex; flex-direction: column; flex: 1; }
+        .score-team-name { font-weight: 900; font-size: 15px; color: var(--text-main); }
+        .score-controls { display: flex; align-items: center; gap: 10px; }
+        
+        .point-display { background: var(--dark); color: #fff; width: 60px; height: 50px; display: flex; justify-content: center; align-items: center; border-radius: 10px; font-size: 24px; font-weight: 900; border: 2px solid var(--primary); box-shadow: 0 0 10px rgba(67, 97, 238, 0.4); transition: 0.3s; cursor: pointer; }
+        .point-display.advantage { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 15px rgba(247, 37, 133, 0.5); }
+        .point-display:active { transform: scale(0.9); }
+        
+        .game-display { font-size: 28px; font-weight: 900; width: 40px; text-align: center; color: var(--text-main); }
+        .btn-score { width: 40px; height: 40px; border-radius: 50%; font-size: 18px; display: flex; justify-content: center; align-items: center; padding: 0; }
+        .btn-score-minus { background: var(--input-bg); color: var(--text-muted); border: 1px solid var(--border-color); }
+
+        /* COURT VISUALIZATION */
+        .court-container { padding: 20px; position: relative; border-radius: 16px; margin-top: 10px; transition: all 0.5s ease; box-shadow: inset 0 0 40px rgba(0,0,0,0.3); overflow: hidden;}
+        .court-tennis { background: #16a34a; border: 4px solid #ffffff; }
+        .court-padel { background: #0284c7; border: 6px solid rgba(135, 206, 235, 0.4); box-shadow: 0 0 0 4px rgba(255,255,255,0.8), inset 0 0 40px rgba(0,0,0,0.4); }
+        .net { position: absolute; top: 50%; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.7); transform: translateY(-50%); z-index: 1;}
+        .team-box { background: var(--card-bg); padding: 12px; border-radius: 12px; position: relative; z-index: 2; width: 85%; margin: 0 auto; box-shadow: 0 8px 20px rgba(0,0,0,0.2); border: 1px solid var(--border-color);}
+        .vs-badge { background: var(--accent); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); z-index:10; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3);}
+
+        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+        th { text-align: left; color: var(--text-muted); font-size: 12px; text-transform: uppercase; padding: 0 5px; letter-spacing: 0.5px;}
+        td { padding: 8px 5px; vertical-align: middle; font-size: 14px; }
+        .rank-row { background: var(--input-bg); transition: 0.3s; border-radius: 10px; cursor: pointer; border: 1px solid var(--border-color);}
+
+        .nav-dock { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 85%; max-width: 400px; background: var(--dock-bg); border-radius: 25px; display: flex; justify-content: space-around; padding: 12px 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); z-index: 99; border: 1px solid var(--border-color); backdrop-filter: blur(10px);}
+        .nav-item { border: none; background: none; font-size: 22px; color: var(--text-muted); cursor: pointer; transition: all 0.3s; padding: 10px;}
+        .nav-item.active { color: var(--primary); transform: translateY(-5px) scale(1.1); text-shadow: 0 10px 15px rgba(67, 97, 238, 0.4);}
+
+        .hidden { display: none !important; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div id="customDialog">
+    <div class="dialog-box">
+        <i id="dialogIcon" class="fas fa-info-circle dialog-icon info"></i>
+        <div id="dialogTitle" class="dialog-title">Informasi</div>
+        <div id="dialogMsg" class="dialog-msg">Pesan...</div>
+        <div class="dialog-actions" id="dialogActions"></div>
+    </div>
+</div>
+
+<div id="welcomeScreen">
+    <div class="hero-anim-container">
+        <div class="hero-net"></div>
+        <div class="hero-ball"></div>
+        <div class="hero-shadow"></div>
+    </div>
+    <div class="welcome-title animate__animated animate__fadeInUp">PRO HITTERS<br><span style="font-size:14px; font-weight:500; letter-spacing:1px; color:#ddd;">TENNIS & PADEL</span></div>
+    <button class="btn-enter animate__animated animate__pulse animate__infinite" onclick="enterApp()">MULAI APLIKASI</button>
+</div>
+
+<div class="app-container" id="appContainer">
+    <header>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <i class="fas fa-table-tennis-paddle-ball" style="color:var(--primary); font-size:24px;"></i>
+            <h1>PRO HITTERS</h1>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="sound-toggle" onclick="toggleTheme()" id="themeBtn"><i id="themeIcon" class="fas fa-moon"></i></button>
+            <button class="sound-toggle" onclick="toggleMute()"><i id="soundIcon" class="fas fa-volume-up"></i></button>
+        </div>
+    </header>
+
+    <div id="tab-home" class="content active">
+        <div class="card">
+            <h3 style="margin:0 0 15px 0; color:var(--primary); font-weight:900;">+ Tambah Pemain Baru</h3>
+            <div style="display:flex; gap:15px; align-items:center;">
+                <div style="width:75px; height:75px; background:var(--input-bg); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; border:2px dashed var(--text-muted);" onclick="playSfx('pop'); document.getElementById('fileIn').click()">
+                    <img id="prevImg" src="" style="width:100%; height:100%; object-fit:cover; display:none;">
+                    <i id="camIcon" class="fas fa-camera" style="color:var(--text-muted); font-size: 20px;"></i>
+                </div>
+                <div style="flex:1;">
+                    <input type="text" id="pName" placeholder="Nama Pemain (Max 12)" maxlength="12">
+                    <div class="gender-select">
+                        <button id="btnM" class="g-btn active-m" onclick="setGender('M')"><i class="fas fa-mars"></i> Pria</button>
+                        <button id="btnF" class="g-btn" onclick="setGender('F')"><i class="fas fa-venus"></i> Wanita</button>
+                    </div>
+                </div>
+            </div>
+            <input type="file" id="fileIn" hidden accept="image/*" onchange="handleImg(this)">
+            <button class="btn btn-primary" onclick="addPlayer()" style="margin-top:10px;">Simpan Ke Daftar</button>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; margin:25px 5px 15px 5px; color:var(--text-muted); font-size:13px; font-weight:800;">
+            <span>DAFTAR PEMAIN (<span id="pCount">0</span>)</span>
+            <span onclick="toggleTools()" style="cursor:pointer; color:var(--primary); background:var(--input-bg); padding:4px 10px; border-radius:12px;"><i class="fas fa-cog"></i> Pengaturan</span>
+        </div>
+
+        <div id="toolsPanel" class="card hidden animate__animated animate__fadeIn">
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-ghost" style="padding:10px; font-size:12px;" onclick="exportData()"><i class="fas fa-save"></i> Backup</button>
+                <button class="btn btn-ghost" style="padding:10px; font-size:12px;" onclick="document.getElementById('impFile').click()"><i class="fas fa-upload"></i> Restore</button>
+                <button class="btn btn-ghost" style="padding:10px; font-size:12px; color:#ef4444; border-color:rgba(239, 68, 68, 0.3);" onclick="resetConfirm()"><i class="fas fa-trash"></i> Reset</button>
+            </div>
+            <input type="file" id="impFile" hidden accept=".json" onchange="importData(this)">
+        </div>
+
+        <div id="playerList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+    </div>
+
+    <div id="tab-play" class="content">
+        <div id="setupArea" class="card" style="padding:20px;">
+            <h3 style="margin:0 0 15px 0; text-align:center; color:var(--text-main);"><i class="fas fa-sliders-h"></i> Pengaturan Match</h3>
+            
+            <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">JENIS OLAHRAGA</label>
+            <div class="segmented-control">
+                <button id="btnSportTennis" class="seg-btn active" onclick="setSport('tennis')">🎾 TENNIS</button>
+                <button id="btnSportPadel" class="seg-btn" onclick="setSport('padel')">🏸 PADEL</button>
+            </div>
+
+            <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">FORMAT PERTANDINGAN</label>
+            <div class="segmented-control" id="formatToggleDiv">
+                <button id="btnFormatSingles" class="seg-btn" onclick="setFormat('singles')"><i class="fas fa-user"></i> 1 VS 1</button>
+                <button id="btnFormatDoubles" class="seg-btn active" onclick="setFormat('doubles')"><i class="fas fa-user-friends"></i> 2 VS 2</button>
+            </div>
+
+            <div id="settingTennis" style="margin-top:10px;">
+                <label style="font-size:12px; font-weight:bold; color:var(--text-muted); display:block; margin-bottom:5px;">BATAS DEUCE (SUDDEN DEATH)</label>
+                <select id="selMaxDeuce">
+                    <option value="-1">Tanpa Batas (Standar)</option>
+                    <option value="0">No-Ad (Langsung Sudden Death)</option>
+                    <option value="1">Maksimal 1x Deuce</option>
+                    <option value="2">Maksimal 2x Deuce</option>
+                    <option value="3">Maksimal 3x Deuce</option>
+                </select>
+            </div>
+
+            <div id="settingPadel" class="hidden" style="margin-top:10px;">
+                <label style="font-size:12px; font-weight:bold; color:var(--text-muted); display:block; margin-bottom:5px;">SISTEM POIN PADEL</label>
+                <select id="selPadelScoring" onchange="toggleDeucePadel()">
+                    <option value="tennis">Tradisional (15-30-40)</option>
+                    <option value="21">Rally Poin (Sampai 21)</option>
+                    <option value="32">Rally Poin (Sampai 32)</option>
+                </select>
+
+                <div id="padelDeuceWrapper">
+                    <label style="font-size:12px; font-weight:bold; color:var(--text-muted); display:block; margin-bottom:5px;">BATAS DEUCE / GOLDEN POINT</label>
+                    <select id="selMaxDeucePadel">
+                        <option value="0">No-Ad (Langsung Golden Point)</option>
+                        <option value="-1">Tanpa Batas (Standar Deuce)</option>
+                        <option value="1">Maksimal 1x Deuce</option>
+                    </select>
+                </div>
+
+                <label style="font-size:12px; font-weight:bold; color:var(--text-muted); display:block; margin-bottom:5px;">LOGIKA ACAK PASANGAN</label>
+                <select id="selPadelLogic">
+                    <option value="standard">Standar (Prioritas jarang main)</option>
+                    <option value="americano">Americano (Prioritas partner baru)</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="font-size:16px; padding:16px; margin-top: 10px;" onclick="generateMatch()">
+                <i class="fas fa-random"></i> ACAK SEKARANG
+            </button>
+        </div>
+
+        <div id="matchArea" class="hidden animate__animated animate__fadeInUp">
+            <div id="visualCourt" class="court-container court-tennis">
+                <div class="net"></div>
+                <div class="vs-badge">VS</div>
+                <div class="team-box" style="margin-bottom: 40px; border-bottom: 4px solid var(--accent);">
+                    <small style="display:block; text-align:center; color:var(--text-muted); font-weight:900; margin-bottom:8px;">TIM A</small>
+                    <div id="t1p1" class="p-item" style="margin-bottom:5px;"></div>
+                    <div id="t1p2" class="p-item"></div>
+                </div>
+                <div class="team-box" style="border-top: 4px solid var(--primary);">
+                    <small style="display:block; text-align:center; color:var(--text-muted); font-weight:900; margin-bottom:8px;">TIM B</small>
+                    <div id="t2p1" class="p-item" style="margin-bottom:5px;"></div>
+                    <div id="t2p2" class="p-item"></div>
+                </div>
+            </div>
+            
+            <div class="card" style="margin-top:15px;">
+                <h4 style="margin:0 0 15px 0; color:var(--primary); text-align:center;"><i class="fas fa-stopwatch"></i> LIVE SCOREBOARD</h4>
+                <div id="sdBadgeArea"></div>
+
+                <div class="live-scoreboard">
+                    <div class="score-row">
+                        <div class="score-team-info">
+                            <span class="score-team-name" style="color:var(--accent);">TIM A</span>
+                            <span style="font-size:11px; color:var(--text-muted); font-weight:bold;">Game Won:</span>
+                        </div>
+                        <div class="score-controls">
+                            <button class="btn btn-score btn-score-minus" onclick="adjGame(1, -1)"><i class="fas fa-minus"></i></button>
+                            <div id="gDisp1" class="game-display">0</div>
+                            <button class="btn btn-score btn-primary" onclick="adjGame(1, 1)"><i class="fas fa-plus"></i></button>
+                            <div style="width:1px; height:30px; background:var(--border-color); margin:0 5px;"></div>
+                            <button class="btn btn-score btn-score-minus" onclick="adjPoint(1, -1)"><i class="fas fa-undo"></i></button>
+                            <div id="pDisp1" class="point-display" onclick="adjPoint(1, 1)">0</div>
+                        </div>
+                    </div>
+
+                    <div class="score-row">
+                        <div class="score-team-info">
+                            <span class="score-team-name" style="color:var(--primary);">TIM B</span>
+                            <span style="font-size:11px; color:var(--text-muted); font-weight:bold;">Game Won:</span>
+                        </div>
+                        <div class="score-controls">
+                            <button class="btn btn-score btn-score-minus" onclick="adjGame(2, -1)"><i class="fas fa-minus"></i></button>
+                            <div id="gDisp2" class="game-display">0</div>
+                            <button class="btn btn-score btn-primary" onclick="adjGame(2, 1)"><i class="fas fa-plus"></i></button>
+                            <div style="width:1px; height:30px; background:var(--border-color); margin:0 5px;"></div>
+                            <button class="btn btn-score btn-score-minus" onclick="adjPoint(2, -1)"><i class="fas fa-undo"></i></button>
+                            <div id="pDisp2" class="point-display" onclick="adjPoint(2, 1)">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button class="btn btn-ghost" onclick="cancelMatchConfirm()">Batalkan Match</button>
+                    <button class="btn btn-success" onclick="submitScoreConfirm()"><i class="fas fa-check-circle"></i> Selesai & Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-rank" class="content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="margin:0; font-weight:900;">KLASEMEN LIVE</h3>
+        </div>
+
+        <div id="rankCaptureArea" class="card" style="padding:20px;">
+            <div style="text-align:center; margin-bottom:20px; border-bottom:2px dashed var(--border-color); padding-bottom:15px;">
+                <h4 style="margin:0; color:var(--primary); font-weight:900; letter-spacing:1px; font-size: 18px;">LEADERBOARD</h4>
+                <div id="finishBadge" class="hidden" style="background:var(--gold); color:#000; display:inline-block; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:900; margin-top:8px;">🏆 TURNAMEN SELESAI</div>
+            </div>
+            <div id="rankTableContainer">
+                <table>
+                    <thead>
+                        <tr><th style="width:30px">#</th><th>Pemain</th><th style="text-align:center">Main</th><th style="text-align:right">Poin</th></tr>
+                    </thead>
+                    <tbody id="rankBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="finishArea" style="margin-top:20px;">
+            <button id="btnFinish" class="btn btn-danger" style="padding:16px;" onclick="finishConfirm()"><i class="fas fa-flag-checkered"></i> SELESAIKAN TURNAMEN</button>
+            <button id="btnResume" class="btn btn-ghost hidden" style="padding:16px;" onclick="data.isFinished = false; save();"><i class="fas fa-undo"></i> Buka Kembali Turnamen</button>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin:30px 0 15px 0;">
+            <h4 style="margin:0; color:var(--text-muted); font-weight:800;">Riwayat Terakhir</h4>
+            <button id="btnUndo" class="btn btn-warning" style="width:auto; padding:6px 15px; font-size:12px;" onclick="undoConfirm()"><i class="fas fa-rotate-left"></i> Undo Pertandingan</button>
+        </div>
+        <div id="histList" style="padding-bottom:30px; display:flex; flex-direction:column; gap:10px;"></div>
+    </div>
+
+    <div class="nav-dock">
+        <button id="nav-home" class="nav-item active" onclick="nav('home')"><i class="fas fa-users"></i></button>
+        <button id="nav-play" class="nav-item" onclick="nav('play')"><i class="fas fa-play-circle"></i></button>
+        <button id="nav-rank" class="nav-item" onclick="nav('rank')"><i class="fas fa-trophy"></i></button>
+    </div>
+</div>
+
+<script>
+    let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let isMuted = false;
+    let currentTheme = localStorage.getItem('HH_THEME') || 'auto';
+    const DB_KEY = 'HAPPY_HITTERS_APP_DB';
+    
+    let data = { players: [], matches: [], isFinished: false, currentMatch: null, activeTab: 'home' };
+    let tempImg = '', tempGender = 'M';
+    let selectedSport = 'tennis', selectedFormat = 'doubles', currentMatch = null;
+    const P_MAP = ['0', '15', '30', '40', 'AD'];
+    const DEF_M = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23dbeafe'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%233b82f6'/%3E%3C/svg%3E";
+    const DEF_F = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23fce7f3'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%23ec4899'/%3E%3C/svg%3E";
+
+    function showAppDialog(type, title, msg, onConfirm, onCancel) {
+        const dialog = document.getElementById('customDialog');
+        const icon = document.getElementById('dialogIcon');
+        const acts = document.getElementById('dialogActions');
+        
+        document.getElementById('dialogTitle').innerText = title;
+        document.getElementById('dialogMsg').innerText = msg;
+        
+        icon.className = 'fas dialog-icon ';
+        if(type === 'alert') icon.className += 'fa-exclamation-circle error';
+        else if(type === 'success') icon.className += 'fa-check-circle success';
+        else if(type === 'confirm') icon.className += 'fa-question-circle warning';
+        else icon.className += 'fa-info-circle info';
+
+        acts.innerHTML = '';
+        if(type === 'confirm') {
+            const btnC = document.createElement('button'); btnC.className = 'btn btn-ghost'; btnC.innerText = 'Batal';
+            btnC.onclick = () => { playSfx('pop'); dialog.style.display = 'none'; if(onCancel) onCancel(); };
+            const btnO = document.createElement('button'); btnO.className = 'btn btn-primary'; btnO.innerText = 'Ya, Lanjutkan';
+            btnO.onclick = () => { playSfx('pop'); dialog.style.display = 'none'; if(onConfirm) onConfirm(); };
+            acts.appendChild(btnC); acts.appendChild(btnO);
+        } else {
+            const btnO = document.createElement('button'); btnO.className = 'btn btn-primary'; btnO.innerText = 'Tutup';
+            btnO.onclick = () => { playSfx('pop'); dialog.style.display = 'none'; if(onConfirm) onConfirm(); };
+            acts.appendChild(btnO);
+        }
+        dialog.style.display = 'flex';
+    }
+
+    function appAlert(title, msg) { showAppDialog('alert', title, msg); }
+    function appSuccess(title, msg) { showAppDialog('success', title, msg); }
+    function appConfirm(title, msg, onConfirm) { showAppDialog('confirm', title, msg, onConfirm); }
+
+    function enterApp() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        playSfx('pop'); document.getElementById('welcomeScreen').classList.add('hidden'); document.getElementById('appContainer').classList.add('visible');
+    }
+
+    function initTheme() {
+        if (currentTheme === 'auto') document.documentElement.setAttribute('data-theme', window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        else document.documentElement.setAttribute('data-theme', currentTheme);
+    }
+
+    function init() {
+        const s = localStorage.getItem(DB_KEY);
+        if(s) {
+            data = JSON.parse(s);
+            if (data.currentMatch === undefined) data.currentMatch = null;
+            if (!data.activeTab) data.activeTab = 'home';
+        }
+
+        nav(data.activeTab, false);
+        if (data.currentMatch) {
+            currentMatch = data.currentMatch;
+            if(currentMatch.sport) setSport(currentMatch.sport, false);
+            if(currentMatch.format) setFormat(currentMatch.format, false);
+            renderMatch(currentMatch);
+            updateScoreboardUI();
+        }
+        renderAll();
+    }
+    
+    function save() { localStorage.setItem(DB_KEY, JSON.stringify(data)); renderAll(); }
+    function getAvatar(p) { return (p.img && p.img.length > 100) ? p.img : (p.gender === 'M' ? DEF_M : DEF_F); }
+
+    function playSfx(type) {
+        if(isMuted) return;
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        if(type === 'pop') {
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        } else if (type === 'whistle') {
+            osc.frequency.setValueAtTime(2000, audioCtx.currentTime); gain.gain.value = 0.05;
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        }
+    }
+    function toggleMute() { isMuted = !isMuted; document.getElementById('soundIcon').className = isMuted ? 'fas fa-volume-mute' : 'fas fa-volume-up'; }
+    function toggleTheme() { currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', currentTheme); localStorage.setItem('HH_THEME', currentTheme); }
+
+    function handleImg(input) {
+        if(input.files && input.files[0]) {
+            const r = new FileReader();
+            r.onload = e => {
+                const img = new Image(); img.src = e.target.result;
+                img.onload = () => {
+                    const c = document.createElement('canvas'); c.width = 150; c.height = 150;
+                    c.getContext('2d').drawImage(img, 0, 0, 150, 150);
+                    tempImg = c.toDataURL('image/jpeg', 0.6);
+                    document.getElementById('prevImg').src = tempImg; document.getElementById('prevImg').style.display = 'block';
+                    document.getElementById('camIcon').style.display = 'none';
+                }
+            }; r.readAsDataURL(input.files[0]);
+        }
+    }
+    function setGender(g) { playSfx('pop'); tempGender = g; document.getElementById('btnM').className = g==='M'?'g-btn active-m':'g-btn'; document.getElementById('btnF').className = g==='F'?'g-btn active-f':'g-btn'; }
+    function addPlayer() {
+        const name = document.getElementById('pName').value.trim().substring(0,12);
+        if(!name) return appAlert("Peringatan", "Isi nama pemain terlebih dahulu!");
+        data.players.push({ id: 'P'+Date.now(), name, gender: tempGender, img: tempImg, stats: { p:0, w:0, l:0, d:0, pts:0, gd:0 } });
+        document.getElementById('pName').value = ''; tempImg = '';
+        document.getElementById('prevImg').style.display = 'none'; document.getElementById('camIcon').style.display = 'block';
+        save();
+    }
+    function delPlayerConfirm(id) { appConfirm("Hapus Pemain", "Hapus pemain ini dari daftar turnamen?", () => { data.players = data.players.filter(p => p.id !== id); save(); }); }
+
+    function nav(id, playSound=true) {
+        if(playSound) playSfx('pop');
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        document.getElementById('tab-'+id).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach((b,i) => b.classList.toggle('active', ['home','play','rank'][i]===id));
+        data.activeTab = id; localStorage.setItem(DB_KEY, JSON.stringify(data)); 
+    }
+
+    function setSport(s, playSnd=true) {
+        if(playSnd) playSfx('pop');
+        selectedSport = s;
+        document.getElementById('btnSportTennis').className = s==='tennis' ? 'seg-btn active' : 'seg-btn';
+        document.getElementById('btnSportPadel').className = s==='padel' ? 'seg-btn active' : 'seg-btn';
+        
+        if(s === 'padel') { 
+            document.getElementById('btnFormatSingles').classList.add('disabled'); setFormat('doubles', false); 
+            document.getElementById('settingTennis').classList.add('hidden');
+            document.getElementById('settingPadel').classList.remove('hidden');
+        } else { 
+            document.getElementById('btnFormatSingles').classList.remove('disabled'); 
+            document.getElementById('settingTennis').classList.remove('hidden');
+            document.getElementById('settingPadel').classList.add('hidden');
+        }
+    }
+    
+    function setFormat(f, playSnd=true) {
+        if(selectedSport === 'padel' && f === 'singles') return; 
+        if(playSnd) playSfx('pop');
+        selectedFormat = f;
+        document.getElementById('btnFormatSingles').className = f==='singles' ? 'seg-btn active' : 'seg-btn';
+        document.getElementById('btnFormatDoubles').className = f==='doubles' ? 'seg-btn active' : 'seg-btn';
+    }
+
+    function toggleDeucePadel() {
+        const val = document.getElementById('selPadelScoring').value;
+        document.getElementById('padelDeuceWrapper').style.display = (val === 'tennis') ? 'block' : 'none';
+    }
+
+    function countPartnership(id1, id2) {
+        return data.matches.filter(m => (m.ids1 && m.ids1.includes(id1) && m.ids1.includes(id2)) || (m.ids2 && m.ids2.includes(id1) && m.ids2.includes(id2))).length;
+    }
+
+    function generateMatch() {
+        if(data.isFinished) return appAlert("Perhatian", "Turnamen sudah selesai! Buka kembali turnamen di menu Ranking jika ingin melanjutkan.");
+        let reqP = selectedFormat === 'doubles' ? 4 : 2;
+        if(data.players.length < reqP) return appAlert("Perhatian", `Butuh minimal ${reqP} pemain untuk format ini!`);
+        
+        playSfx('whistle');
+        
+        let scoringType = selectedSport === 'padel' ? document.getElementById('selPadelScoring').value : 'tennis';
+        let maxDeuce = -1;
+        if (selectedSport === 'tennis') maxDeuce = parseInt(document.getElementById('selMaxDeuce').value);
+        if (selectedSport === 'padel' && scoringType === 'tennis') maxDeuce = parseInt(document.getElementById('selMaxDeucePadel').value);
+        
+        let padelLogic = selectedSport === 'padel' ? document.getElementById('selPadelLogic').value : 'standard';
+
+        let sorted = [...data.players].sort((a, b) => (a.stats.p !== b.stats.p) ? a.stats.p - b.stats.p : Math.random() - 0.5);
+        let sel = sorted.slice(0, reqP);
+        let best = null;
+
+        if (selectedFormat === 'doubles' && padelLogic === 'americano') {
+            let bestScore = 9999;
+            for(let i = 0; i < 150; i++) {
+                let p = [...sel].sort(() => Math.random() - 0.5);
+                let t1 = [p[0], p[1]], t2 = [p[2], p[3]];
+                let score = countPartnership(t1[0].id, t1[1].id) + countPartnership(t2[0].id, t2[1].id);
+                if (score < bestScore) {
+                    bestScore = score; best = {t1, t2};
+                    if(score === 0) break;
+                }
+            }
+        } else if (selectedFormat === 'doubles') {
+            for(let i = 0; i < 50; i++) {
+                let p = [...sel].sort(() => Math.random() - 0.5);
+                let t1 = [p[0], p[1]], t2 = [p[2], p[3]];
+                let f1 = (t1[0].gender === 'F' && t1[1].gender === 'F'), m1 = (t1[0].gender === 'M' && t1[1].gender === 'M');
+                let f2 = (t2[0].gender === 'F' && t2[1].gender === 'F'), m2 = (t2[0].gender === 'M' && t2[1].gender === 'M');
+                if ((f1 && m2) || (m1 && f2)) continue; 
+                best = {t1, t2}; break; 
+            }
+            if(!best) best = { t1: [sel[0], sel[1]], t2: [sel[2], sel[3]] };
+        } else {
+            let p = [...sel].sort(() => Math.random() - 0.5);
+            best = { t1: [p[0]], t2: [p[1]] };
+        }
+
+        best.sport = selectedSport; best.format = selectedFormat; best.scoringType = scoringType;
+        best.maxDeuce = maxDeuce; best.padelLogic = padelLogic;
+        best.p1 = 0; best.p2 = 0; best.g1 = 0; best.g2 = 0; best.deuceCount = 0;
+
+        currentMatch = best; data.currentMatch = best; 
+        save(); renderMatch(best); updateScoreboardUI();
+    }
+
+    function renderMatch(m) {
+        document.getElementById('setupArea').style.display = 'none';
+        document.getElementById('visualCourt').className = 'court-container court-' + m.sport;
+        const fill = (id, p) => { 
+            let el = document.getElementById(id);
+            if(p) {
+                el.innerHTML = `<img src="${getAvatar(p)}" class="p-img" style="width:38px; height:38px; border:2px solid ${m.sport==='padel'?'#0284c7':'#16a34a'}"><div style="font-weight:900; font-size:15px;">${p.name} <small style="opacity:0.6; font-weight:normal;">(${p.stats.p}x)</small></div>`;
+                el.style.display = 'flex';
+            } else el.style.display = 'none';
+        };
+        fill('t1p1', m.t1[0]); fill('t1p2', m.t1[1] || null);
+        fill('t2p1', m.t2[0]); fill('t2p2', m.t2[1] || null);
+        document.getElementById('matchArea').classList.remove('hidden');
+    }
+
+    function updateScoreboardUI() {
+        let m = currentMatch;
+        if(!m) return;
+        
+        document.getElementById('gDisp1').innerText = m.g1;
+        document.getElementById('gDisp2').innerText = m.g2;
+        let pD1 = document.getElementById('pDisp1'), pD2 = document.getElementById('pDisp2');
+        let sdArea = document.getElementById('sdBadgeArea');
+        
+        if (m.scoringType === '21' || m.scoringType === '32') {
+            pD1.innerText = m.p1; pD2.innerText = m.p2;
+            pD1.classList.remove('advantage'); pD2.classList.remove('advantage');
+            sdArea.innerHTML = '';
+        } else {
+            pD1.innerText = P_MAP[m.p1]; pD2.innerText = P_MAP[m.p2];
+            pD1.classList.toggle('advantage', m.p1 === 4); pD2.classList.toggle('advantage', m.p2 === 4);
+
+            if (m.p1 === 3 && m.p2 === 3 && m.maxDeuce !== -1 && m.deuceCount >= m.maxDeuce) {
+                sdArea.innerHTML = '<div style="background:#ef4444; color:white; font-size:13px; font-weight:900; text-align:center; padding:8px; border-radius:10px; margin-bottom:15px; animation: flashAlert 1s infinite; border:2px solid #b91c1c; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);">🔥 GOLDEN POINT / SUDDEN DEATH! 🔥</div>';
+            } else {
+                sdArea.innerHTML = '';
+            }
+        }
+    }
+
+    function adjPoint(team, change) {
+        if(!currentMatch) return;
+        playSfx('pop');
+        let m = currentMatch;
+        let t = team === 1 ? 'p1' : 'p2', o = team === 1 ? 'p2' : 'p1';
+
+        if (change > 0) {
+            if (m.scoringType === '21' || m.scoringType === '32') {
+                let limit = parseInt(m.scoringType);
+                m[t]++;
+                if (m[t] >= limit) adjGame(team, 1);
+            } else {
+                if (m[t] === 3 && m[o] < 3) {
+                    adjGame(team, 1);
+                } else if (m[t] === 3 && m[o] === 3) {
+                    if (m.maxDeuce !== -1 && m.deuceCount >= m.maxDeuce) adjGame(team, 1); 
+                    else m[t] = 4; 
+                } else if (m[t] === 4 && m[o] === 3) {
+                    adjGame(team, 1); 
+                } else if (m[t] === 3 && m[o] === 4) {
+                    m[o] = 3; m.deuceCount++; 
+                } else {
+                    m[t]++;
+                    if(m[t] === 3 && m[o] === 3) m.deuceCount++; 
+                }
+            }
+        } else {
+            if (m[t] > 0) m[t]--;
+        }
+        
+        data.currentMatch = currentMatch; save(); updateScoreboardUI();
+    }
+
+    function adjGame(team, change) {
+        if(!currentMatch) return;
+        playSfx('pop');
+        let t = team === 1 ? 'g1' : 'g2';
+        currentMatch[t] += change;
+        if(currentMatch[t] < 0) currentMatch[t] = 0;
+        
+        if(change > 0) { currentMatch.p1 = 0; currentMatch.p2 = 0; currentMatch.deuceCount = 0; }
+        data.currentMatch = currentMatch; save(); updateScoreboardUI();
+    }
+
+    function cancelMatchConfirm() {
+        appConfirm("Batal Match", "Yakin ingin membatalkan pertandingan ini?", () => {
+            document.getElementById('matchArea').classList.add('hidden'); 
+            document.getElementById('setupArea').style.display = 'block';
+            currentMatch = null; data.currentMatch = null; save();
+        });
+    }
+
+    function submitScoreConfirm() {
+        if(currentMatch.g1 === 0 && currentMatch.g2 === 0 && currentMatch.p1 === 0 && currentMatch.p2 === 0) {
+            return appAlert("Peringatan", "Skor masih 0-0! Silakan mainkan Game terlebih dahulu.");
+        }
+        appConfirm("Simpan Hasil", "Simpan hasil akhir pertandingan ini ke klasemen?", () => {
+            let s1 = currentMatch.g1; let s2 = currentMatch.g2;
+            const upd = (arr, ms, os) => {
+                arr.forEach(pid => {
+                    let p = data.players.find(x=>x.id===pid.id);
+                    if(p) {
+                        p.stats.p++; p.stats.gd += (ms-os);
+                        if(ms>os) { p.stats.w++; p.stats.pts+=3; }
+                        else if(ms==os) { p.stats.d++; p.stats.pts+=1; }
+                        else p.stats.l++;
+                    }
+                });
+            };
+            upd(currentMatch.t1, s1, s2); upd(currentMatch.t2, s2, s1);
+            
+            data.matches.unshift({ 
+                sport: currentMatch.sport, format: currentMatch.format, logic: currentMatch.padelLogic,
+                t1: currentMatch.t1.map(x=>x.name).join(' & '), t2: currentMatch.t2.map(x=>x.name).join(' & '), 
+                ids1: currentMatch.t1.map(x=>x.id), ids2: currentMatch.t2.map(x=>x.id),
+                s1, s2, time: new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}) 
+            });
+            
+            confetti({ particleCount: 150, origin: { y: 0.6 }, spread: 80, colors: ['#4361ee', '#f72585', '#10b981'] });
+            document.getElementById('matchArea').classList.add('hidden'); document.getElementById('setupArea').style.display = 'block';
+            currentMatch = null; data.currentMatch = null; save(); nav('rank');
+        });
+    }
+
+    function undoConfirm() {
+        if(data.matches.length === 0) return appAlert("Oops", "Belum ada riwayat pertandingan untuk di-undo.");
+        appConfirm("Undo Pertandingan", "Batalkan hasil pertandingan terakhir? Poin di klasemen akan dikembalikan.", () => {
+            const last = data.matches[0];
+            const rev = (pid, ms, os) => {
+                let p = data.players.find(x=>x.id===pid);
+                if(p) { p.stats.p--; p.stats.gd -= (ms-os); if(ms>os){p.stats.w--; p.stats.pts-=3;} else if(ms==os){p.stats.d--; p.stats.pts-=1;} else p.stats.l--; }
+            };
+            if(last.ids1) last.ids1.forEach(id => rev(id, last.s1, last.s2));
+            if(last.ids2) last.ids2.forEach(id => rev(id, last.s2, last.s1));
+            data.matches.shift(); save(); appSuccess("Berhasil", "Pertandingan terakhir telah dibatalkan.");
+        });
+    }
+
+    function finishConfirm() { 
+        if(data.players.length < 1) return;
+        appConfirm("Selesai Turnamen", "Selesaikan Turnamen dan Kunci Klasemen?", () => { data.isFinished = true; save(); });
+    }
+
+    function resetConfirm() {
+        appConfirm("RESET DATA", "PERINGATAN: Semua pemain dan riwayat pertandingan akan dihapus secara permanen. Yakin?", () => {
+            localStorage.removeItem(DB_KEY); location.reload();
+        });
+    }
+
+    function renderAll() {
+        document.getElementById('pCount').innerText = data.players.length;
+        document.getElementById('playerList').innerHTML = data.players.slice().reverse().map(p => `
+            <div class="card p-item" style="padding:12px 15px; justify-content:space-between; margin-bottom:0;">
+                <div class="p-item" style="flex:1;">
+                    <img src="${getAvatar(p)}" class="p-img">
+                    <div><b style="font-size:15px;">${p.name}</b><br><small style="color:var(--text-muted); font-weight:bold;">${p.gender==='M'?'Pria':'Wanita'}</small></div>
+                </div>
+                <button onclick="delPlayerConfirm('${p.id}')" style="background:none; border:none; color:#ef4444; font-size:18px; padding:10px;"><i class="fas fa-trash-alt"></i></button>
+            </div>`).join('');
+            
+        let sorted = [...data.players].sort((a,b) => b.stats.pts - a.stats.pts || b.stats.gd - a.stats.gd);
+        const isFin = data.isFinished;
+        document.getElementById('finishBadge').classList.toggle('hidden', !isFin);
+        document.getElementById('btnFinish').classList.toggle('hidden', isFin);
+        document.getElementById('btnResume').classList.toggle('hidden', !isFin);
+        
+        document.getElementById('rankBody').innerHTML = sorted.map((p,i) => {
+            return `<tr class="rank-row"><td style="padding-left:12px; font-weight:900; color:var(--text-muted);">${i+1}</td><td><div class="p-item"><b style="font-size:14px;">${p.name}</b></div></td><td style="text-align:center; font-weight:bold;">${p.stats.p}</td><td style="text-align:right; font-weight:900; padding-right:12px; color:var(--primary); font-size:16px;">${p.stats.pts}</td></tr>`
+        }).join('');
+        
+        document.getElementById('histList').innerHTML = data.matches.slice(0,5).map(m => {
+            let icon = m.sport === 'padel' ? '🏸' : '🎾';
+            let typeStr = m.format === 'singles' ? '(1v1)' : '(2v2)';
+            let logicStr = m.logic === 'americano' ? ' • Americano' : '';
+            return `
+            <div class="card" style="padding:15px; font-size:13px; margin-bottom:0;">
+                <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:8px; font-size:11px; color:var(--text-muted); font-weight:bold;">
+                    <span>${icon} ${m.sport ? m.sport.toUpperCase() : 'TENNIS'} ${typeStr}${logicStr}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold;">
+                    <span style="flex:1; text-align:right;">${m.t1}</span>
+                    <b style="font-size:16px; color:var(--primary); padding:0 15px;">${m.s1} - ${m.s2}</b>
+                    <span style="flex:1; text-align:left;">${m.t2}</span>
+                </div>
+            </div>`
+        }).join('');
+    }
+
+    function toggleTools() { document.getElementById('toolsPanel').classList.toggle('hidden'); }
+    function exportData() { let a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data)); a.download = "ProHitters_Backup.json"; a.click(); }
+    function importData(el) { let r = new FileReader(); r.onload = e => { data = JSON.parse(e.target.result); save(); appSuccess('Berhasil', 'Data berhasil direstore!'); }; r.readAsText(el.files[0]); }
+
+if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker Terdaftar!'))
+                .catch(err => console.log('Service Worker Gagal:', err));
+        });
+    }
+    window.onload = () => { init(); initTheme(); toggleDeucePadel(); };
+</script>
+</body>
+</html>
