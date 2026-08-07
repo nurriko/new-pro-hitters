@@ -19,6 +19,11 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
+    <!-- FIREBASE COMPAT SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <style>
         :root {
             --primary: #4361ee; --accent: #f72585; --success: #10b981; --warning: #f59e0b;
@@ -185,7 +190,7 @@
         <h2 id="authTitle" style="color:var(--primary); font-weight:900; margin-top:0;">LOGIN APLIKASI</h2>
         <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">Silakan otentikasi untuk melanjutkan</p>
         
-        <input type="text" id="authUsername" placeholder="Username" autocomplete="off">
+        <input type="email" id="authEmail" placeholder="Email Anda" autocomplete="off">
         <input type="password" id="authPassword" placeholder="Password">
         
         <button id="authBtnSubmit" class="btn btn-primary" onclick="handleAuthSubmit()" style="margin-top:10px;">LOGIN</button>
@@ -360,7 +365,7 @@
                 <span onclick="toggleTools()" style="cursor:pointer; color:var(--primary); background:var(--input-bg); padding:4px 10px; border-radius:12px;"><i class="fas fa-cog"></i> Pengaturan</span>
             </div>
 
-            <!-- TOOLS PANEL TANPA LOGOUT -->
+            <!-- TOOLS PANEL TANPA LOGOUT LAMA -->
             <div id="toolsPanel" class="card hidden animate__animated animate__fadeIn">
                 <div style="display:flex; flex-direction:column; gap:10px;">
                     <div style="display:flex; gap:10px;">
@@ -497,10 +502,32 @@
 </div>
 
 <script>
+    // --- FIREBASE CONFIGURATION (ISI DENGAN DATA DARI FIREBASE CONSOLE) ---
+    const firebaseConfig = {
+  apiKey: "AIzaSyB71_NTi3ijqt2Qxm7SgJLLjmoCjYXOt0I",
+  authDomain: "happy-hitters-app.firebaseapp.com",
+  projectId: "happy-hitters-app",
+  storageBucket: "happy-hitters-app.firebasestorage.app",
+  messagingSenderId: "1001816853311",
+  appId: "1:1001816853311:web:84c0fb7b1b9679756ea18a"
+};
+    
+    // Inisialisasi Firebase (jika API Key belum diisi, kita biarkan tidak jalan agar aplikasi tidak error)
+    let auth, db;
+    if(firebaseConfig.apiKey !== "ISI_API_KEY_ANDA_DISINI") {
+        firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        db = firebase.firestore();
+
+        // Mengaktifkan fitur OFFLINE PERSISTENCE Firebase
+        db.enablePersistence().catch(err => {
+            console.error("Firebase Offline Error:", err);
+        });
+    }
+
     let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     let isMuted = false;
     let currentTheme = localStorage.getItem('HH_THEME') || 'auto';
-    const DB_KEY = 'HAPPY_HITTERS_APP_DB';
     
     let data = { 
         title: "", players: [], matches: [], fixedPairs: [],
@@ -510,58 +537,115 @@
     let tempImg = '', tempGender = 'M';
     let selectedSport = 'tennis', selectedFormat = 'doubles', currentPartnerMode = 'acak';
     let currentEditMatchId = null;
+    let dbUnsubscribe = null;
+    
     const P_MAP = ['0', '15', '30', '40', 'AD'];
     const DEF_M = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23dbeafe'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%233b82f6'/%3E%3C/svg%3E";
     const DEF_F = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23fce7f3'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%23ec4899'/%3E%3C/svg%3E";
 
-    // --- AUTENTIKASI ---
+    // --- AUTENTIKASI FIREBASE ---
     let authMode = 'login';
+
     function enterAppFlow() {
         if(audioCtx.state === 'suspended') audioCtx.resume();
         playSfx('pop'); 
-        if(localStorage.getItem('HH_LOGGED_IN') === 'true') {
-            document.getElementById('welcomeScreen').classList.add('hidden'); 
-            document.getElementById('appContainer').classList.add('visible');
-            renderTitleSetup();
-        } else {
-            document.getElementById('welcomeScreen').classList.add('hidden');
-            document.getElementById('authScreen').classList.remove('hidden');
+        
+        if(!auth) {
+            appAlert("Peringatan", "Firebase belum dikonfigurasi. Silakan isi konfigurasi di dalam kode HTML terlebih dahulu.");
+            return;
         }
+
+        // Mengecek status login dari Firebase secara real-time
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('welcomeScreen').classList.add('hidden'); 
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('appContainer').classList.add('visible');
+                setupRealtimeListener(); // Tarik data dari Firestore setelah login
+            } else {
+                document.getElementById('welcomeScreen').classList.add('hidden');
+                document.getElementById('authScreen').classList.remove('hidden');
+                document.getElementById('appContainer').classList.remove('visible');
+            }
+        });
     }
+
     function toggleAuthMode() {
         playSfx('pop');
         authMode = authMode === 'login' ? 'register' : 'login';
         document.getElementById('authTitle').innerText = authMode === 'login' ? 'LOGIN APLIKASI' : 'DAFTAR AKUN';
         document.getElementById('authBtnSubmit').innerText = authMode === 'login' ? 'LOGIN' : 'DAFTAR';
         document.getElementById('authToggleText').innerText = authMode === 'login' ? 'Belum punya akun?' : 'Sudah punya akun?';
-        document.getElementById('authUsername').value = ''; document.getElementById('authPassword').value = '';
+        document.getElementById('authEmail').value = ''; document.getElementById('authPassword').value = '';
     }
+
     function handleAuthSubmit() {
         playSfx('pop');
-        const user = document.getElementById('authUsername').value.trim();
+        const email = document.getElementById('authEmail').value.trim();
         const pass = document.getElementById('authPassword').value.trim();
-        if(!user || !pass) return appAlert('Error', 'Username dan Password wajib diisi!');
-        const users = JSON.parse(localStorage.getItem('HH_USERS') || '{}');
+        if(!email || !pass) return appAlert('Error', 'Email dan Password wajib diisi!');
         
         if(authMode === 'register') {
-            if(users[user]) return appAlert('Error', 'Username sudah terdaftar! Silakan login.');
-            users[user] = pass; localStorage.setItem('HH_USERS', JSON.stringify(users));
-            appSuccess('Berhasil', 'Akun berhasil didaftarkan. Silakan login.'); toggleAuthMode();
+            auth.createUserWithEmailAndPassword(email, pass)
+                .then(() => {
+                    appSuccess('Berhasil', 'Akun berhasil didaftarkan. Anda akan segera masuk.');
+                })
+                .catch(err => appAlert("Registrasi Gagal", err.message));
         } else {
-            if(users[user] && users[user] === pass) {
-                localStorage.setItem('HH_LOGGED_IN', 'true');
-                document.getElementById('authScreen').classList.add('hidden');
-                document.getElementById('appContainer').classList.add('visible');
-                renderTitleSetup();
-            } else appAlert('Error', 'Username atau Password salah!');
+            auth.signInWithEmailAndPassword(email, pass)
+                .catch(err => appAlert("Login Gagal", err.message));
         }
     }
+
     function doLogout() {
         appConfirm('Logout', 'Yakin ingin keluar dari aplikasi?', () => {
-            localStorage.removeItem('HH_LOGGED_IN'); location.reload();
+            if(dbUnsubscribe) dbUnsubscribe();
+            auth.signOut().then(() => {
+                location.reload();
+            });
         });
     }
 
+    // --- SINKRONISASI DATA FIRESTORE ---
+    function setupRealtimeListener() {
+        if (dbUnsubscribe) dbUnsubscribe();
+        
+        dbUnsubscribe = db.collection("tournaments").doc("currentApp")
+            .onSnapshot(doc => {
+                if (doc.exists) {
+                    let loadedData = doc.data();
+                    if(loadedData.currentMatch && !loadedData.currentMatches) loadedData.currentMatches = [loadedData.currentMatch];
+                    if(!loadedData.fixedPairs) loadedData.fixedPairs = [];
+                    if(!loadedData.title) loadedData.title = "";
+                    data = loadedData;
+                } else {
+                    // Buat data kosong jika database masih baru
+                    save(); 
+                }
+                nav(data.activeTab, false);
+                setPartnerMode(currentPartnerMode, false);
+                if(data.currentMatches && data.currentMatches.length > 0) {
+                    let sample = data.currentMatches[0];
+                    if(sample.sport) setSport(sample.sport, false);
+                    if(sample.format) setFormat(sample.format, false);
+                    renderMatches();
+                }
+                renderTitleSetup();
+                renderAll();
+            }, err => {
+                console.error("Gagal menarik data:", err);
+            });
+    }
+
+    function save() { 
+        renderAll(); // Segera render lokal agar UI terasa instan (tidak delay menunggu server)
+        if(db) {
+            db.collection("tournaments").doc("currentApp").set(data).catch(err => {
+                console.error("Gagal menyimpan ke server:", err);
+            });
+        }
+    }
+    
     // --- UTILS & CORE ---
     function showAppDialog(type, title, msg, onConfirm, onCancel) {
         const dialog = document.getElementById('customDialog');
@@ -598,27 +682,9 @@
     }
 
     function init() {
-        const s = localStorage.getItem(DB_KEY);
-        if(s) {
-            let loadedData = JSON.parse(s);
-            if(loadedData.currentMatch && !loadedData.currentMatches) loadedData.currentMatches = [loadedData.currentMatch];
-            if(!loadedData.fixedPairs) loadedData.fixedPairs = [];
-            if(!loadedData.title) loadedData.title = "";
-            data = loadedData;
-        }
-
-        nav(data.activeTab, false);
-        setPartnerMode(currentPartnerMode, false);
-        if(data.currentMatches && data.currentMatches.length > 0) {
-            let sample = data.currentMatches[0];
-            if(sample.sport) setSport(sample.sport, false);
-            if(sample.format) setFormat(sample.format, false);
-            renderMatches();
-        }
-        renderAll();
+        // Init dipanggil saat script termuat. Flow diambil alih enterAppFlow.
     }
     
-    function save() { localStorage.setItem(DB_KEY, JSON.stringify(data)); renderAll(); }
     function getAvatar(p) { return (p.img && p.img.length > 100) ? p.img : (p.gender === 'M' ? DEF_M : DEF_F); }
 
     function playSfx(type) {
@@ -661,7 +727,7 @@
     }
     
     function createNewTournament() {
-        appConfirm("Buat Turnamen Baru", "Turnamen saat ini akan diarsipkan dan aplikasi akan disetel ulang untuk turnamen baru. Lanjutkan?", () => {
+        appConfirm("Buat Turnamen Baru", "Turnamen saat ini akan diarsipkan secara lokal. Lanjutkan?", () => {
             let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
             data.dateArchived = new Date().toLocaleString('id-ID');
             archives.push(data);
@@ -707,7 +773,7 @@
     }
 
     function viewArchive(idx) {
-        appConfirm("Buka Arsip", "Ini akan mengganti turnamen yang sedang berjalan di layar dengan data dari arsip. Lanjutkan?", () => {
+        appConfirm("Buka Arsip", "Ini akan mengganti turnamen yang sedang berjalan dengan data dari arsip. Lanjutkan?", () => {
             let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
             data = archives[idx];
             save();
@@ -756,7 +822,12 @@
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
         document.getElementById('tab-'+id).classList.add('active');
         document.querySelectorAll('.nav-item').forEach((b,i) => b.classList.toggle('active', ['home','play','rank'][i]===id));
-        data.activeTab = id; localStorage.setItem(DB_KEY, JSON.stringify(data)); 
+        if (data.activeTab !== id) {
+            data.activeTab = id; 
+            // Kita pakai localStorage kecil untuk simpan posisi tab agar saat refresh tidak kembali ke home
+            localStorage.setItem("HH_ACTIVE_TAB", id);
+            save();
+        }
     }
 
     // --- PENGATURAN MATCH ---
@@ -831,7 +902,7 @@
         data.fixedPairs.push({p1, p2, playCount:0}); save(); renderFixedPairsUI();
     }
     function generateRandomPairs() {
-        appConfirm("Acak Pasangan Tetap", "Ini akan menghapus pasangan tetap yang ada saat ini dan mengacak ulang semua pemain berstatus HADIR untuk dipasangkan secara permanen. Lanjutkan?", () => {
+        appConfirm("Acak Pasangan Tetap", "Ini akan menghapus pasangan tetap yang ada saat ini dan mengacak ulang semua pemain berstatus HADIR. Lanjutkan?", () => {
             let active = data.players.filter(p => p.isPresent !== false);
             active.sort(() => Math.random() - 0.5);
             data.fixedPairs = [];
@@ -1144,7 +1215,12 @@
 
     function resetConfirm() {
         appConfirm("RESET DATA", "PERINGATAN: Semua data pemain, judul, dan riwayat pertandingan aktif akan dihapus. Yakin?", () => {
-            localStorage.removeItem(DB_KEY); location.reload();
+            if(db) {
+                // Untuk benar-benar reset, kita bisa timpa dengan objek kosong
+                db.collection("tournaments").doc("currentApp").set({}).then(() => location.reload());
+            } else {
+                localStorage.removeItem(DB_KEY); location.reload();
+            }
         });
     }
 
