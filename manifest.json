@@ -1,7 +1,7 @@
 {
-  "id": "/new-pro-hitters/",
-  "name": "Pro Hitters",
-  "short_name": "Pro Hitters",
+  "id": "/happy-hitters-tournament/",
+  "name": "Happy Hitters Tournament",
+  "short_name": "Happy Hitters",
   "description": "Aplikasi pengacak pertandingan Tenis dan Padel cerdas.",
   "start_url": "./",
   "display": "standalone",
