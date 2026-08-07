@@ -116,8 +116,9 @@
         .score-team-name { font-weight: 900; font-size: 15px; color: var(--text-main); }
         .score-controls { display: flex; align-items: center; gap: 10px; }
         
-        .point-display { background: var(--dark); color: #fff; width: 60px; height: 50px; display: flex; justify-content: center; align-items: center; border-radius: 10px; font-size: 24px; font-weight: 900; border: 2px solid var(--primary); box-shadow: 0 0 10px rgba(67, 97, 238, 0.4); transition: 0.3s; }
-        .point-display.advantage { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 15px rgba(247, 37, 133, 0.5); }
+        .point-display { width: 60px; height: 50px; display: flex; justify-content: center; align-items: center; border-radius: 10px; font-size: 24px; font-weight: 900; color: #fff; transition: 0.3s; }
+        .score-box-a { background: var(--accent); border: 2px solid var(--accent); box-shadow: 0 0 15px rgba(247, 37, 133, 0.5); }
+        .score-box-b { background: var(--primary); border: 2px solid var(--primary); box-shadow: 0 0 15px rgba(67, 97, 238, 0.5); }
         
         .btn-score { width: 40px; height: 40px; border-radius: 50%; font-size: 18px; display: flex; justify-content: center; align-items: center; padding: 0; cursor: pointer; }
         .btn-score-minus { background: var(--input-bg); color: var(--text-muted); border: 1px solid var(--border-color); }
@@ -408,18 +409,7 @@
                 <button class="btn btn-ghost" onclick="openFixedPairsDialog()"><i class="fas fa-users-cog"></i> Kelola Pasangan Tetap</button>
             </div>
 
-            <!-- Bagian ini disembunyikan karena poin 15-30-40 telah dihapus -->
-            <div id="scoringSettings" style="display:none;">
-                <div id="settingTennis" style="margin-top:10px;">
-                    <select id="selMaxDeuce"><option value="-1">Tanpa Batas</option></select>
-                </div>
-                <div id="settingPadel" style="margin-top:10px;">
-                    <select id="selPadelScoring"><option value="tennis">Tradisional</option></select>
-                    <div id="padelDeuceWrapper"><select id="selMaxDeucePadel"><option value="-1">Tanpa Batas</option></select></div>
-                </div>
-            </div>
-
-            <!-- Logika Padel tetap dibiarkan agar algoritma Americano/Standard tetap bekerja -->
+            <!-- Logika Padel untuk Americano/Standard -->
             <div id="logicPadelOnly" class="hidden" style="margin-top:10px;">
                 <label id="lblPadelLogic" style="font-size:12px; font-weight:bold; color:var(--text-muted); display:block; margin-bottom:5px;">LOGIKA ACAK PASANGAN</label>
                 <select id="selPadelLogic">
@@ -493,7 +483,6 @@
   appId: "1:1001816853311:web:84c0fb7b1b9679756ea18a"
 };
     
-    // Inisialisasi Firebase
     let auth, db;
     if(firebaseConfig.apiKey !== "ISI_API_KEY_ANDA_DISINI") {
         firebase.initializeApp(firebaseConfig);
@@ -522,7 +511,6 @@
     const DEF_M = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23dbeafe'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%233b82f6'/%3E%3C/svg%3E";
     const DEF_F = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23fce7f3'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%23ec4899'/%3E%3C/svg%3E";
 
-    // --- PEMANTAUAN SESI OTOMATIS SAAT HALAMAN DIMUAT ---
     window.onload = () => { 
         initTheme(); 
         
@@ -542,7 +530,6 @@
         }
     };
 
-    // --- AUTENTIKASI FIREBASE ---
     let authMode = 'login';
 
     function enterAppFlow() {
@@ -594,7 +581,6 @@
         });
     }
 
-    // --- SINKRONISASI DATA FIRESTORE ---
     function setupRealtimeListener() {
         if (dbUnsubscribe) dbUnsubscribe();
         
@@ -602,7 +588,6 @@
             .onSnapshot(doc => {
                 if (doc.exists) {
                     let loadedData = doc.data();
-                    
                     data.title = loadedData.title || "";
                     data.players = loadedData.players || [];
                     data.matches = loadedData.matches || [];
@@ -611,7 +596,6 @@
                     data.currentMatches = loadedData.currentMatches || (loadedData.currentMatch ? [loadedData.currentMatch] : []);
                     data.activeTab = loadedData.activeTab || 'home';
                     data.dateArchived = loadedData.dateArchived || null;
-                    
                 } else {
                     save(); 
                 }
@@ -643,7 +627,6 @@
         }
     }
     
-    // --- UTILS & CORE ---
     function showAppDialog(type, title, msg, onConfirm, onCancel) {
         const dialog = document.getElementById('customDialog');
         document.getElementById('dialogTitle').innerText = title;
@@ -698,7 +681,6 @@
     function toggleMute() { isMuted = !isMuted; document.getElementById('soundIcon').className = isMuted ? 'fas fa-volume-mute' : 'fas fa-volume-up'; }
     function toggleTheme() { currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', currentTheme); localStorage.setItem('HH_THEME', currentTheme); }
 
-    // --- JUDUL & ARSIP TURNAMEN ---
     function saveTitle() {
         let t = document.getElementById('tourTitleInp').value.trim();
         if(!t) return appAlert("Peringatan", "Silakan masukkan judul game/turnamen terlebih dahulu.");
@@ -779,7 +761,6 @@
         });
     }
 
-    // --- TAMBAH PEMAIN ---
     function handleImg(input) {
         if(input.files && input.files[0]) {
             const r = new FileReader();
@@ -824,7 +805,6 @@
         }
     }
 
-    // --- PENGATURAN MATCH ---
     function setSport(s, playSnd=true) {
         if(playSnd) playSfx('pop');
         selectedSport = s;
@@ -860,7 +840,6 @@
         }
     }
 
-    // --- KELOLA PASANGAN TETAP ---
     function openFixedPairsDialog() {
         document.getElementById('fixedPairsDialog').classList.remove('hidden');
         renderFixedPairsUI();
@@ -906,7 +885,6 @@
     }
     function delFixedPair(idx) { data.fixedPairs.splice(idx, 1); save(); renderFixedPairsUI(); }
 
-    // --- GENERATE MULTI-COURT MATCH ---
     function generateMatch() {
         if(data.isFinished) return appAlert("Perhatian", "Turnamen sudah selesai! Buka kembali turnamen di menu Ranking jika ingin melanjutkan.");
         
@@ -1001,7 +979,7 @@
                         </div>
                         <div class="score-controls">
                             <button class="btn btn-score btn-score-minus" onclick="adjGame(${idx}, 1, -1)"><i class="fas fa-minus"></i></button>
-                            <div id="gDisp1_${idx}" class="point-display advantage">${m.g1}</div>
+                            <div id="gDisp1_${idx}" class="point-display score-box-a">${m.g1}</div>
                             <button class="btn btn-score btn-primary" onclick="adjGame(${idx}, 1, 1)"><i class="fas fa-plus"></i></button>
                         </div>
                     </div>
@@ -1013,7 +991,7 @@
                         </div>
                         <div class="score-controls">
                             <button class="btn btn-score btn-score-minus" onclick="adjGame(${idx}, 2, -1)"><i class="fas fa-minus"></i></button>
-                            <div id="gDisp2_${idx}" class="point-display" style="border-color:var(--primary); background:var(--dark); box-shadow:0 0 10px rgba(67, 97, 238, 0.4);">${m.g2}</div>
+                            <div id="gDisp2_${idx}" class="point-display score-box-b">${m.g2}</div>
                             <button class="btn btn-score btn-primary" onclick="adjGame(${idx}, 2, 1)"><i class="fas fa-plus"></i></button>
                         </div>
                     </div>
@@ -1099,7 +1077,6 @@
         });
     }
 
-    // --- EDIT SKOR MANUAL ---
     function openEditScore(id) {
         let m = data.matches.find(x => x.id === id);
         if(!m) return;
@@ -1158,7 +1135,6 @@
         });
     }
 
-    // --- FITUR: 3D PLAYER CARD ---
     function openPlayerCard(id) {
         let p = data.players.find(x => x.id === id);
         if(!p) return;
@@ -1183,7 +1159,6 @@
     function toggleCardFlip() { playSfx('pop'); document.getElementById('pCard').classList.toggle('flipped'); }
     function closePlayerCard() { document.getElementById('playerCardModal').classList.add('hidden'); }
 
-    // --- FITUR: SHARE TICKET ---
     function openShareMatch(id) {
         let m = data.matches.find(x => x.id === id);
         if(!m) return;
@@ -1210,7 +1185,6 @@
         });
     }
 
-    // --- RENDER UMUM ---
     function renderAll() {
         document.getElementById('pCount').innerText = data.players.length;
         document.getElementById('playerList').innerHTML = data.players.slice().reverse().map(p => {
