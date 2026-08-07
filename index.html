@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#4361ee">
     
-    <title>Pro Hitters - Tennis & Padel</title>
+    <!-- Meta tags khusus iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Happy Hitters">
+    
+    <title>Happy Hitters Tournament</title>
     <link rel="apple-touch-icon" href="logo.png">
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
@@ -38,9 +43,9 @@
 
         body { font-family: 'Outfit', sans-serif; background: var(--bg-grad); margin: 0; padding: 0; min-height: 100vh; color: var(--text-main); overflow-x: hidden; user-select: none; transition: background 0.3s, color 0.3s; }
 
-        /* --- ANIMASI WELCOME SCREEN (NEON BOUNCE) --- */
-        #welcomeScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-grad); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: opacity 0.5s ease, visibility 0.5s; }
-        #welcomeScreen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        /* --- ANIMASI WELCOME SCREEN --- */
+        #welcomeScreen, #authScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-grad); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: opacity 0.5s ease, visibility 0.5s; }
+        #welcomeScreen.hidden, #authScreen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
         
         .hero-anim-container { position: relative; width: 240px; height: 120px; margin-bottom: 40px; display: flex; justify-content: center; align-items: flex-end; }
         .hero-net { position: absolute; width: 5px; height: 70px; background: linear-gradient(to top, rgba(255,255,255,0.9), transparent); bottom: 0; border-radius: 3px; box-shadow: 0 0 15px rgba(255,255,255,0.5); z-index: 2; }
@@ -55,17 +60,18 @@
         .btn-enter { background: white; color: var(--primary); padding: 15px 35px; border: none; border-radius: 50px; font-size: 18px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-family: 'Outfit', sans-serif; transition: transform 0.2s; text-transform: uppercase; letter-spacing: 1px; }
         .btn-enter:active { transform: scale(0.95); }
 
-        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); display: flex; flex-direction: column; position: relative; opacity: 0; transition: opacity 0.5s; }
-        .app-container.visible { opacity: 1; }
+        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); display: flex; flex-direction: column; position: relative; opacity: 0; transition: opacity 0.5s; display:none; }
+        .app-container.visible { opacity: 1; display:flex;}
         
         header { padding: 15px 20px; display:flex; justify-content:space-between; align-items:center; background: var(--glass); position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        h1 { margin: 0; font-size: 20px; font-weight: 900; color: var(--primary); letter-spacing: -0.5px; text-transform: uppercase; }
+        h1 { margin: 0; font-size: 18px; font-weight: 900; color: var(--primary); letter-spacing: -0.5px; text-transform: uppercase; }
         
         .sound-toggle { background: var(--input-bg); border: 1px solid var(--border-color); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); cursor: pointer; transition: 0.2s; }
         .content { padding: 20px 20px 120px 20px; display: none; animation: fadeIn 0.3s ease; }
         .content.active { display: block; }
         
         .card { background: var(--card-bg); border-radius: 18px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border-color); transition: 0.3s; }
+        .auth-card { background: var(--card-bg); width: 85%; max-width: 350px; border-radius: 20px; padding: 30px 25px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); }
         .btn { width: 100%; border: none; padding: 14px; border-radius: 12px; font-weight: 700; cursor: pointer; font-family:'Outfit'; display:flex; align-items:center; justify-content:center; gap:8px; font-size:15px; transition: 0.2s; }
         .btn:active { transform: scale(0.95); }
         .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3); }
@@ -156,15 +162,33 @@
         <div class="hero-ball"></div>
         <div class="hero-shadow"></div>
     </div>
-    <div class="welcome-title animate__animated animate__fadeInUp">PRO HITTERS<br><span style="font-size:14px; font-weight:500; letter-spacing:1px; color:#ddd;">TENNIS & PADEL</span></div>
-    <button class="btn-enter animate__animated animate__pulse animate__infinite" onclick="enterApp()">MULAI APLIKASI</button>
+    <div class="welcome-title animate__animated animate__fadeInUp">HAPPY HITTERS<br><span style="font-size:14px; font-weight:500; letter-spacing:1px; color:#ddd;">TOURNAMENT</span></div>
+    <button class="btn-enter animate__animated animate__pulse animate__infinite" onclick="enterAppFlow()">MULAI APLIKASI</button>
+</div>
+
+<!-- HALAMAN LOGIN & REGISTER -->
+<div id="authScreen" class="hidden">
+    <div class="auth-card animate__animated animate__zoomIn">
+        <h2 id="authTitle" style="color:var(--primary); font-weight:900; margin-top:0;">LOGIN APLIKASI</h2>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">Silakan otentikasi untuk melanjutkan</p>
+        
+        <input type="text" id="authUsername" placeholder="Username" autocomplete="off">
+        <input type="password" id="authPassword" placeholder="Password">
+        
+        <button id="authBtnSubmit" class="btn btn-primary" onclick="handleAuthSubmit()" style="margin-top:10px;">LOGIN</button>
+        
+        <div style="margin-top:20px; font-size:13px; color:var(--text-muted);">
+            <span id="authToggleText">Belum punya akun?</span> 
+            <b style="color:var(--primary); cursor:pointer;" onclick="toggleAuthMode()">Daftar Disini</b>
+        </div>
+    </div>
 </div>
 
 <div class="app-container" id="appContainer">
     <header>
         <div style="display:flex; align-items:center; gap:10px;">
             <i class="fas fa-table-tennis-paddle-ball" style="color:var(--primary); font-size:24px;"></i>
-            <h1>PRO HITTERS</h1>
+            <h1>HAPPY HITTERS</h1>
         </div>
         <div style="display: flex; gap: 10px;">
             <button class="sound-toggle" onclick="toggleTheme()" id="themeBtn"><i id="themeIcon" class="fas fa-moon"></i></button>
@@ -203,12 +227,15 @@
                 <button class="btn btn-ghost" style="padding:10px; font-size:12px;" onclick="document.getElementById('impFile').click()"><i class="fas fa-upload"></i> Restore</button>
                 <button class="btn btn-ghost" style="padding:10px; font-size:12px; color:#ef4444; border-color:rgba(239, 68, 68, 0.3);" onclick="resetConfirm()"><i class="fas fa-trash"></i> Reset</button>
             </div>
+            <button class="btn btn-danger" style="margin-top:10px; padding:10px; font-size:12px;" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Logout Aplikasi</button>
             <input type="file" id="impFile" hidden accept=".json" onchange="importData(this)">
         </div>
 
         <div id="playerList" style="display: flex; flex-direction: column; gap: 10px;"></div>
     </div>
 
+    <!-- Sisa kode HTML untuk tab-play dan tab-rank tidak berubah secara struktur, disingkat untuk keterbacaan atau dicetak utuh jika diperlukan -->
+    <!-- TAB PLAY -->
     <div id="tab-play" class="content">
         <div id="setupArea" class="card" style="padding:20px;">
             <h3 style="margin:0 0 15px 0; text-align:center; color:var(--text-main);"><i class="fas fa-sliders-h"></i> Pengaturan Match</h3>
@@ -325,6 +352,7 @@
         </div>
     </div>
 
+    <!-- TAB RANK -->
     <div id="tab-rank" class="content">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3 style="margin:0; font-weight:900;">KLASEMEN LIVE</h3>
@@ -377,6 +405,68 @@
     const DEF_M = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23dbeafe'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%233b82f6'/%3E%3C/svg%3E";
     const DEF_F = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23fce7f3'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%23ec4899'/%3E%3C/svg%3E";
 
+    // --- AUTENTIKASI LOGIC ---
+    let authMode = 'login'; // 'login' atau 'register'
+
+    function enterAppFlow() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        playSfx('pop'); 
+        
+        // Cek status login
+        if(localStorage.getItem('HH_LOGGED_IN') === 'true') {
+            document.getElementById('welcomeScreen').classList.add('hidden'); 
+            document.getElementById('appContainer').classList.add('visible');
+        } else {
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('authScreen').classList.remove('hidden');
+        }
+    }
+
+    function toggleAuthMode() {
+        playSfx('pop');
+        authMode = authMode === 'login' ? 'register' : 'login';
+        document.getElementById('authTitle').innerText = authMode === 'login' ? 'LOGIN APLIKASI' : 'DAFTAR AKUN';
+        document.getElementById('authBtnSubmit').innerText = authMode === 'login' ? 'LOGIN' : 'DAFTAR';
+        document.getElementById('authToggleText').innerText = authMode === 'login' ? 'Belum punya akun?' : 'Sudah punya akun?';
+        document.getElementById('authUsername').value = '';
+        document.getElementById('authPassword').value = '';
+    }
+
+    function handleAuthSubmit() {
+        playSfx('pop');
+        const user = document.getElementById('authUsername').value.trim();
+        const pass = document.getElementById('authPassword').value.trim();
+
+        if(!user || !pass) return appAlert('Error', 'Username dan Password wajib diisi!');
+
+        if(authMode === 'register') {
+            const users = JSON.parse(localStorage.getItem('HH_USERS') || '{}');
+            if(users[user]) return appAlert('Error', 'Username sudah terdaftar! Silakan gunakan username lain atau login.');
+            
+            users[user] = pass;
+            localStorage.setItem('HH_USERS', JSON.stringify(users));
+            appSuccess('Berhasil', 'Akun berhasil didaftarkan. Silakan login.');
+            toggleAuthMode();
+        } else {
+            const users = JSON.parse(localStorage.getItem('HH_USERS') || '{}');
+            if(users[user] && users[user] === pass) {
+                localStorage.setItem('HH_LOGGED_IN', 'true');
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('appContainer').classList.add('visible');
+            } else {
+                appAlert('Error', 'Username atau Password salah!');
+            }
+        }
+    }
+
+    function doLogout() {
+        appConfirm('Logout', 'Yakin ingin keluar dari aplikasi?', () => {
+            localStorage.removeItem('HH_LOGGED_IN');
+            location.reload();
+        });
+    }
+    // --- END AUTENTIKASI ---
+
     function showAppDialog(type, title, msg, onConfirm, onCancel) {
         const dialog = document.getElementById('customDialog');
         const icon = document.getElementById('dialogIcon');
@@ -409,11 +499,6 @@
     function appAlert(title, msg) { showAppDialog('alert', title, msg); }
     function appSuccess(title, msg) { showAppDialog('success', title, msg); }
     function appConfirm(title, msg, onConfirm) { showAppDialog('confirm', title, msg, onConfirm); }
-
-    function enterApp() {
-        if(audioCtx.state === 'suspended') audioCtx.resume();
-        playSfx('pop'); document.getElementById('welcomeScreen').classList.add('hidden'); document.getElementById('appContainer').classList.add('visible');
-    }
 
     function initTheme() {
         if (currentTheme === 'auto') document.documentElement.setAttribute('data-theme', window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -456,6 +541,7 @@
             osc.start(); osc.stop(audioCtx.currentTime + 0.3);
         }
     }
+    
     function toggleMute() { isMuted = !isMuted; document.getElementById('soundIcon').className = isMuted ? 'fas fa-volume-mute' : 'fas fa-volume-up'; }
     function toggleTheme() { currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', currentTheme); localStorage.setItem('HH_THEME', currentTheme); }
 
@@ -474,7 +560,9 @@
             }; r.readAsDataURL(input.files[0]);
         }
     }
+    
     function setGender(g) { playSfx('pop'); tempGender = g; document.getElementById('btnM').className = g==='M'?'g-btn active-m':'g-btn'; document.getElementById('btnF').className = g==='F'?'g-btn active-f':'g-btn'; }
+    
     function addPlayer() {
         const name = document.getElementById('pName').value.trim().substring(0,12);
         if(!name) return appAlert("Peringatan", "Isi nama pemain terlebih dahulu!");
@@ -483,6 +571,7 @@
         document.getElementById('prevImg').style.display = 'none'; document.getElementById('camIcon').style.display = 'block';
         save();
     }
+    
     function delPlayerConfirm(id) { appConfirm("Hapus Pemain", "Hapus pemain ini dari daftar turnamen?", () => { data.players = data.players.filter(p => p.id !== id); save(); }); }
 
     function nav(id, playSound=true) {
