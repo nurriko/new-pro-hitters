@@ -501,7 +501,7 @@
 
 <script>
     // --- FIREBASE CONFIGURATION (ISI DENGAN DATA DARI FIREBASE CONSOLE) ---
-    const firebaseConfig = {
+   const firebaseConfig = {
   apiKey: "AIzaSyB71_NTi3ijqt2Qxm7SgJLLjmoCjYXOt0I",
   authDomain: "happy-hitters-app.firebaseapp.com",
   projectId: "happy-hitters-app",
@@ -549,13 +549,11 @@
         if (auth) {
             auth.onAuthStateChanged(user => {
                 if (user) {
-                    // Bypass welcome screen langsung
                     document.getElementById('welcomeScreen').classList.add('hidden');
                     document.getElementById('authScreen').classList.add('hidden');
                     document.getElementById('appContainer').classList.add('visible');
                     setupRealtimeListener(); 
                 } else {
-                    // Jika belum login (atau setelah logout) kembalikan ke layar awal
                     document.getElementById('appContainer').classList.remove('visible');
                     document.getElementById('authScreen').classList.add('hidden');
                     document.getElementById('welcomeScreen').classList.remove('hidden');
@@ -576,7 +574,6 @@
             return;
         }
 
-        // Pindah ke layar auth (ini dipanggil jika pengguna memencet tombol "Mulai")
         document.getElementById('welcomeScreen').classList.add('hidden');
         document.getElementById('authScreen').classList.remove('hidden');
     }
@@ -600,7 +597,6 @@
             auth.createUserWithEmailAndPassword(email, pass)
                 .then(() => {
                     appSuccess('Berhasil', 'Akun berhasil didaftarkan. Anda akan segera masuk.');
-                    // auth.onAuthStateChanged otomatis merespons perpindahan ke dalam app
                 })
                 .catch(err => appAlert("Registrasi Gagal", err.message));
         } else {
@@ -626,15 +622,21 @@
             .onSnapshot(doc => {
                 if (doc.exists) {
                     let loadedData = doc.data();
-                    if(loadedData.currentMatch && !loadedData.currentMatches) loadedData.currentMatches = [loadedData.currentMatch];
-                    if(!loadedData.fixedPairs) loadedData.fixedPairs = [];
-                    if(!loadedData.title) loadedData.title = "";
-                    data = loadedData;
+                    
+                    // --- FIX: Beri nilai default jika data kosong (misal setelah di-reset) ---
+                    data.title = loadedData.title || "";
+                    data.players = loadedData.players || [];
+                    data.matches = loadedData.matches || [];
+                    data.fixedPairs = loadedData.fixedPairs || [];
+                    data.isFinished = loadedData.isFinished || false;
+                    data.currentMatches = loadedData.currentMatches || (loadedData.currentMatch ? [loadedData.currentMatch] : []);
+                    data.activeTab = loadedData.activeTab || 'home';
+                    data.dateArchived = loadedData.dateArchived || null;
+                    
                 } else {
                     save(); 
                 }
                 
-                // Gunakan memori tab dari perangkat masing-masing
                 nav(localStorage.getItem('HH_ACTIVE_TAB') || 'home', false);
                 setPartnerMode(currentPartnerMode, false);
                 
@@ -657,6 +659,8 @@
             db.collection("tournaments").doc("currentApp").set(data).catch(err => {
                 console.error("Gagal menyimpan ke server:", err);
             });
+        } else {
+            localStorage.setItem(DB_KEY, JSON.stringify(data));
         }
     }
     
@@ -719,7 +723,9 @@
     function saveTitle() {
         let t = document.getElementById('tourTitleInp').value.trim();
         if(!t) return appAlert("Peringatan", "Silakan masukkan judul game/turnamen terlebih dahulu.");
-        data.title = t; save(); renderTitleSetup();
+        data.title = t; 
+        save(); 
+        renderTitleSetup();
     }
     function editTitle() {
         let t = prompt("Ubah Judul Game/Turnamen:", data.title);
@@ -1224,10 +1230,12 @@
 
     function resetConfirm() {
         appConfirm("RESET DATA", "PERINGATAN: Semua data pemain, judul, dan riwayat pertandingan aktif akan dihapus. Yakin?", () => {
+            let defaultData = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home' };
             if(db) {
-                db.collection("tournaments").doc("currentApp").set({}).then(() => location.reload());
+                db.collection("tournaments").doc("currentApp").set(defaultData).then(() => location.reload());
             } else {
-                localStorage.removeItem(DB_KEY); location.reload();
+                localStorage.setItem(DB_KEY, JSON.stringify(defaultData)); 
+                location.reload();
             }
         });
     }
