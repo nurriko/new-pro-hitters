@@ -309,7 +309,6 @@
 </div>
 
 <div class="app-container" id="appContainer">
-    <!-- HEADER DIRUBAH (LOGOUT DISINI) -->
     <header>
         <div style="display:flex; align-items:center; gap:10px;">
             <i class="fas fa-table-tennis-paddle-ball" style="color:var(--primary); font-size:24px;"></i>
@@ -365,7 +364,6 @@
                 <span onclick="toggleTools()" style="cursor:pointer; color:var(--primary); background:var(--input-bg); padding:4px 10px; border-radius:12px;"><i class="fas fa-cog"></i> Pengaturan</span>
             </div>
 
-            <!-- TOOLS PANEL TANPA LOGOUT LAMA -->
             <div id="toolsPanel" class="card hidden animate__animated animate__fadeIn">
                 <div style="display:flex; flex-direction:column; gap:10px;">
                     <div style="display:flex; gap:10px;">
@@ -512,7 +510,7 @@
   appId: "1:1001816853311:web:84c0fb7b1b9679756ea18a"
 };
     
-    // Inisialisasi Firebase (jika API Key belum diisi, kita biarkan tidak jalan agar aplikasi tidak error)
+    // Inisialisasi Firebase
     let auth, db;
     if(firebaseConfig.apiKey !== "ISI_API_KEY_ANDA_DISINI") {
         firebase.initializeApp(firebaseConfig);
@@ -543,6 +541,29 @@
     const DEF_M = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23dbeafe'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%233b82f6'/%3E%3C/svg%3E";
     const DEF_F = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23fce7f3'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%23ec4899'/%3E%3C/svg%3E";
 
+    // --- PEMANTAUAN SESI OTOMATIS SAAT HALAMAN DIMUAT ---
+    window.onload = () => { 
+        initTheme(); 
+        toggleDeucePadel(); 
+        
+        if (auth) {
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // Bypass welcome screen langsung
+                    document.getElementById('welcomeScreen').classList.add('hidden');
+                    document.getElementById('authScreen').classList.add('hidden');
+                    document.getElementById('appContainer').classList.add('visible');
+                    setupRealtimeListener(); 
+                } else {
+                    // Jika belum login (atau setelah logout) kembalikan ke layar awal
+                    document.getElementById('appContainer').classList.remove('visible');
+                    document.getElementById('authScreen').classList.add('hidden');
+                    document.getElementById('welcomeScreen').classList.remove('hidden');
+                }
+            });
+        }
+    };
+
     // --- AUTENTIKASI FIREBASE ---
     let authMode = 'login';
 
@@ -555,19 +576,9 @@
             return;
         }
 
-        // Mengecek status login dari Firebase secara real-time
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById('welcomeScreen').classList.add('hidden'); 
-                document.getElementById('authScreen').classList.add('hidden');
-                document.getElementById('appContainer').classList.add('visible');
-                setupRealtimeListener(); // Tarik data dari Firestore setelah login
-            } else {
-                document.getElementById('welcomeScreen').classList.add('hidden');
-                document.getElementById('authScreen').classList.remove('hidden');
-                document.getElementById('appContainer').classList.remove('visible');
-            }
-        });
+        // Pindah ke layar auth (ini dipanggil jika pengguna memencet tombol "Mulai")
+        document.getElementById('welcomeScreen').classList.add('hidden');
+        document.getElementById('authScreen').classList.remove('hidden');
     }
 
     function toggleAuthMode() {
@@ -589,6 +600,7 @@
             auth.createUserWithEmailAndPassword(email, pass)
                 .then(() => {
                     appSuccess('Berhasil', 'Akun berhasil didaftarkan. Anda akan segera masuk.');
+                    // auth.onAuthStateChanged otomatis merespons perpindahan ke dalam app
                 })
                 .catch(err => appAlert("Registrasi Gagal", err.message));
         } else {
@@ -619,11 +631,13 @@
                     if(!loadedData.title) loadedData.title = "";
                     data = loadedData;
                 } else {
-                    // Buat data kosong jika database masih baru
                     save(); 
                 }
-                nav(data.activeTab, false);
+                
+                // Gunakan memori tab dari perangkat masing-masing
+                nav(localStorage.getItem('HH_ACTIVE_TAB') || 'home', false);
                 setPartnerMode(currentPartnerMode, false);
+                
                 if(data.currentMatches && data.currentMatches.length > 0) {
                     let sample = data.currentMatches[0];
                     if(sample.sport) setSport(sample.sport, false);
@@ -638,7 +652,7 @@
     }
 
     function save() { 
-        renderAll(); // Segera render lokal agar UI terasa instan (tidak delay menunggu server)
+        renderAll(); 
         if(db) {
             db.collection("tournaments").doc("currentApp").set(data).catch(err => {
                 console.error("Gagal menyimpan ke server:", err);
@@ -679,10 +693,6 @@
     function initTheme() {
         if (currentTheme === 'auto') document.documentElement.setAttribute('data-theme', window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         else document.documentElement.setAttribute('data-theme', currentTheme);
-    }
-
-    function init() {
-        // Init dipanggil saat script termuat. Flow diambil alih enterAppFlow.
     }
     
     function getAvatar(p) { return (p.img && p.img.length > 100) ? p.img : (p.gender === 'M' ? DEF_M : DEF_F); }
@@ -824,7 +834,6 @@
         document.querySelectorAll('.nav-item').forEach((b,i) => b.classList.toggle('active', ['home','play','rank'][i]===id));
         if (data.activeTab !== id) {
             data.activeTab = id; 
-            // Kita pakai localStorage kecil untuk simpan posisi tab agar saat refresh tidak kembali ke home
             localStorage.setItem("HH_ACTIVE_TAB", id);
             save();
         }
@@ -1216,7 +1225,6 @@
     function resetConfirm() {
         appConfirm("RESET DATA", "PERINGATAN: Semua data pemain, judul, dan riwayat pertandingan aktif akan dihapus. Yakin?", () => {
             if(db) {
-                // Untuk benar-benar reset, kita bisa timpa dengan objek kosong
                 db.collection("tournaments").doc("currentApp").set({}).then(() => location.reload());
             } else {
                 localStorage.removeItem(DB_KEY); location.reload();
@@ -1343,7 +1351,6 @@
                 .catch(err => console.log('Service Worker Gagal:', err));
         });
     }
-    window.onload = () => { init(); initTheme(); toggleDeucePadel(); };
 </script>
 </body>
 </html>
