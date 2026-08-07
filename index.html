@@ -116,12 +116,10 @@
         .score-team-name { font-weight: 900; font-size: 15px; color: var(--text-main); }
         .score-controls { display: flex; align-items: center; gap: 10px; }
         
-        .point-display { background: var(--dark); color: #fff; width: 60px; height: 50px; display: flex; justify-content: center; align-items: center; border-radius: 10px; font-size: 24px; font-weight: 900; border: 2px solid var(--primary); box-shadow: 0 0 10px rgba(67, 97, 238, 0.4); transition: 0.3s; cursor: pointer; }
+        .point-display { background: var(--dark); color: #fff; width: 60px; height: 50px; display: flex; justify-content: center; align-items: center; border-radius: 10px; font-size: 24px; font-weight: 900; border: 2px solid var(--primary); box-shadow: 0 0 10px rgba(67, 97, 238, 0.4); transition: 0.3s; }
         .point-display.advantage { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 15px rgba(247, 37, 133, 0.5); }
-        .point-display:active { transform: scale(0.9); }
         
-        .game-display { font-size: 28px; font-weight: 900; width: 40px; text-align: center; color: var(--text-main); }
-        .btn-score { width: 40px; height: 40px; border-radius: 50%; font-size: 18px; display: flex; justify-content: center; align-items: center; padding: 0; }
+        .btn-score { width: 40px; height: 40px; border-radius: 50%; font-size: 18px; display: flex; justify-content: center; align-items: center; padding: 0; cursor: pointer; }
         .btn-score-minus { background: var(--input-bg); color: var(--text-muted); border: 1px solid var(--border-color); }
 
         table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
@@ -410,34 +408,19 @@
                 <button class="btn btn-ghost" onclick="openFixedPairsDialog()"><i class="fas fa-users-cog"></i> Kelola Pasangan Tetap</button>
             </div>
 
-            <div id="settingTennis" style="margin-top:10px;">
-                <label style="font-size:12px; font-weight:bold; color:var(--text-muted); display:block; margin-bottom:5px;">BATAS DEUCE (SUDDEN DEATH)</label>
-                <select id="selMaxDeuce">
-                    <option value="-1">Tanpa Batas (Standar)</option>
-                    <option value="0">No-Ad (Langsung Sudden Death)</option>
-                    <option value="1">Maksimal 1x Deuce</option>
-                    <option value="2">Maksimal 2x Deuce</option>
-                    <option value="3">Maksimal 3x Deuce</option>
-                </select>
+            <!-- Bagian ini disembunyikan karena poin 15-30-40 telah dihapus -->
+            <div id="scoringSettings" style="display:none;">
+                <div id="settingTennis" style="margin-top:10px;">
+                    <select id="selMaxDeuce"><option value="-1">Tanpa Batas</option></select>
+                </div>
+                <div id="settingPadel" style="margin-top:10px;">
+                    <select id="selPadelScoring"><option value="tennis">Tradisional</option></select>
+                    <div id="padelDeuceWrapper"><select id="selMaxDeucePadel"><option value="-1">Tanpa Batas</option></select></div>
+                </div>
             </div>
 
-            <div id="settingPadel" class="hidden" style="margin-top:10px;">
-                <label style="font-size:12px; font-weight:bold; color:var(--text-muted); display:block; margin-bottom:5px;">SISTEM POIN PADEL</label>
-                <select id="selPadelScoring" onchange="toggleDeucePadel()">
-                    <option value="tennis">Tradisional (15-30-40)</option>
-                    <option value="21">Rally Poin (Sampai 21)</option>
-                    <option value="32">Rally Poin (Sampai 32)</option>
-                </select>
-
-                <div id="padelDeuceWrapper">
-                    <label style="font-size:12px; font-weight:bold; color:var(--text-muted); display:block; margin-bottom:5px;">BATAS DEUCE / GOLDEN POINT</label>
-                    <select id="selMaxDeucePadel">
-                        <option value="0">No-Ad (Langsung Golden Point)</option>
-                        <option value="-1">Tanpa Batas (Standar Deuce)</option>
-                        <option value="1">Maksimal 1x Deuce</option>
-                    </select>
-                </div>
-
+            <!-- Logika Padel tetap dibiarkan agar algoritma Americano/Standard tetap bekerja -->
+            <div id="logicPadelOnly" class="hidden" style="margin-top:10px;">
                 <label id="lblPadelLogic" style="font-size:12px; font-weight:bold; color:var(--text-muted); display:block; margin-bottom:5px;">LOGIKA ACAK PASANGAN</label>
                 <select id="selPadelLogic">
                     <option value="standard">Standar (Prioritas jarang main)</option>
@@ -517,7 +500,6 @@
         auth = firebase.auth();
         db = firebase.firestore();
 
-        // Mengaktifkan fitur OFFLINE PERSISTENCE Firebase
         db.enablePersistence().catch(err => {
             console.error("Firebase Offline Error:", err);
         });
@@ -537,14 +519,12 @@
     let currentEditMatchId = null;
     let dbUnsubscribe = null;
     
-    const P_MAP = ['0', '15', '30', '40', 'AD'];
     const DEF_M = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23dbeafe'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%233b82f6'/%3E%3C/svg%3E";
     const DEF_F = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23fce7f3'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%23ec4899'/%3E%3C/svg%3E";
 
     // --- PEMANTAUAN SESI OTOMATIS SAAT HALAMAN DIMUAT ---
     window.onload = () => { 
         initTheme(); 
-        toggleDeucePadel(); 
         
         if (auth) {
             auth.onAuthStateChanged(user => {
@@ -623,7 +603,6 @@
                 if (doc.exists) {
                     let loadedData = doc.data();
                     
-                    // --- FIX: Beri nilai default jika data kosong (misal setelah di-reset) ---
                     data.title = loadedData.title || "";
                     data.players = loadedData.players || [];
                     data.matches = loadedData.matches || [];
@@ -854,12 +833,10 @@
         
         if(s === 'padel') { 
             document.getElementById('btnFormatSingles').classList.add('disabled'); setFormat('doubles', false); 
-            document.getElementById('settingTennis').classList.add('hidden');
-            document.getElementById('settingPadel').classList.remove('hidden');
+            document.getElementById('logicPadelOnly').classList.remove('hidden');
         } else { 
             document.getElementById('btnFormatSingles').classList.remove('disabled'); 
-            document.getElementById('settingTennis').classList.remove('hidden');
-            document.getElementById('settingPadel').classList.add('hidden');
+            document.getElementById('logicPadelOnly').classList.add('hidden');
         }
     }
     function setFormat(f, playSnd=true) {
@@ -869,10 +846,6 @@
         document.getElementById('btnFormatSingles').className = f==='singles' ? 'seg-btn active' : 'seg-btn';
         document.getElementById('btnFormatDoubles').className = f==='doubles' ? 'seg-btn active' : 'seg-btn';
     }
-    function toggleDeucePadel() {
-        const val = document.getElementById('selPadelScoring').value;
-        document.getElementById('padelDeuceWrapper').style.display = (val === 'tennis') ? 'block' : 'none';
-    }
     function setPartnerMode(mode, playSnd=true) {
         if(playSnd) playSfx('pop');
         currentPartnerMode = mode;
@@ -880,8 +853,11 @@
         document.getElementById('btnPasanganTetap').className = mode === 'tetap' ? 'seg-btn active' : 'seg-btn';
         
         document.getElementById('fixedPartnerSetup').classList.toggle('hidden', mode !== 'tetap');
-        document.getElementById('lblPadelLogic').style.display = mode === 'tetap' ? 'none' : 'block';
-        document.getElementById('selPadelLogic').style.display = mode === 'tetap' ? 'none' : 'block';
+        if (mode === 'tetap') {
+            document.getElementById('logicPadelOnly').classList.add('hidden');
+        } else if (selectedSport === 'padel') {
+            document.getElementById('logicPadelOnly').classList.remove('hidden');
+        }
     }
 
     // --- KELOLA PASANGAN TETAP ---
@@ -981,17 +957,13 @@
     }
 
     function createMatchObj(courtNum, t1, t2) {
-        let scoringType = selectedSport === 'padel' ? document.getElementById('selPadelScoring').value : 'tennis';
-        let maxDeuce = -1;
-        if (selectedSport === 'tennis') maxDeuce = parseInt(document.getElementById('selMaxDeuce').value);
-        if (selectedSport === 'padel' && scoringType === 'tennis') maxDeuce = parseInt(document.getElementById('selMaxDeucePadel').value);
         let padelLogic = selectedSport === 'padel' ? document.getElementById('selPadelLogic').value : 'standard';
 
         return {
             id: 'MC_'+Date.now()+'_'+courtNum, court: courtNum,
             t1, t2, sport: selectedSport, format: selectedFormat,
-            scoringType, maxDeuce, padelLogic, partnerMode: currentPartnerMode,
-            p1:0, p2:0, g1:0, g2:0, deuceCount:0
+            padelLogic, partnerMode: currentPartnerMode,
+            g1:0, g2:0
         };
     }
 
@@ -1008,8 +980,6 @@
         
         document.getElementById('multiCourtContainer').innerHTML = html;
         document.getElementById('matchArea').classList.remove('hidden');
-
-        data.currentMatches.forEach((m, idx) => updateCourtScoreUI(idx));
     }
 
     function generateMatchHTML(m, idx) {
@@ -1022,36 +992,29 @@
             
             <div style="margin-top:15px;">
                 <h4 style="margin:0 0 10px 0; color:var(--primary); text-align:center;"><i class="fas fa-stopwatch"></i> SCOREBOARD</h4>
-                <div id="sdBadgeArea_${idx}"></div>
 
                 <div class="live-scoreboard">
                     <div class="score-row">
                         <div class="score-team-info">
                             <span class="score-team-name" style="color:var(--accent); font-size:14px;">${t1Names}</span>
-                            <span style="font-size:11px; color:var(--text-muted); font-weight:bold;">Game Won:</span>
+                            <span style="font-size:11px; color:var(--text-muted); font-weight:bold;">Skor Akhir:</span>
                         </div>
                         <div class="score-controls">
                             <button class="btn btn-score btn-score-minus" onclick="adjGame(${idx}, 1, -1)"><i class="fas fa-minus"></i></button>
-                            <div id="gDisp1_${idx}" class="game-display">0</div>
+                            <div id="gDisp1_${idx}" class="point-display advantage">${m.g1}</div>
                             <button class="btn btn-score btn-primary" onclick="adjGame(${idx}, 1, 1)"><i class="fas fa-plus"></i></button>
-                            <div style="width:1px; height:30px; background:var(--border-color); margin:0 5px;"></div>
-                            <button class="btn btn-score btn-score-minus" onclick="adjPoint(${idx}, 1, -1)"><i class="fas fa-undo"></i></button>
-                            <div id="pDisp1_${idx}" class="point-display" onclick="adjPoint(${idx}, 1, 1)">0</div>
                         </div>
                     </div>
 
                     <div class="score-row">
                         <div class="score-team-info">
                             <span class="score-team-name" style="color:var(--primary); font-size:14px;">${t2Names}</span>
-                            <span style="font-size:11px; color:var(--text-muted); font-weight:bold;">Game Won:</span>
+                            <span style="font-size:11px; color:var(--text-muted); font-weight:bold;">Skor Akhir:</span>
                         </div>
                         <div class="score-controls">
                             <button class="btn btn-score btn-score-minus" onclick="adjGame(${idx}, 2, -1)"><i class="fas fa-minus"></i></button>
-                            <div id="gDisp2_${idx}" class="game-display">0</div>
+                            <div id="gDisp2_${idx}" class="point-display" style="border-color:var(--primary); background:var(--dark); box-shadow:0 0 10px rgba(67, 97, 238, 0.4);">${m.g2}</div>
                             <button class="btn btn-score btn-primary" onclick="adjGame(${idx}, 2, 1)"><i class="fas fa-plus"></i></button>
-                            <div style="width:1px; height:30px; background:var(--border-color); margin:0 5px;"></div>
-                            <button class="btn btn-score btn-score-minus" onclick="adjPoint(${idx}, 2, -1)"><i class="fas fa-undo"></i></button>
-                            <div id="pDisp2_${idx}" class="point-display" onclick="adjPoint(${idx}, 2, 1)">0</div>
                         </div>
                     </div>
                 </div>
@@ -1069,55 +1032,11 @@
         let m = data.currentMatches[idx];
         if(!m) return;
         
-        document.getElementById(`gDisp1_${idx}`).innerText = m.g1;
-        document.getElementById(`gDisp2_${idx}`).innerText = m.g2;
-        let pD1 = document.getElementById(`pDisp1_${idx}`), pD2 = document.getElementById(`pDisp2_${idx}`);
-        let sdArea = document.getElementById(`sdBadgeArea_${idx}`);
+        let gD1 = document.getElementById(`gDisp1_${idx}`);
+        let gD2 = document.getElementById(`gDisp2_${idx}`);
         
-        if (m.scoringType === '21' || m.scoringType === '32') {
-            pD1.innerText = m.p1; pD2.innerText = m.p2;
-            pD1.classList.remove('advantage'); pD2.classList.remove('advantage');
-            sdArea.innerHTML = '';
-        } else {
-            pD1.innerText = P_MAP[m.p1]; pD2.innerText = P_MAP[m.p2];
-            pD1.classList.toggle('advantage', m.p1 === 4); pD2.classList.toggle('advantage', m.p2 === 4);
-
-            if (m.p1 === 3 && m.p2 === 3 && m.maxDeuce !== -1 && m.deuceCount >= m.maxDeuce) {
-                sdArea.innerHTML = '<div style="background:#ef4444; color:white; font-size:13px; font-weight:900; text-align:center; padding:8px; border-radius:10px; margin-bottom:15px; animation: flashAlert 1s infinite; border:2px solid #b91c1c;">🔥 SUDDEN DEATH! 🔥</div>';
-            } else { sdArea.innerHTML = ''; }
-        }
-    }
-
-    function adjPoint(idx, team, change) {
-        let m = data.currentMatches[idx];
-        if(!m) return;
-        playSfx('pop');
-        let t = team === 1 ? 'p1' : 'p2', o = team === 1 ? 'p2' : 'p1';
-
-        if (change > 0) {
-            if (m.scoringType === '21' || m.scoringType === '32') {
-                let limit = parseInt(m.scoringType);
-                m[t]++;
-                if (m[t] >= limit) adjGame(idx, team, 1);
-            } else {
-                if (m[t] === 3 && m[o] < 3) {
-                    adjGame(idx, team, 1);
-                } else if (m[t] === 3 && m[o] === 3) {
-                    if (m.maxDeuce !== -1 && m.deuceCount >= m.maxDeuce) adjGame(idx, team, 1); 
-                    else m[t] = 4; 
-                } else if (m[t] === 4 && m[o] === 3) {
-                    adjGame(idx, team, 1); 
-                } else if (m[t] === 3 && m[o] === 4) {
-                    m[o] = 3; m.deuceCount++; 
-                } else {
-                    m[t]++;
-                    if(m[t] === 3 && m[o] === 3) m.deuceCount++; 
-                }
-            }
-        } else {
-            if (m[t] > 0) m[t]--;
-        }
-        save(); updateCourtScoreUI(idx);
+        if (gD1) gD1.innerText = m.g1;
+        if (gD2) gD2.innerText = m.g2;
     }
 
     function adjGame(idx, team, change) {
@@ -1128,7 +1047,6 @@
         m[t] += change;
         if(m[t] < 0) m[t] = 0;
         
-        if(change > 0) { m.p1 = 0; m.p2 = 0; m.deuceCount = 0; }
         save(); updateCourtScoreUI(idx);
     }
 
@@ -1141,8 +1059,8 @@
 
     function submitCourtConfirm(idx) {
         let m = data.currentMatches[idx];
-        if(m.g1 === 0 && m.g2 === 0 && m.p1 === 0 && m.p2 === 0) {
-            return appAlert("Peringatan", "Skor masih 0-0! Silakan catat poin terlebih dahulu.");
+        if(m.g1 === 0 && m.g2 === 0) {
+            return appAlert("Peringatan", "Skor masih 0-0! Silakan catat skor pemenang terlebih dahulu.");
         }
         appConfirm("Simpan Hasil", `Simpan hasil akhir Lapangan ${m.court} ke klasemen?`, () => {
             let s1 = m.g1; let s2 = m.g2;
