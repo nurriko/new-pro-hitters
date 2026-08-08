@@ -16,6 +16,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Cropper.js untuk fitur potong/crop foto -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
@@ -46,9 +50,10 @@
 
         body { font-family: 'Outfit', sans-serif; background: var(--bg-grad); margin: 0; padding: 0; min-height: 100vh; color: var(--text-main); overflow-x: hidden; user-select: none; transition: background 0.3s, color 0.3s; }
 
-        #welcomeScreen, #authScreen, #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #adminScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-grad); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: opacity 0.5s ease, visibility 0.5s; }
-        #welcomeScreen.hidden, #authScreen.hidden, #fixedPairsDialog.hidden, #editScoreDialog.hidden, #archivesDialog.hidden, #playerCardModal.hidden, #shareMatchModal.hidden, #adminScreen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        #welcomeScreen, #authScreen, #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #adminScreen, #cropModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-grad); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: opacity 0.5s ease, visibility 0.5s; }
+        #welcomeScreen.hidden, #authScreen.hidden, #fixedPairsDialog.hidden, #editScoreDialog.hidden, #archivesDialog.hidden, #playerCardModal.hidden, #shareMatchModal.hidden, #adminScreen.hidden, #cropModal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
         #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal { background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001; }
+        #cropModal { background: #000; z-index: 10005; }
         
         #adminScreen { align-items: center; justify-content: flex-start; padding: 20px; box-sizing: border-box; overflow-y: auto; }
 
@@ -88,7 +93,6 @@
         input, select { width: 100%; padding: 12px; border-radius: 12px; border: 2px solid var(--border-color); margin-bottom: 10px; font-family: 'Outfit'; box-sizing: border-box; outline:none; background: var(--input-bg); color: var(--text-main); font-weight: 500;}
         select { cursor: pointer; }
         
-        /* PASSWORD FIELD WRAPPER */
         .pwd-wrapper { position: relative; width: 100%; margin-bottom: 10px; }
         .pwd-wrapper input { margin-bottom: 0; padding-right: 40px; }
         .pwd-toggle-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted); font-size: 16px; }
@@ -141,21 +145,21 @@
         .nav-item.active { color: var(--primary); transform: translateY(-5px) scale(1.1); text-shadow: 0 10px 15px rgba(67, 97, 238, 0.4);}
 
         /* 3D COLLECTIBLE CARD CSS */
-        .flip-card { background-color: transparent; width: 280px; height: 400px; perspective: 1000px; margin-bottom: 20px; }
-        .flip-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-style: preserve-3d; cursor: pointer; }
+        .flip-card { background-color: transparent; width: 280px; height: 500px; perspective: 1000px; margin-bottom: 20px; }
+        .flip-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-style: preserve-3d; }
         .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
         .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); border: 2px solid rgba(255,255,255,0.3); overflow: hidden; }
         
-        .flip-card-front { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; display:flex; flex-direction:column; align-items:center; padding-top:40px;}
+        .flip-card-front { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; display:flex; flex-direction:column; align-items:center; padding-top:50px; cursor: pointer;}
         .flip-card-front::after { content: ''; position: absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(125deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.1) 100%); pointer-events: none; }
-        .card-avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--gold); box-shadow: 0 10px 20px rgba(0,0,0,0.4); margin-bottom: 20px; background: #fff; }
-        .card-name { font-size: 24px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .card-pts { font-size: 32px; font-weight: 900; color: var(--gold); }
+        .card-avatar { width: 130px; height: 130px; border-radius: 50%; object-fit: cover; border: 4px solid var(--gold); box-shadow: 0 10px 20px rgba(0,0,0,0.4); margin-bottom: 20px; background: #fff; }
+        .card-name { font-size: 26px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .card-pts { font-size: 38px; font-weight: 900; color: var(--gold); }
         
-        .flip-card-back { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; transform: rotateY(180deg); display:flex; flex-direction:column; justify-content:center; padding: 25px; text-align: left; }
-        .stat-row { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px; }
+        .flip-card-back { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; transform: rotateY(180deg); display:flex; flex-direction:column; padding: 20px; text-align: left; overflow-y: auto; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px; }
         .stat-label { font-size: 13px; opacity: 0.9; font-weight: 700; text-transform: uppercase; }
-        .stat-val { font-size: 18px; font-weight: 900; }
+        .stat-val { font-size: 16px; font-weight: 900; }
 
         /* SHARE TICKET CSS */
         .share-ticket { background: var(--bg-grad); padding: 25px; border-radius: 20px; width: 320px; text-align:center; color: white; border: 2px solid rgba(255,255,255,0.5); box-shadow: 0 15px 30px rgba(0,0,0,0.6); position: relative; overflow: hidden; margin-bottom: 20px;}
@@ -220,30 +224,51 @@
     </div>
 </div>
 
+<!-- MODAL CROPPER FOTO -->
+<div id="cropModal" class="hidden">
+    <div style="flex:1; width:100%; display:flex; justify-content:center; align-items:center; overflow:hidden; background:#111;">
+        <img id="imageToCrop" style="max-width:100%; max-height:100%; display:block;">
+    </div>
+    <div style="width:100%; padding:20px; background:var(--dark); display:flex; gap:15px; box-sizing:border-box;">
+        <button class="btn btn-ghost" style="flex:1; color:white; border-color:white;" onclick="cancelCrop()">Batal</button>
+        <button class="btn btn-success" style="flex:2;" onclick="doCrop()"><i class="fas fa-crop-alt"></i> Potong & Simpan</button>
+    </div>
+</div>
+
 <!-- MODAL PLAYER 3D CARD -->
 <div id="playerCardModal" class="hidden" onclick="if(event.target.id === 'playerCardModal') closePlayerCard()">
-    <div class="flip-card" id="pCard" onclick="toggleCardFlip()">
+    <div class="flip-card" id="pCard">
         <div class="flip-card-inner">
-            <div class="flip-card-front">
+            <!-- BAGIAN DEPAN (Klik untuk putar) -->
+            <div class="flip-card-front" onclick="toggleCardFlip()">
                 <div style="position:absolute; top:15px; right:20px; color:var(--gold); font-size:24px;"><i class="fas fa-medal"></i></div>
                 <img id="pcAvatar" src="" class="card-avatar">
                 <div id="pcName" class="card-name">NAMA</div>
                 <div style="font-size:12px; font-weight:bold; opacity:0.8; margin-bottom:5px;">TOTAL POIN</div>
                 <div id="pcPts" class="card-pts">0</div>
-                <div style="margin-top:auto; padding-bottom:15px; font-size:11px; opacity:0.6;">Tap kartu untuk membalik</div>
+                <div style="margin-top:auto; padding-bottom:15px; font-size:11px; opacity:0.6;"><i class="fas fa-sync"></i> Tap kartu untuk melihat statistik</div>
             </div>
+            
+            <!-- BAGIAN BELAKANG (Bisa di scroll, ada tombol kembali) -->
             <div class="flip-card-back">
-                <h3 style="margin-top:0; border-bottom:2px solid white; padding-bottom:10px; text-align:center;">STATISTIK DETAIL</h3>
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid white; padding-bottom:10px; margin-bottom:15px;">
+                    <h3 style="margin:0;">STATISTIK DETAIL</h3>
+                    <button class="btn btn-ghost" style="width:auto; padding:5px 10px; font-size:11px; color:white; border-color:white;" onclick="toggleCardFlip()"><i class="fas fa-undo"></i> Depan</button>
+                </div>
+                
                 <div class="stat-row"><span class="stat-label">Main</span><span id="pcP" class="stat-val">0</span></div>
                 <div class="stat-row"><span class="stat-label">Menang</span><span id="pcW" class="stat-val">0</span></div>
                 <div class="stat-row"><span class="stat-label">Kalah</span><span id="pcL" class="stat-val">0</span></div>
                 <div class="stat-row"><span class="stat-label">Seri</span><span id="pcD" class="stat-val">0</span></div>
                 <div class="stat-row"><span class="stat-label">Selisih Game</span><span id="pcGD" class="stat-val">0</span></div>
-                <div class="stat-row"><span class="stat-label">Win Rate</span><span id="pcWR" class="stat-val">0%</span></div>
+                <div class="stat-row" style="margin-bottom:20px;"><span class="stat-label">Win Rate</span><span id="pcWR" class="stat-val">0%</span></div>
+
+                <h4 style="margin: 0 0 10px 0; border-bottom:1px solid rgba(255,255,255,0.3); padding-bottom:5px; text-transform:uppercase; font-size:12px;"><i class="fas fa-history"></i> Riwayat Pertandingan</h4>
+                <div id="pcHistoryContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
             </div>
         </div>
     </div>
-    <button class="btn btn-ghost" style="width:200px; background:rgba(255,255,255,0.1); color:white; border-color:rgba(255,255,255,0.3);" onclick="closePlayerCard()">Tutup Profil</button>
+    <button class="btn btn-ghost" style="width:200px; background:rgba(255,255,255,0.1); color:white; border-color:rgba(255,255,255,0.3); margin-top:10px;" onclick="closePlayerCard()">Tutup Profil</button>
 </div>
 
 <!-- MODAL SHARE TICKET LEADERBOARD -->
@@ -370,6 +395,7 @@
                         </div>
                     </div>
                 </div>
+                <!-- Input ini di setting agar bisa memunculkan opsi kamera atau galeri -->
                 <input type="file" id="fileIn" hidden accept="image/*" onchange="handleImg(this)">
                 <button class="btn btn-primary" onclick="addPlayer()" style="margin-top:10px;">Simpan Ke Daftar</button>
             </div>
@@ -526,6 +552,7 @@
     let selectedSport = 'tennis', selectedFormat = 'doubles', currentPartnerMode = 'acak';
     let currentEditMatchId = null;
     let dbUnsubscribe = null;
+    let cropper = null;
     
     const DEF_M = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23dbeafe'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%233b82f6'/%3E%3C/svg%3E";
     const DEF_F = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23fce7f3'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%23ec4899'/%3E%3C/svg%3E";
@@ -590,7 +617,6 @@
         document.getElementById('authUsername').value = ''; 
         document.getElementById('authPassword').value = '';
         
-        // Reset password type ke sensor
         document.getElementById('authPassword').type = 'password';
         document.getElementById('pwdToggleIcon').className = 'fas fa-eye pwd-toggle-icon';
     }
@@ -858,20 +884,41 @@
         });
     }
 
+    // --- CROPPER.JS LOGIC ---
     function handleImg(input) {
         if(input.files && input.files[0]) {
             const r = new FileReader();
             r.onload = e => {
-                const img = new Image(); img.src = e.target.result;
-                img.onload = () => {
-                    const c = document.createElement('canvas'); c.width = 150; c.height = 150;
-                    c.getContext('2d').drawImage(img, 0, 0, 150, 150);
-                    tempImg = c.toDataURL('image/jpeg', 0.6);
-                    document.getElementById('prevImg').src = tempImg; document.getElementById('prevImg').style.display = 'block';
-                    document.getElementById('camIcon').style.display = 'none';
-                }
-            }; r.readAsDataURL(input.files[0]);
+                document.getElementById('imageToCrop').src = e.target.result;
+                document.getElementById('cropModal').classList.remove('hidden');
+                
+                if(cropper) cropper.destroy();
+                cropper = new Cropper(document.getElementById('imageToCrop'), {
+                    aspectRatio: 1, 
+                    viewMode: 1,
+                    background: false,
+                    dragMode: 'move',
+                    autoCropArea: 0.8
+                });
+            }; 
+            r.readAsDataURL(input.files[0]);
         }
+        input.value = ''; // Reset input
+    }
+
+    function cancelCrop() {
+        document.getElementById('cropModal').classList.add('hidden');
+        if(cropper) { cropper.destroy(); cropper = null; }
+    }
+
+    function doCrop() {
+        if(!cropper) return;
+        const canvas = cropper.getCroppedCanvas({ width: 300, height: 300 });
+        tempImg = canvas.toDataURL('image/jpeg', 0.8);
+        document.getElementById('prevImg').src = tempImg;
+        document.getElementById('prevImg').style.display = 'block';
+        document.getElementById('camIcon').style.display = 'none';
+        cancelCrop();
     }
     
     function setGender(g) { playSfx('pop'); tempGender = g; document.getElementById('btnM').className = g==='M'?'g-btn active-m':'g-btn'; document.getElementById('btnF').className = g==='F'?'g-btn active-f':'g-btn'; }
@@ -1266,6 +1313,7 @@
         });
     }
 
+    // --- FITUR: 3D PLAYER CARD & HISTORY ---
     function openPlayerCard(id) {
         let p = data.players.find(x => x.id === id);
         if(!p) return;
@@ -1283,10 +1331,39 @@
         
         let wr = p.stats.p > 0 ? Math.round((p.stats.w / p.stats.p) * 100) : 0;
         document.getElementById('pcWR').innerText = wr + '%';
+
+        // Render History
+        let pMatches = data.matches.filter(m => m.ids1.includes(id) || m.ids2.includes(id));
+        let histHtml = '';
+        if(pMatches.length === 0) {
+            histHtml = '<div style="font-size:11px; opacity:0.7; text-align:center;">Belum ada pertandingan</div>';
+        } else {
+            histHtml = pMatches.slice(0, 10).map(m => {
+                let isT1 = m.ids1.includes(id);
+                let resultStr = "";
+                if(m.s1 === m.s2) resultStr = "<span style='color:var(--warning)'>SERI</span>";
+                else if((isT1 && m.s1 > m.s2) || (!isT1 && m.s2 > m.s1)) resultStr = "<span style='color:var(--success)'>MENANG</span>";
+                else resultStr = "<span style='color:#ef4444'>KALAH</span>";
+                
+                return `<div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:8px; font-size:11px; margin-bottom:5px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px; border-bottom:1px dashed rgba(255,255,255,0.2); padding-bottom:4px;">
+                        <span style="opacity:0.8">${m.dateStr || m.time} (Lap ${m.court})</span>
+                        <b>${resultStr}</b>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-weight:bold; align-items:center;">
+                        <span style="flex:1; text-align:right; ${isT1 ? 'color:var(--gold)' : ''}">${m.t1}</span>
+                        <span style="padding:0 8px; font-size:14px;">${m.s1} - ${m.s2}</span>
+                        <span style="flex:1; text-align:left; ${!isT1 ? 'color:var(--gold)' : ''}">${m.t2}</span>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+        document.getElementById('pcHistoryContainer').innerHTML = histHtml;
         
         document.getElementById('pCard').classList.remove('flipped');
         document.getElementById('playerCardModal').classList.remove('hidden');
     }
+    
     function toggleCardFlip() { playSfx('pop'); document.getElementById('pCard').classList.toggle('flipped'); }
     function closePlayerCard() { document.getElementById('playerCardModal').classList.add('hidden'); }
 
