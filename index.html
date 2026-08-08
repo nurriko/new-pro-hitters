@@ -46,10 +46,12 @@
 
         body { font-family: 'Outfit', sans-serif; background: var(--bg-grad); margin: 0; padding: 0; min-height: 100vh; color: var(--text-main); overflow-x: hidden; user-select: none; transition: background 0.3s, color 0.3s; }
 
-        #welcomeScreen, #authScreen, #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-grad); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: opacity 0.5s ease, visibility 0.5s; }
-        #welcomeScreen.hidden, #authScreen.hidden, #fixedPairsDialog.hidden, #editScoreDialog.hidden, #archivesDialog.hidden, #playerCardModal.hidden, #shareMatchModal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        #welcomeScreen, #authScreen, #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #adminScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-grad); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: opacity 0.5s ease, visibility 0.5s; }
+        #welcomeScreen.hidden, #authScreen.hidden, #fixedPairsDialog.hidden, #editScoreDialog.hidden, #archivesDialog.hidden, #playerCardModal.hidden, #shareMatchModal.hidden, #adminScreen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
         #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal { background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001; }
         
+        #adminScreen { align-items: center; justify-content: flex-start; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+
         .hero-anim-container { position: relative; width: 240px; height: 120px; margin-bottom: 40px; display: flex; justify-content: center; align-items: flex-end; }
         .hero-net { position: absolute; width: 5px; height: 70px; background: linear-gradient(to top, rgba(255,255,255,0.9), transparent); bottom: 0; border-radius: 3px; box-shadow: 0 0 15px rgba(255,255,255,0.5); z-index: 2; }
         .hero-ball { position: absolute; bottom: 0; width: 22px; height: 22px; background: #ccff00; border-radius: 50%; box-shadow: 0 0 20px #ccff00, 0 0 40px #ccff00, inset -2px -2px 6px rgba(0,0,0,0.2); animation: proRally 1.4s infinite alternate cubic-bezier(0.4, 0, 0.2, 1); z-index: 3; }
@@ -86,6 +88,11 @@
         input, select { width: 100%; padding: 12px; border-radius: 12px; border: 2px solid var(--border-color); margin-bottom: 10px; font-family: 'Outfit'; box-sizing: border-box; outline:none; background: var(--input-bg); color: var(--text-main); font-weight: 500;}
         select { cursor: pointer; }
         
+        /* PASSWORD FIELD WRAPPER */
+        .pwd-wrapper { position: relative; width: 100%; margin-bottom: 10px; }
+        .pwd-wrapper input { margin-bottom: 0; padding-right: 40px; }
+        .pwd-toggle-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted); font-size: 16px; }
+
         .p-item { display: flex; align-items: center; gap: 12px; }
         .p-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #eee; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
@@ -153,9 +160,7 @@
         /* SHARE TICKET CSS */
         .share-ticket { background: var(--bg-grad); padding: 25px; border-radius: 20px; width: 320px; text-align:center; color: white; border: 2px solid rgba(255,255,255,0.5); box-shadow: 0 15px 30px rgba(0,0,0,0.6); position: relative; overflow: hidden; margin-bottom: 20px;}
         .share-ticket::before { content:''; position:absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%); pointer-events:none; }
-        .ticket-header { font-size: 14px; font-weight: 900; letter-spacing: 2px; margin-bottom: 15px; color: var(--gold); text-transform: uppercase; }
-        .ticket-team { font-size: 16px; font-weight: 900; margin: 10px 0; }
-        .ticket-score { font-size: 40px; font-weight: 900; margin: 15px 0; text-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .ticket-header { font-size: 18px; font-weight: 900; letter-spacing: 2px; margin-bottom: 5px; color: var(--gold); text-transform: uppercase; text-shadow: 0 2px 5px rgba(0,0,0,0.3);}
 
         .hidden { display: none !important; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -189,15 +194,29 @@
         <h2 id="authTitle" style="color:var(--primary); font-weight:900; margin-top:0;">LOGIN APLIKASI</h2>
         <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">Silakan otentikasi untuk melanjutkan</p>
         
-        <input type="email" id="authEmail" placeholder="Email Anda" autocomplete="off">
-        <input type="password" id="authPassword" placeholder="Password">
+        <input type="text" id="authUsername" placeholder="Username (misal: Budi)" autocomplete="off">
+        <div class="pwd-wrapper">
+            <input type="password" id="authPassword" placeholder="Password">
+            <i class="fas fa-eye pwd-toggle-icon" onclick="togglePasswordVisibility()" id="pwdToggleIcon"></i>
+        </div>
         
         <button id="authBtnSubmit" class="btn btn-primary" onclick="handleAuthSubmit()" style="margin-top:10px;">LOGIN</button>
         
         <div style="margin-top:20px; font-size:13px; color:var(--text-muted);">
             <span id="authToggleText">Belum punya akun?</span> 
-            <b style="color:var(--primary); cursor:pointer;" onclick="toggleAuthMode()">Daftar Disini</b>
+            <b id="authToggleLink" style="color:var(--primary); cursor:pointer;" onclick="toggleAuthMode()">Daftar Disini</b>
         </div>
+    </div>
+</div>
+
+<!-- DASHBOARD ADMIN KHUSUS -->
+<div id="adminScreen" class="hidden">
+    <div class="card animate__animated animate__fadeInUp" style="width: 100%; max-width: 500px; margin-top: 20px; text-align:center;">
+        <h2 style="color: var(--primary);"><i class="fas fa-user-shield"></i> SUPERADMIN</h2>
+        <button class="btn btn-danger" onclick="doLogout()" style="margin-bottom: 20px; padding:12px;"><i class="fas fa-sign-out-alt"></i> Logout Admin</button>
+        
+        <h4 style="margin:0 0 10px 0; color:var(--text-muted); border-bottom:2px dashed var(--border-color); padding-bottom:10px; text-align:left;">Daftar Akun Terdaftar:</h4>
+        <div id="adminUserList" style="display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto; padding-bottom:20px;"></div>
     </div>
 </div>
 
@@ -227,23 +246,20 @@
     <button class="btn btn-ghost" style="width:200px; background:rgba(255,255,255,0.1); color:white; border-color:rgba(255,255,255,0.3);" onclick="closePlayerCard()">Tutup Profil</button>
 </div>
 
-<!-- MODAL SHARE TICKET -->
-<div id="shareMatchModal" class="hidden" onclick="if(event.target.id === 'shareMatchModal') closeShareMatch()">
-    <div id="shareableTicket" class="share-ticket">
-        <div id="shareTitle" class="ticket-header">HAPPY HITTERS</div>
-        <div id="shareSport" style="font-size:12px; font-weight:bold; opacity:0.8; margin-bottom:15px;">🎾 TENNIS MATCH</div>
+<!-- MODAL SHARE TICKET LEADERBOARD -->
+<div id="shareMatchModal" class="hidden" onclick="if(event.target.id === 'shareMatchModal') closeShareLeaderboard()">
+    <div id="shareableTicket" class="share-ticket" style="padding:30px;">
+        <div id="shareTitle" class="ticket-header">🏆 KLASEMEN TURNAMEN</div>
+        <div id="shareTourTitle" style="font-size:14px; font-weight:bold; margin-bottom:20px; text-transform:uppercase; color:#fff;">HAPPY HITTERS</div>
         
-        <div id="shareT1" class="ticket-team" style="color:#ffb703;">TIM A</div>
-        <div id="shareScore" class="ticket-score">0 - 0</div>
-        <div id="shareT2" class="ticket-team" style="color:#4cc9f0;">TIM B</div>
+        <div id="shareLBRank" style="text-align:left; font-size:14px;"></div>
         
-        <div style="margin-top:20px; font-size:10px; opacity:0.6; border-top:1px dashed rgba(255,255,255,0.3); padding-top:10px;">
-            <div id="shareDate"></div>
+        <div style="margin-top:25px; font-size:10px; opacity:0.6; border-top:1px dashed rgba(255,255,255,0.3); padding-top:10px;">
             Generated by Happy Hitters App
         </div>
     </div>
     <div style="display:flex; gap:10px; width:320px;">
-        <button class="btn btn-ghost" style="flex:1; background:rgba(255,255,255,0.1); color:white;" onclick="closeShareMatch()">Tutup</button>
+        <button class="btn btn-ghost" style="flex:1; background:rgba(255,255,255,0.1); color:white;" onclick="closeShareLeaderboard()">Tutup</button>
         <button class="btn btn-primary" style="flex:2;" onclick="downloadShareImage()"><i class="fas fa-download"></i> Simpan Gambar</button>
     </div>
 </div>
@@ -409,7 +425,6 @@
                 <button class="btn btn-ghost" onclick="openFixedPairsDialog()"><i class="fas fa-users-cog"></i> Kelola Pasangan Tetap</button>
             </div>
 
-            <!-- Logika Padel untuk Americano/Standard -->
             <div id="logicPadelOnly" class="hidden" style="margin-top:10px;">
                 <label id="lblPadelLogic" style="font-size:12px; font-weight:bold; color:var(--text-muted); display:block; margin-bottom:5px;">LOGIKA ACAK PASANGAN</label>
                 <select id="selPadelLogic">
@@ -434,6 +449,10 @@
             <h3 style="margin:0; font-weight:900;">KLASEMEN LIVE</h3>
             <small style="color:var(--text-muted); font-size:10px;">(Tap nama u/ Profil)</small>
         </div>
+
+        <button class="btn btn-primary" style="margin-bottom:15px; width:100%; box-shadow:0 4px 15px rgba(67, 97, 238, 0.4);" onclick="openShareLeaderboard()">
+            <i class="fas fa-share-alt"></i> BAGIKAN KLASEMEN
+        </button>
 
         <button id="btnNewTournament" class="btn btn-success hidden" style="margin-bottom:15px; padding:16px; width:100%; box-shadow:0 4px 15px rgba(16, 185, 129, 0.4);" onclick="createNewTournament()">
             <i class="fas fa-plus-circle"></i> BUAT TURNAMEN BARU
@@ -474,7 +493,7 @@
 
 <script>
     // --- FIREBASE CONFIGURATION (ISI DENGAN DATA DARI FIREBASE CONSOLE) ---
-   const firebaseConfig = {
+    const firebaseConfig = {
   apiKey: "AIzaSyB71_NTi3ijqt2Qxm7SgJLLjmoCjYXOt0I",
   authDomain: "happy-hitters-app.firebaseapp.com",
   projectId: "happy-hitters-app",
@@ -517,13 +536,27 @@
         if (auth) {
             auth.onAuthStateChanged(user => {
                 if (user) {
-                    document.getElementById('welcomeScreen').classList.add('hidden');
-                    document.getElementById('authScreen').classList.add('hidden');
-                    document.getElementById('appContainer').classList.add('visible');
-                    setupRealtimeListener(); 
+                    db.collection('users').doc(user.uid).get().then(doc => {
+                        if(!doc.exists && user.email !== 'admin@happyhitters.app') {
+                            auth.signOut();
+                            appAlert("Akses Ditolak", "Akun Anda tidak ditemukan atau telah dihapus oleh Admin.");
+                            return;
+                        }
+
+                        if(user.email === 'admin@happyhitters.app') {
+                            showAdminScreen();
+                        } else {
+                            document.getElementById('welcomeScreen').classList.add('hidden');
+                            document.getElementById('authScreen').classList.add('hidden');
+                            document.getElementById('adminScreen').classList.add('hidden');
+                            document.getElementById('appContainer').classList.add('visible');
+                            setupRealtimeListener(user.uid); 
+                        }
+                    });
                 } else {
                     document.getElementById('appContainer').classList.remove('visible');
                     document.getElementById('authScreen').classList.add('hidden');
+                    document.getElementById('adminScreen').classList.add('hidden');
                     document.getElementById('welcomeScreen').classList.remove('hidden');
                 }
             });
@@ -550,24 +583,56 @@
         authMode = authMode === 'login' ? 'register' : 'login';
         document.getElementById('authTitle').innerText = authMode === 'login' ? 'LOGIN APLIKASI' : 'DAFTAR AKUN';
         document.getElementById('authBtnSubmit').innerText = authMode === 'login' ? 'LOGIN' : 'DAFTAR';
+        
         document.getElementById('authToggleText').innerText = authMode === 'login' ? 'Belum punya akun?' : 'Sudah punya akun?';
-        document.getElementById('authEmail').value = ''; document.getElementById('authPassword').value = '';
+        document.getElementById('authToggleLink').innerText = authMode === 'login' ? 'Daftar Disini' : 'Login Disini';
+        
+        document.getElementById('authUsername').value = ''; 
+        document.getElementById('authPassword').value = '';
+        
+        // Reset password type ke sensor
+        document.getElementById('authPassword').type = 'password';
+        document.getElementById('pwdToggleIcon').className = 'fas fa-eye pwd-toggle-icon';
+    }
+
+    function togglePasswordVisibility() {
+        const pwdInput = document.getElementById('authPassword');
+        const pwdIcon = document.getElementById('pwdToggleIcon');
+        if (pwdInput.type === 'password') {
+            pwdInput.type = 'text';
+            pwdIcon.classList.remove('fa-eye');
+            pwdIcon.classList.add('fa-eye-slash');
+        } else {
+            pwdInput.type = 'password';
+            pwdIcon.classList.remove('fa-eye-slash');
+            pwdIcon.classList.add('fa-eye');
+        }
     }
 
     function handleAuthSubmit() {
         playSfx('pop');
-        const email = document.getElementById('authEmail').value.trim();
+        const userInp = document.getElementById('authUsername').value.trim();
         const pass = document.getElementById('authPassword').value.trim();
-        if(!email || !pass) return appAlert('Error', 'Email dan Password wajib diisi!');
+        if(!userInp || !pass) return appAlert('Error', 'Username dan Password wajib diisi!');
         
+        let loginEmail = userInp;
+        if(userInp === 'admin') loginEmail = 'admin@happyhitters.app';
+        else if(!userInp.includes('@')) loginEmail = userInp.replace(/\s+/g, '').toLowerCase() + '@happyhitters.app';
+
         if(authMode === 'register') {
-            auth.createUserWithEmailAndPassword(email, pass)
-                .then(() => {
+            auth.createUserWithEmailAndPassword(loginEmail, pass)
+                .then((cred) => {
+                    db.collection('users').doc(cred.user.uid).set({
+                        username: userInp,
+                        email: loginEmail,
+                        role: userInp === 'admin' ? 'admin' : 'user',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
                     appSuccess('Berhasil', 'Akun berhasil didaftarkan. Anda akan segera masuk.');
                 })
                 .catch(err => appAlert("Registrasi Gagal", err.message));
         } else {
-            auth.signInWithEmailAndPassword(email, pass)
+            auth.signInWithEmailAndPassword(loginEmail, pass)
                 .catch(err => appAlert("Login Gagal", err.message));
         }
     }
@@ -575,16 +640,50 @@
     function doLogout() {
         appConfirm('Logout', 'Yakin ingin keluar dari aplikasi?', () => {
             if(dbUnsubscribe) dbUnsubscribe();
-            auth.signOut().then(() => {
-                location.reload();
+            auth.signOut().then(() => location.reload());
+        });
+    }
+
+    function showAdminScreen() {
+        document.getElementById('welcomeScreen').classList.add('hidden');
+        document.getElementById('authScreen').classList.add('hidden');
+        document.getElementById('appContainer').classList.remove('visible');
+        document.getElementById('adminScreen').classList.remove('hidden');
+        loadAdminUsers();
+    }
+
+    function loadAdminUsers() {
+        db.collection('users').get().then(snap => {
+            let html = '';
+            snap.forEach(doc => {
+                let u = doc.data();
+                if(u.role !== 'admin') {
+                    html += `
+                    <div class="card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:15px; text-align:left;">
+                        <div>
+                            <b style="font-size:16px; color:var(--primary);">${u.username}</b><br>
+                            <small style="color:var(--text-muted);">${u.email}</small>
+                        </div>
+                        <button class="btn btn-danger" style="width:auto; padding:8px 12px; font-size:12px;" onclick="deleteUserByAdmin('${doc.id}')"><i class="fas fa-trash"></i> Hapus</button>
+                    </div>`;
+                }
+            });
+            document.getElementById('adminUserList').innerHTML = html || '<p style="color:var(--text-muted);">Belum ada user terdaftar.</p>';
+        });
+    }
+
+    function deleteUserByAdmin(uid) {
+        appConfirm("Hapus User", "Yakin ingin menghapus user ini? Mereka tidak akan bisa mengakses datanya lagi.", () => {
+            db.collection('users').doc(uid).delete().then(() => {
+                loadAdminUsers();
             });
         });
     }
 
-    function setupRealtimeListener() {
+    function setupRealtimeListener(uid) {
         if (dbUnsubscribe) dbUnsubscribe();
         
-        dbUnsubscribe = db.collection("tournaments").doc("currentApp")
+        dbUnsubscribe = db.collection("tournaments").doc(uid)
             .onSnapshot(doc => {
                 if (doc.exists) {
                     let loadedData = doc.data();
@@ -618,12 +717,10 @@
 
     function save() { 
         renderAll(); 
-        if(db) {
-            db.collection("tournaments").doc("currentApp").set(data).catch(err => {
+        if(auth.currentUser && auth.currentUser.email !== 'admin@happyhitters.app') {
+            db.collection("tournaments").doc(auth.currentUser.uid).set(data).catch(err => {
                 console.error("Gagal menyimpan ke server:", err);
             });
-        } else {
-            localStorage.setItem(DB_KEY, JSON.stringify(data));
         }
     }
     
@@ -885,6 +982,16 @@
     }
     function delFixedPair(idx) { data.fixedPairs.splice(idx, 1); save(); renderFixedPairsUI(); }
 
+    function isValidCourtGender(t1, t2) {
+        let f1 = (t1[0].gender === 'F' && t1[1].gender === 'F');
+        let m1 = (t1[0].gender === 'M' && t1[1].gender === 'M');
+        let f2 = (t2[0].gender === 'F' && t2[1].gender === 'F');
+        let m2 = (t2[0].gender === 'M' && t2[1].gender === 'M');
+        
+        if ((f1 && m2) || (m1 && f2)) return false; 
+        return true;
+    }
+
     function generateMatch() {
         if(data.isFinished) return appAlert("Perhatian", "Turnamen sudah selesai! Buka kembali turnamen di menu Ranking jika ingin melanjutkan.");
         
@@ -917,15 +1024,39 @@
         } else {
             if(activePlayers.length < reqP * numCourts) return appAlert("Error", `Butuh minimal ${reqP * numCourts} pemain HADIR untuk mengisi ${numCourts} lapangan!`);
             let pool = activePlayers.sort((a,b) => a.stats.p - b.stats.p || Math.random() - 0.5).slice(0, reqP * numCourts);
-            pool.sort(() => Math.random() - 0.5); 
-
+            
             let newMatches = [];
-            for(let i=0; i<numCourts; i++) {
-                let cP = pool.slice(i*reqP, (i+1)*reqP);
-                let t1, t2;
-                if(reqP === 4) { t1 = [cP[0], cP[1]]; t2 = [cP[2], cP[3]]; }
-                else { t1 = [cP[0]]; t2 = [cP[1]]; }
-                newMatches.push(createMatchObj(i+1, t1, t2));
+            if(reqP === 4) {
+                let validFound = false;
+                let attempts = 0;
+                let bestFallback = [];
+
+                while(!validFound && attempts < 150) {
+                    pool.sort(() => Math.random() - 0.5);
+                    validFound = true;
+                    bestFallback = [];
+                    for(let i=0; i<numCourts; i++) {
+                        let cP = pool.slice(i*reqP, (i+1)*reqP);
+                        let t1 = [cP[0], cP[1]], t2 = [cP[2], cP[3]];
+                        if(!isValidCourtGender(t1, t2)) { validFound = false; break; }
+                        bestFallback.push({t1, t2});
+                    }
+                    attempts++;
+                }
+
+                for(let i=0; i<numCourts; i++) {
+                    let ct = bestFallback.length > i ? bestFallback[i] : {
+                        t1: [pool[i*reqP], pool[i*reqP+1]], 
+                        t2: [pool[i*reqP+2], pool[i*reqP+3]]
+                    };
+                    newMatches.push(createMatchObj(i+1, ct.t1, ct.t2));
+                }
+            } else {
+                pool.sort(() => Math.random() - 0.5);
+                for(let i=0; i<numCourts; i++) {
+                    let cP = pool.slice(i*reqP, (i+1)*reqP);
+                    newMatches.push(createMatchObj(i+1, [cP[0]], [cP[1]]));
+                }
             }
             data.currentMatches = newMatches;
         }
@@ -1127,7 +1258,7 @@
         appConfirm("RESET DATA", "PERINGATAN: Semua data pemain, judul, dan riwayat pertandingan aktif akan dihapus. Yakin?", () => {
             let defaultData = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home' };
             if(db) {
-                db.collection("tournaments").doc("currentApp").set(defaultData).then(() => location.reload());
+                db.collection("tournaments").doc(auth.currentUser.uid).set(defaultData).then(() => location.reload());
             } else {
                 localStorage.setItem(DB_KEY, JSON.stringify(defaultData)); 
                 location.reload();
@@ -1159,29 +1290,36 @@
     function toggleCardFlip() { playSfx('pop'); document.getElementById('pCard').classList.toggle('flipped'); }
     function closePlayerCard() { document.getElementById('playerCardModal').classList.add('hidden'); }
 
-    function openShareMatch(id) {
-        let m = data.matches.find(x => x.id === id);
-        if(!m) return;
+    function openShareLeaderboard() {
         playSfx('pop');
+        let sorted = [...data.players].sort((a,b) => b.stats.pts - a.stats.pts || b.stats.gd - a.stats.gd);
+        let top5 = sorted.slice(0, 5);
         
-        let icon = m.sport === 'padel' ? '🏸 PADEL' : '🎾 TENNIS';
-        document.getElementById('shareSport').innerText = `${icon} MATCH - LAPANGAN ${m.court || 1}`;
-        document.getElementById('shareT1').innerText = m.t1;
-        document.getElementById('shareT2').innerText = m.t2;
-        document.getElementById('shareScore').innerText = `${m.s1} - ${m.s2}`;
-        document.getElementById('shareDate').innerText = m.dateStr ? `${m.dateStr} | ${m.time}` : m.time;
+        document.getElementById('shareTourTitle').innerText = data.title || 'Turnamen Happy Hitters';
         
+        let listHtml = top5.map((p, i) => {
+            let medal = i===0 ? '🥇' : (i===1 ? '🥈' : (i===2 ? '🥉' : `<b>${i+1}.</b>`));
+            return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:5px;">
+                <div>${medal} ${p.name}</div>
+                <div style="font-weight:900; color:var(--gold);">${p.stats.pts} pts</div>
+            </div>`;
+        }).join('');
+        
+        if(top5.length === 0) listHtml = '<div>Belum ada data pemain.</div>';
+        
+        document.getElementById('shareLBRank').innerHTML = listHtml;
         document.getElementById('shareMatchModal').classList.remove('hidden');
     }
-    function closeShareMatch() { document.getElementById('shareMatchModal').classList.add('hidden'); }
+
+    function closeShareLeaderboard() { document.getElementById('shareMatchModal').classList.add('hidden'); }
     function downloadShareImage() {
         let el = document.getElementById('shareableTicket');
         html2canvas(el, {backgroundColor: null, scale: 2}).then(canvas => {
             let link = document.createElement('a');
-            link.download = `HappyHitters_Result_${Date.now()}.png`;
+            link.download = `HappyHitters_Leaderboard_${Date.now()}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
-            closeShareMatch();
+            closeShareLeaderboard();
         });
     }
 
@@ -1229,10 +1367,7 @@
                     <span style="flex:1; text-align:right;">${m.t1}</span>
                     <div style="display:flex; align-items:center;">
                         <b style="font-size:16px; color:var(--primary); padding:0 10px;">${m.s1} - ${m.s2}</b>
-                        <div style="display:flex; flex-direction:column; gap:5px;">
-                            <button onclick="openEditScore('${m.id}')" style="background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-muted); border-radius:5px; padding:4px 8px; cursor:pointer;"><i class="fas fa-edit"></i></button>
-                            <button onclick="openShareMatch('${m.id}')" style="background:var(--primary); border:1px solid var(--primary); color:white; border-radius:5px; padding:4px 8px; cursor:pointer;"><i class="fas fa-share-alt"></i></button>
-                        </div>
+                        <button onclick="openEditScore('${m.id}')" style="background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-muted); border-radius:5px; padding:4px 8px; cursor:pointer;"><i class="fas fa-edit"></i></button>
                     </div>
                     <span style="flex:1; text-align:left; margin-left:10px;">${m.t2}</span>
                 </div>
