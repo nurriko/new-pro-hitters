@@ -364,10 +364,15 @@
     <div id="tab-home" class="content active">
         <!-- SETUP JUDUL TURNAMEN -->
         <div id="titleArea" class="card" style="text-align:center; margin-top:20px;">
-            <h3 style="color:var(--primary); font-weight:900; margin-top:0;">NAMA TURNAMEN</h3>
-            <p style="font-size:13px; color:var(--text-muted);">Masukkan judul permainan untuk memulai pendaftaran pemain.</p>
+            <h3 style="color:var(--primary); font-weight:900; margin-top:0;">NAMA TURNAMEN BARU</h3>
+            <p style="font-size:13px; color:var(--text-muted);">Masukkan judul permainan untuk memulai turnamen baru.</p>
             <input type="text" id="tourTitleInp" placeholder="Misal: Game Sabtu 8 Agustus" style="text-align:center; font-weight:bold;">
             <button class="btn btn-primary" onclick="saveTitle()">SIMPAN JUDUL & MULAI</button>
+            
+            <div id="quickArchiveSection" class="hidden" style="margin-top: 25px; border-top: 2px dashed var(--border-color); padding-top: 20px;">
+                <h4 style="margin:0 0 15px 0; color:var(--text-muted); font-size:13px; text-transform:uppercase;">Atau Lanjutkan Turnamen Sebelumnya</h4>
+                <div id="quickArchiveList" style="display:flex; flex-direction:column; gap:10px; text-align:left;"></div>
+            </div>
         </div>
 
         <!-- SETUP PEMAIN -->
@@ -383,7 +388,7 @@
             <div class="card">
                 <h3 style="margin:0 0 15px 0; color:var(--primary); font-weight:900;">+ Tambah Pemain Baru</h3>
                 <div style="display:flex; gap:15px; align-items:center;">
-                    <div style="width:75px; height:75px; background:var(--input-bg); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; border:2px dashed var(--text-muted);" onclick="playSfx('pop'); document.getElementById('fileIn').click()">
+                    <div style="width:75px; height:75px; background:var(--input-bg); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; border:2px dashed var(--text-muted);" onclick="chooseImageSource()">
                         <img id="prevImg" src="" style="width:100%; height:100%; object-fit:cover; display:none;">
                         <i id="camIcon" class="fas fa-camera" style="color:var(--text-muted); font-size: 20px;"></i>
                     </div>
@@ -395,8 +400,10 @@
                         </div>
                     </div>
                 </div>
-                <!-- Input ini di setting agar bisa memunculkan opsi kamera atau galeri -->
-                <input type="file" id="fileIn" hidden accept="image/*" onchange="handleImg(this)">
+                
+                <input type="file" id="fileInCam" hidden accept="image/*" capture="environment" onchange="handleImg(this)">
+                <input type="file" id="fileInGal" hidden accept="image/*" onchange="handleImg(this)">
+                
                 <button class="btn btn-primary" onclick="addPlayer()" style="margin-top:10px;">Simpan Ke Daftar</button>
             </div>
 
@@ -762,6 +769,8 @@
         else icon.className += 'fa-info-circle info';
         
         const acts = document.getElementById('dialogActions'); acts.innerHTML = '';
+        acts.style.flexDirection = 'row';
+        
         if(type === 'confirm') {
             const btnC = document.createElement('button'); btnC.className = 'btn btn-ghost'; btnC.innerText = 'Batal';
             btnC.onclick = () => { playSfx('pop'); dialog.style.display = 'none'; if(onCancel) onCancel(); };
@@ -823,6 +832,32 @@
         } else {
             document.getElementById('titleArea').classList.remove('hidden');
             document.getElementById('playerArea').classList.add('hidden');
+            renderQuickArchives();
+        }
+    }
+
+    function renderQuickArchives() {
+        let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
+        let section = document.getElementById('quickArchiveSection');
+        let listContainer = document.getElementById('quickArchiveList');
+        
+        if(archives.length === 0) {
+            section.classList.add('hidden');
+        } else {
+            section.classList.remove('hidden');
+            let html = archives.map((arc, i) => `
+                <div style="background:var(--input-bg); padding:12px; border-radius:12px; border:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                    <div style="flex:1;">
+                        <div style="font-weight:bold; color:var(--primary); font-size:15px;">${arc.title || 'Tanpa Judul'}</div>
+                        <div style="font-size:11px; color:var(--text-muted);">${arc.players.length} Pemain | ${arc.matches.length} Match</div>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-success" style="padding:6px 12px; font-size:12px; width:auto;" onclick="viewArchive(${i})"><i class="fas fa-folder-open"></i> Buka</button>
+                        <button class="btn btn-danger" style="padding:6px 12px; font-size:12px; width:auto;" onclick="deleteArchive(${i})"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+            listContainer.innerHTML = html;
         }
     }
     
@@ -868,23 +903,55 @@
             let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
             archives.splice(idx, 1);
             localStorage.setItem('HH_ARCHIVES', JSON.stringify(archives));
-            openArchives();
+            openArchives(); 
+            renderQuickArchives();
         });
     }
 
     function viewArchive(idx) {
-        appConfirm("Buka Arsip", "Ini akan mengganti turnamen yang sedang berjalan dengan data dari arsip. Lanjutkan?", () => {
+        let loadData = () => {
             let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
             data = archives[idx];
             save();
             document.getElementById('archivesDialog').classList.add('hidden');
-            appSuccess("Berhasil", "Data arsip berhasil dimuat.");
+            appSuccess("Berhasil", "Data turnamen berhasil dimuat.");
             nav('home');
             renderTitleSetup();
-        });
+        };
+
+        if (data.title || data.players.length > 0) {
+            appConfirm("Buka Turnamen", "Ini akan mengganti turnamen yang sedang berjalan dengan data dari arsip. Lanjutkan?", loadData);
+        } else {
+            loadData();
+        }
     }
 
-    // --- CROPPER.JS LOGIC ---
+    function chooseImageSource() {
+        playSfx('pop');
+        const dialog = document.getElementById('customDialog');
+        document.getElementById('dialogTitle').innerText = "Pilih Foto Profil";
+        document.getElementById('dialogMsg').innerText = "Ambil foto langsung dari kamera atau pilih dari galeri HP Anda.";
+        
+        const icon = document.getElementById('dialogIcon');
+        icon.className = 'fas fa-camera dialog-icon info';
+        
+        const acts = document.getElementById('dialogActions'); 
+        acts.innerHTML = '';
+        acts.style.flexDirection = 'column'; 
+        
+        const btnCam = document.createElement('button'); btnCam.className = 'btn btn-primary'; btnCam.innerHTML = '<i class="fas fa-camera"></i> Buka Kamera';
+        btnCam.onclick = () => { dialog.style.display = 'none'; document.getElementById('fileInCam').click(); };
+        
+        const btnGal = document.createElement('button'); btnGal.className = 'btn btn-success'; btnGal.innerHTML = '<i class="fas fa-image"></i> Buka Galeri';
+        btnGal.onclick = () => { dialog.style.display = 'none'; document.getElementById('fileInGal').click(); };
+        
+        const btnCancel = document.createElement('button'); btnCancel.className = 'btn btn-ghost'; btnCancel.innerText = 'Batal';
+        btnCancel.onclick = () => { dialog.style.display = 'none'; };
+
+        acts.appendChild(btnCam); acts.appendChild(btnGal); acts.appendChild(btnCancel);
+        dialog.style.display = 'flex';
+    }
+
     function handleImg(input) {
         if(input.files && input.files[0]) {
             const r = new FileReader();
@@ -903,7 +970,7 @@
             }; 
             r.readAsDataURL(input.files[0]);
         }
-        input.value = ''; // Reset input
+        input.value = '';
     }
 
     function cancelCrop() {
@@ -926,6 +993,10 @@
     function addPlayer() {
         const name = document.getElementById('pName').value.trim().substring(0,12);
         if(!name) return appAlert("Peringatan", "Isi nama pemain terlebih dahulu!");
+        
+        let exists = data.players.find(p => p.name.toLowerCase() === name.toLowerCase());
+        if(exists) return appAlert("Peringatan", "Nama pemain sudah terdaftar! Gunakan nama yang berbeda.");
+
         data.players.push({ id: 'P'+Date.now(), name, gender: tempGender, img: tempImg, isPresent: true, stats: { p:0, w:0, l:0, d:0, pts:0, gd:0 } });
         document.getElementById('pName').value = ''; tempImg = '';
         document.getElementById('prevImg').style.display = 'none'; document.getElementById('camIcon').style.display = 'block';
@@ -1304,7 +1375,7 @@
     function resetConfirm() {
         appConfirm("RESET DATA", "PERINGATAN: Semua data pemain, judul, dan riwayat pertandingan aktif akan dihapus. Yakin?", () => {
             let defaultData = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home' };
-            if(db) {
+            if(db && auth.currentUser) {
                 db.collection("tournaments").doc(auth.currentUser.uid).set(defaultData).then(() => location.reload());
             } else {
                 localStorage.setItem(DB_KEY, JSON.stringify(defaultData)); 
@@ -1313,7 +1384,6 @@
         });
     }
 
-    // --- FITUR: 3D PLAYER CARD & HISTORY ---
     function openPlayerCard(id) {
         let p = data.players.find(x => x.id === id);
         if(!p) return;
@@ -1332,13 +1402,12 @@
         let wr = p.stats.p > 0 ? Math.round((p.stats.w / p.stats.p) * 100) : 0;
         document.getElementById('pcWR').innerText = wr + '%';
 
-        // Render History
         let pMatches = data.matches.filter(m => m.ids1.includes(id) || m.ids2.includes(id));
         let histHtml = '';
         if(pMatches.length === 0) {
             histHtml = '<div style="font-size:11px; opacity:0.7; text-align:center;">Belum ada pertandingan</div>';
         } else {
-            histHtml = pMatches.slice(0, 10).map(m => {
+            histHtml = pMatches.map(m => {
                 let isT1 = m.ids1.includes(id);
                 let resultStr = "";
                 if(m.s1 === m.s2) resultStr = "<span style='color:var(--warning)'>SERI</span>";
@@ -1369,12 +1438,11 @@
 
     function openShareLeaderboard() {
         playSfx('pop');
-        let sorted = [...data.players].sort((a,b) => b.stats.pts - a.stats.pts || b.stats.gd - a.stats.gd);
-        let top5 = sorted.slice(0, 5);
+        let allPlayers = [...data.players].sort((a,b) => b.stats.pts - a.stats.pts || b.stats.gd - a.stats.gd);
         
         document.getElementById('shareTourTitle').innerText = data.title || 'Turnamen Happy Hitters';
         
-        let listHtml = top5.map((p, i) => {
+        let listHtml = allPlayers.map((p, i) => {
             let medal = i===0 ? '🥇' : (i===1 ? '🥈' : (i===2 ? '🥉' : `<b>${i+1}.</b>`));
             return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:5px;">
                 <div>${medal} ${p.name}</div>
@@ -1382,7 +1450,7 @@
             </div>`;
         }).join('');
         
-        if(top5.length === 0) listHtml = '<div>Belum ada data pemain.</div>';
+        if(allPlayers.length === 0) listHtml = '<div>Belum ada data pemain.</div>';
         
         document.getElementById('shareLBRank').innerHTML = listHtml;
         document.getElementById('shareMatchModal').classList.remove('hidden');
@@ -1444,7 +1512,9 @@
                     <span style="flex:1; text-align:right;">${m.t1}</span>
                     <div style="display:flex; align-items:center;">
                         <b style="font-size:16px; color:var(--primary); padding:0 10px;">${m.s1} - ${m.s2}</b>
-                        <button onclick="openEditScore('${m.id}')" style="background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-muted); border-radius:5px; padding:4px 8px; cursor:pointer;"><i class="fas fa-edit"></i></button>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="openEditScore('${m.id}')" style="background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-muted); border-radius:5px; padding:4px 8px; cursor:pointer;"><i class="fas fa-edit"></i></button>
+                        </div>
                     </div>
                     <span style="flex:1; text-align:left; margin-left:10px;">${m.t2}</span>
                 </div>
