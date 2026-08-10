@@ -16,14 +16,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Cropper.js untuk fitur potong/crop foto -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
-    <!-- FIREBASE COMPAT SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -50,9 +48,9 @@
 
         body { font-family: 'Outfit', sans-serif; background: var(--bg-grad); margin: 0; padding: 0; min-height: 100vh; color: var(--text-main); overflow-x: hidden; user-select: none; transition: background 0.3s, color 0.3s; }
 
-        #welcomeScreen, #authScreen, #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #adminScreen, #cropModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-grad); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: opacity 0.5s ease, visibility 0.5s; }
-        #welcomeScreen.hidden, #authScreen.hidden, #fixedPairsDialog.hidden, #editScoreDialog.hidden, #archivesDialog.hidden, #playerCardModal.hidden, #shareMatchModal.hidden, #adminScreen.hidden, #cropModal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-        #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal { background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001; }
+        #welcomeScreen, #authScreen, #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #adminScreen, #cropModal, #editMatchPlayersModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-grad); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: opacity 0.5s ease, visibility 0.5s; }
+        #welcomeScreen.hidden, #authScreen.hidden, #fixedPairsDialog.hidden, #editScoreDialog.hidden, #archivesDialog.hidden, #playerCardModal.hidden, #shareMatchModal.hidden, #adminScreen.hidden, #cropModal.hidden, #editMatchPlayersModal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #editMatchPlayersModal { background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001; }
         #cropModal { background: #000; z-index: 10005; }
         
         #adminScreen { align-items: center; justify-content: flex-start; padding: 20px; box-sizing: border-box; overflow-y: auto; }
@@ -271,6 +269,21 @@
     <button class="btn btn-ghost" style="width:200px; background:rgba(255,255,255,0.1); color:white; border-color:rgba(255,255,255,0.3); margin-top:10px;" onclick="closePlayerCard()">Tutup Profil</button>
 </div>
 
+<!-- MODAL EDIT PEMAIN MANUAL -->
+<div id="editMatchPlayersModal" class="hidden">
+    <div class="dialog-box" style="width: 90%; max-width: 400px; padding: 20px; max-height:80vh; overflow-y:auto;">
+        <h3 style="color:var(--primary); margin-top:0;">Ganti Pemain Manual</h3>
+        <p style="font-size:12px; color:var(--text-muted);">Pilih pemain pengganti dari daftar yang hadir.</p>
+        
+        <div id="editMatchPlayersContainer" style="text-align:left; margin-bottom:15px;"></div>
+        
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-ghost" onclick="document.getElementById('editMatchPlayersModal').classList.add('hidden')">Batal</button>
+            <button class="btn btn-primary" onclick="saveManualPlayerEdit()">Simpan Perubahan</button>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL SHARE TICKET LEADERBOARD -->
 <div id="shareMatchModal" class="hidden" onclick="if(event.target.id === 'shareMatchModal') closeShareLeaderboard()">
     <div id="shareableTicket" class="share-ticket" style="padding:30px;">
@@ -458,14 +471,6 @@
                 <button class="btn btn-ghost" onclick="openFixedPairsDialog()"><i class="fas fa-users-cog"></i> Kelola Pasangan Tetap</button>
             </div>
 
-            <div id="logicPadelOnly" class="hidden" style="margin-top:10px;">
-                <label id="lblPadelLogic" style="font-size:12px; font-weight:bold; color:var(--text-muted); display:block; margin-bottom:5px;">LOGIKA ACAK PASANGAN</label>
-                <select id="selPadelLogic">
-                    <option value="standard">Standar (Prioritas jarang main)</option>
-                    <option value="americano">Americano (Prioritas partner baru)</option>
-                </select>
-            </div>
-
             <button class="btn btn-primary" style="font-size:16px; padding:16px; margin-top: 15px;" onclick="generateMatch()">
                 <i class="fas fa-play"></i> MULAI PERTANDINGAN
             </button>
@@ -534,7 +539,6 @@
   messagingSenderId: "1001816853311",
   appId: "1:1001816853311:web:84c0fb7b1b9679756ea18a"
 };
-    
     let auth, db;
     if(firebaseConfig.apiKey !== "ISI_API_KEY_ANDA_DISINI") {
         firebase.initializeApp(firebaseConfig);
@@ -560,6 +564,7 @@
     let currentEditMatchId = null;
     let dbUnsubscribe = null;
     let cropper = null;
+    let currentEditCourtIdx = null;
     
     const DEF_M = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23dbeafe'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%233b82f6'/%3E%3C/svg%3E";
     const DEF_F = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23fce7f3'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%23ec4899'/%3E%3C/svg%3E";
@@ -1025,14 +1030,6 @@
         selectedSport = s;
         document.getElementById('btnSportTennis').className = s==='tennis' ? 'seg-btn active' : 'seg-btn';
         document.getElementById('btnSportPadel').className = s==='padel' ? 'seg-btn active' : 'seg-btn';
-        
-        if(s === 'padel') { 
-            document.getElementById('btnFormatSingles').classList.add('disabled'); setFormat('doubles', false); 
-            document.getElementById('logicPadelOnly').classList.remove('hidden');
-        } else { 
-            document.getElementById('btnFormatSingles').classList.remove('disabled'); 
-            document.getElementById('logicPadelOnly').classList.add('hidden');
-        }
     }
     function setFormat(f, playSnd=true) {
         if(selectedSport === 'padel' && f === 'singles') return; 
@@ -1048,11 +1045,6 @@
         document.getElementById('btnPasanganTetap').className = mode === 'tetap' ? 'seg-btn active' : 'seg-btn';
         
         document.getElementById('fixedPartnerSetup').classList.toggle('hidden', mode !== 'tetap');
-        if (mode === 'tetap') {
-            document.getElementById('logicPadelOnly').classList.add('hidden');
-        } else if (selectedSport === 'padel') {
-            document.getElementById('logicPadelOnly').classList.remove('hidden');
-        }
     }
 
     function openFixedPairsDialog() {
@@ -1106,8 +1098,17 @@
         let f2 = (t2[0].gender === 'F' && t2[1].gender === 'F');
         let m2 = (t2[0].gender === 'M' && t2[1].gender === 'M');
         
+        // Mencegah 2Lawan vs 2Wanita ATAU 2Wanita vs 2Laki
         if ((f1 && m2) || (m1 && f2)) return false; 
         return true;
+    }
+
+    function countPartnership(id1, id2) {
+        return data.matches.filter(m => (m.ids1 && m.ids1.includes(id1) && m.ids1.includes(id2)) || (m.ids2 && m.ids2.includes(id1) && m.ids2.includes(id2))).length;
+    }
+
+    function countOpponent(id1, id2) {
+        return data.matches.filter(m => (m.ids1 && m.ids1.includes(id1) && m.ids2 && m.ids2.includes(id2)) || (m.ids1 && m.ids1.includes(id2) && m.ids2 && m.ids2.includes(id1))).length;
     }
 
     function generateMatch() {
@@ -1141,33 +1142,56 @@
             data.currentMatches = newMatches;
         } else {
             if(activePlayers.length < reqP * numCourts) return appAlert("Error", `Butuh minimal ${reqP * numCourts} pemain HADIR untuk mengisi ${numCourts} lapangan!`);
+            
+            // Prioritaskan pemain yang paling jarang main
             let pool = activePlayers.sort((a,b) => a.stats.p - b.stats.p || Math.random() - 0.5).slice(0, reqP * numCourts);
             
             let newMatches = [];
             if(reqP === 4) {
-                let validFound = false;
-                let attempts = 0;
-                let bestFallback = [];
+                let bestArrangement = null;
+                let bestScore = 99999;
 
-                while(!validFound && attempts < 150) {
+                // Algoritma Penalty-based Shuffle: Rotasi Partner & Lawan
+                for(let attempts = 0; attempts < 200; attempts++) {
                     pool.sort(() => Math.random() - 0.5);
-                    validFound = true;
-                    bestFallback = [];
+                    let valid = true;
+                    let currentScore = 0;
+                    let currentArrangement = [];
+
                     for(let i=0; i<numCourts; i++) {
                         let cP = pool.slice(i*reqP, (i+1)*reqP);
                         let t1 = [cP[0], cP[1]], t2 = [cP[2], cP[3]];
-                        if(!isValidCourtGender(t1, t2)) { validFound = false; break; }
-                        bestFallback.push({t1, t2});
+                        if(!isValidCourtGender(t1, t2)) { valid = false; break; }
+                        
+                        // Penalty jika pernah partner
+                        currentScore += countPartnership(t1[0].id, t1[1].id);
+                        currentScore += countPartnership(t2[0].id, t2[1].id);
+                        
+                        // Penalty jika pernah lawan
+                        currentScore += countOpponent(t1[0].id, t2[0].id) * 0.5;
+                        currentScore += countOpponent(t1[0].id, t2[1].id) * 0.5;
+                        currentScore += countOpponent(t1[1].id, t2[0].id) * 0.5;
+                        currentScore += countOpponent(t1[1].id, t2[1].id) * 0.5;
+
+                        currentArrangement.push({t1, t2});
                     }
-                    attempts++;
+
+                    if(valid && currentScore < bestScore) {
+                        bestScore = currentScore;
+                        bestArrangement = currentArrangement;
+                        if(bestScore === 0) break; // Perfect score
+                    }
                 }
 
+                if(!bestArrangement) {
+                    bestArrangement = [];
+                    for(let i=0; i<numCourts; i++) {
+                        bestArrangement.push({t1: [pool[i*4], pool[i*4+1]], t2: [pool[i*4+2], pool[i*4+3]]});
+                    }
+                }
+                
                 for(let i=0; i<numCourts; i++) {
-                    let ct = bestFallback.length > i ? bestFallback[i] : {
-                        t1: [pool[i*reqP], pool[i*reqP+1]], 
-                        t2: [pool[i*reqP+2], pool[i*reqP+3]]
-                    };
-                    newMatches.push(createMatchObj(i+1, ct.t1, ct.t2));
+                    newMatches.push(createMatchObj(i+1, bestArrangement[i].t1, bestArrangement[i].t2));
                 }
             } else {
                 pool.sort(() => Math.random() - 0.5);
@@ -1184,12 +1208,10 @@
     }
 
     function createMatchObj(courtNum, t1, t2) {
-        let padelLogic = selectedSport === 'padel' ? document.getElementById('selPadelLogic').value : 'standard';
-
         return {
             id: 'MC_'+Date.now()+'_'+courtNum, court: courtNum,
             t1, t2, sport: selectedSport, format: selectedFormat,
-            padelLogic, partnerMode: currentPartnerMode,
+            partnerMode: currentPartnerMode,
             g1:0, g2:0
         };
     }
@@ -1217,6 +1239,10 @@
         <div class="card" style="margin-bottom: 25px; border: 2px solid var(--border-color); position:relative;">
             <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:var(--primary); color:white; padding:4px 15px; border-radius:20px; font-weight:900; font-size:13px; box-shadow:0 4px 10px rgba(67, 97, 238, 0.4);">LAPANGAN ${m.court}</div>
             
+            <div style="position:absolute; top:10px; right:15px; z-index:10;">
+                <button class="btn btn-ghost" style="padding:4px 8px; font-size:11px; background:var(--input-bg);" onclick="openEditMatchPlayers(${idx})"><i class="fas fa-user-edit"></i> Edit Pemain</button>
+            </div>
+
             <div style="margin-top:15px;">
                 <h4 style="margin:0 0 10px 0; color:var(--primary); text-align:center;"><i class="fas fa-stopwatch"></i> SCOREBOARD</h4>
 
@@ -1253,6 +1279,86 @@
             </div>
         </div>
         `;
+    }
+
+    // --- MANUAL EDIT PEMAIN ---
+    function openEditMatchPlayers(idx) {
+        currentEditCourtIdx = idx;
+        let m = data.currentMatches[idx];
+        let activePlayers = data.players.filter(p => p.isPresent !== false);
+        
+        let opts = `<option value="">-- Kosong --</option>`;
+        activePlayers.forEach(p => opts += `<option value="${p.id}">${p.name} (${p.gender === 'M' ? 'Pria' : 'Wanita'})</option>`);
+
+        let html = '';
+        if(m.format === 'doubles') {
+            html += `
+                <label style="font-size:12px; font-weight:bold; color:var(--accent);">TIM A - Pemain 1</label>
+                <select id="emp_t1_0" style="margin-bottom:10px;">${opts}</select>
+                <label style="font-size:12px; font-weight:bold; color:var(--accent);">TIM A - Pemain 2</label>
+                <select id="emp_t1_1" style="margin-bottom:15px;">${opts}</select>
+                
+                <label style="font-size:12px; font-weight:bold; color:var(--primary);">TIM B - Pemain 1</label>
+                <select id="emp_t2_0" style="margin-bottom:10px;">${opts}</select>
+                <label style="font-size:12px; font-weight:bold; color:var(--primary);">TIM B - Pemain 2</label>
+                <select id="emp_t2_1" style="margin-bottom:15px;">${opts}</select>
+            `;
+        } else {
+            html += `
+                <label style="font-size:12px; font-weight:bold; color:var(--accent);">TIM A</label>
+                <select id="emp_t1_0" style="margin-bottom:15px;">${opts}</select>
+                
+                <label style="font-size:12px; font-weight:bold; color:var(--primary);">TIM B</label>
+                <select id="emp_t2_0" style="margin-bottom:15px;">${opts}</select>
+            `;
+        }
+
+        document.getElementById('editMatchPlayersContainer').innerHTML = html;
+
+        if(document.getElementById('emp_t1_0') && m.t1[0]) document.getElementById('emp_t1_0').value = m.t1[0].id;
+        if(document.getElementById('emp_t1_1') && m.t1[1]) document.getElementById('emp_t1_1').value = m.t1[1].id;
+        if(document.getElementById('emp_t2_0') && m.t2[0]) document.getElementById('emp_t2_0').value = m.t2[0].id;
+        if(document.getElementById('emp_t2_1') && m.t2[1]) document.getElementById('emp_t2_1').value = m.t2[1].id;
+
+        document.getElementById('editMatchPlayersModal').classList.remove('hidden');
+    }
+
+    function saveManualPlayerEdit() {
+        let idx = currentEditCourtIdx;
+        let m = data.currentMatches[idx];
+        
+        let t1_0 = document.getElementById('emp_t1_0').value;
+        let t2_0 = document.getElementById('emp_t2_0').value;
+        
+        if(!t1_0 || !t2_0) return appAlert("Error", "Pemain pertama di tiap tim tidak boleh kosong!");
+
+        let nt1 = [data.players.find(x => x.id === t1_0)];
+        let nt2 = [data.players.find(x => x.id === t2_0)];
+
+        if(m.format === 'doubles') {
+            let t1_1 = document.getElementById('emp_t1_1').value;
+            let t2_1 = document.getElementById('emp_t2_1').value;
+            if(!t1_1 || !t2_1) return appAlert("Error", "Semua slot pemain harus terisi untuk mode doubles!");
+            
+            let ids = [t1_0, t1_1, t2_0, t2_1];
+            if(new Set(ids).size !== 4) return appAlert("Error", "Tidak boleh ada pemain yang sama di satu lapangan yang sama!");
+
+            nt1.push(data.players.find(x => x.id === t1_1));
+            nt2.push(data.players.find(x => x.id === t2_1));
+            
+            if(!isValidCourtGender(nt1, nt2)) {
+                appAlert("Peringatan Aturan Gender", "Susunan manual ini mempertemukan Ganda Putri (2 Wanita) vs Ganda Putra (2 Pria). Perubahan tetap disimpan, harap perhatikan.");
+            }
+        } else {
+            if(t1_0 === t2_0) return appAlert("Error", "Pemain tidak boleh sama!");
+        }
+
+        m.t1 = nt1;
+        m.t2 = nt2;
+
+        document.getElementById('editMatchPlayersModal').classList.add('hidden');
+        save();
+        renderMatches();
     }
 
     function updateCourtScoreUI(idx) {
@@ -1384,90 +1490,6 @@
         });
     }
 
-    function openPlayerCard(id) {
-        let p = data.players.find(x => x.id === id);
-        if(!p) return;
-        playSfx('pop');
-        
-        document.getElementById('pcAvatar').src = getAvatar(p);
-        document.getElementById('pcName').innerText = p.name;
-        document.getElementById('pcPts').innerText = p.stats.pts;
-        
-        document.getElementById('pcP').innerText = p.stats.p;
-        document.getElementById('pcW').innerText = p.stats.w;
-        document.getElementById('pcL').innerText = p.stats.l;
-        document.getElementById('pcD').innerText = p.stats.d;
-        document.getElementById('pcGD').innerText = p.stats.gd > 0 ? '+'+p.stats.gd : p.stats.gd;
-        
-        let wr = p.stats.p > 0 ? Math.round((p.stats.w / p.stats.p) * 100) : 0;
-        document.getElementById('pcWR').innerText = wr + '%';
-
-        let pMatches = data.matches.filter(m => m.ids1.includes(id) || m.ids2.includes(id));
-        let histHtml = '';
-        if(pMatches.length === 0) {
-            histHtml = '<div style="font-size:11px; opacity:0.7; text-align:center;">Belum ada pertandingan</div>';
-        } else {
-            histHtml = pMatches.map(m => {
-                let isT1 = m.ids1.includes(id);
-                let resultStr = "";
-                if(m.s1 === m.s2) resultStr = "<span style='color:var(--warning)'>SERI</span>";
-                else if((isT1 && m.s1 > m.s2) || (!isT1 && m.s2 > m.s1)) resultStr = "<span style='color:var(--success)'>MENANG</span>";
-                else resultStr = "<span style='color:#ef4444'>KALAH</span>";
-                
-                return `<div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:8px; font-size:11px; margin-bottom:5px;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px; border-bottom:1px dashed rgba(255,255,255,0.2); padding-bottom:4px;">
-                        <span style="opacity:0.8">${m.dateStr || m.time} (Lap ${m.court})</span>
-                        <b>${resultStr}</b>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; font-weight:bold; align-items:center;">
-                        <span style="flex:1; text-align:right; ${isT1 ? 'color:var(--gold)' : ''}">${m.t1}</span>
-                        <span style="padding:0 8px; font-size:14px;">${m.s1} - ${m.s2}</span>
-                        <span style="flex:1; text-align:left; ${!isT1 ? 'color:var(--gold)' : ''}">${m.t2}</span>
-                    </div>
-                </div>`;
-            }).join('');
-        }
-        document.getElementById('pcHistoryContainer').innerHTML = histHtml;
-        
-        document.getElementById('pCard').classList.remove('flipped');
-        document.getElementById('playerCardModal').classList.remove('hidden');
-    }
-    
-    function toggleCardFlip() { playSfx('pop'); document.getElementById('pCard').classList.toggle('flipped'); }
-    function closePlayerCard() { document.getElementById('playerCardModal').classList.add('hidden'); }
-
-    function openShareLeaderboard() {
-        playSfx('pop');
-        let allPlayers = [...data.players].sort((a,b) => b.stats.pts - a.stats.pts || b.stats.gd - a.stats.gd);
-        
-        document.getElementById('shareTourTitle').innerText = data.title || 'Turnamen Happy Hitters';
-        
-        let listHtml = allPlayers.map((p, i) => {
-            let medal = i===0 ? '🥇' : (i===1 ? '🥈' : (i===2 ? '🥉' : `<b>${i+1}.</b>`));
-            return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:5px;">
-                <div>${medal} ${p.name}</div>
-                <div style="font-weight:900; color:var(--gold);">${p.stats.pts} pts</div>
-            </div>`;
-        }).join('');
-        
-        if(allPlayers.length === 0) listHtml = '<div>Belum ada data pemain.</div>';
-        
-        document.getElementById('shareLBRank').innerHTML = listHtml;
-        document.getElementById('shareMatchModal').classList.remove('hidden');
-    }
-
-    function closeShareLeaderboard() { document.getElementById('shareMatchModal').classList.add('hidden'); }
-    function downloadShareImage() {
-        let el = document.getElementById('shareableTicket');
-        html2canvas(el, {backgroundColor: null, scale: 2}).then(canvas => {
-            let link = document.createElement('a');
-            link.download = `HappyHitters_Leaderboard_${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            closeShareLeaderboard();
-        });
-    }
-
     function renderAll() {
         document.getElementById('pCount').innerText = data.players.length;
         document.getElementById('playerList').innerHTML = data.players.slice().reverse().map(p => {
@@ -1502,7 +1524,7 @@
         document.getElementById('histList').innerHTML = data.matches.map(m => {
             let icon = m.sport === 'padel' ? '🏸' : '🎾';
             let typeStr = m.format === 'singles' ? '(1v1)' : '(2v2)';
-            let logicStr = m.logic === 'fixed' ? ' • Fixed Partner' : (m.logic === 'americano' ? ' • Americano' : '');
+            let logicStr = m.logic === 'fixed' ? ' • Fixed Partner' : '';
             return `
             <div class="card" style="padding:15px; font-size:13px; margin-bottom:0; position:relative;">
                 <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:8px; font-size:11px; color:var(--text-muted); font-weight:bold;">
