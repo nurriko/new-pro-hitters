@@ -34,10 +34,11 @@
             
             --bg-color-1: #a1c4fd; --bg-color-2: #c2e9fb; --bg-color-3: #fecfef; --bg-color-4: #ff9a9e;
             
-            --glass-bg: rgba(255, 255, 255, 0.65);
-            --glass-border: rgba(255, 255, 255, 0.8);
-            --glass-shadow: rgba(0, 0, 0, 0.1);
-            --input-bg: rgba(255, 255, 255, 0.6);
+            /* Dibuat lebih solid agar tidak tumpang tindih */
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-border: rgba(255, 255, 255, 1);
+            --glass-shadow: rgba(0, 0, 0, 0.15);
+            --input-bg: #f8fafc;
         }
 
         [data-theme="dark"] {
@@ -46,10 +47,11 @@
             
             --bg-color-1: #0f172a; --bg-color-2: #1e293b; --bg-color-3: #312e81; --bg-color-4: #1e1b4b;
             
-            --glass-bg: rgba(15, 23, 42, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.15);
-            --glass-shadow: rgba(0, 0, 0, 0.4);
-            --input-bg: rgba(0, 0, 0, 0.3);
+            /* Dibuat lebih solid gelap agar layernya jelas */
+            --glass-bg: rgba(30, 41, 59, 0.98);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-shadow: rgba(0, 0, 0, 0.6);
+            --input-bg: rgba(0, 0, 0, 0.4);
         }
 
         body { 
@@ -66,7 +68,7 @@
         .modal-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
         
         #welcomeScreen, #authScreen, #adminScreen, #cropModal { background: linear-gradient(-45deg, var(--bg-color-1), var(--bg-color-2), var(--bg-color-3), var(--bg-color-4)); background-size: 400% 400%; animation: gradientBG 15s ease infinite; }
-        .glass-modal { background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 10001; }
+        .glass-modal { background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 10001; }
         #cropModal { background: #000; z-index: 10005; }
         
         #adminScreen { align-items: center; justify-content: flex-start; padding: 20px; box-sizing: border-box; overflow-y: auto; display: flex; }
@@ -88,7 +90,7 @@
         .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; position: relative; opacity: 0; transition: opacity 0.5s; display:none; }
         .app-container.visible { opacity: 1; display:flex;}
         
-        header, .card, .auth-card, .dialog-box, .nav-dock, .share-ticket { background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--glass-border); box-shadow: 0 8px 32px 0 var(--glass-shadow); }
+        header, .card, .auth-card, .dialog-box, .nav-dock, .share-ticket { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: 0 10px 30px var(--glass-shadow); }
 
         header { padding: 15px 20px; display:flex; justify-content:space-between; align-items:center; position: sticky; top: 0; z-index: 100; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;}
         h1 { margin: 0; font-size: 18px; font-weight: 900; color: var(--primary); letter-spacing: -0.5px; text-transform: uppercase; }
@@ -96,26 +98,27 @@
         .sound-toggle { background: var(--input-bg); border: 1px solid var(--glass-border); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); cursor: pointer; transition: transform 0.2s; }
         .sound-toggle:active { transform: scale(0.85); }
 
+        /* CONTENT TABS STYLING */
         .content { padding: 20px 20px 120px 20px; display: none; }
         .content.active { display: block; }
-        .slide-in-right { animation: slideInR 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-        .slide-in-left { animation: slideInL 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-        @keyframes slideInR { from { transform: translateX(50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes slideInL { from { transform: translateX(-50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         
-        .card { border-radius: 18px; padding: 18px; margin-bottom: 15px; transition: 0.3s; }
-        .auth-card { width: 85%; max-width: 350px; border-radius: 20px; padding: 30px 25px; text-align: center; }
+        /* LAYERS & SPACING */
+        .card { border-radius: 20px; padding: 22px; margin-bottom: 25px; transition: 0.3s; }
+        .auth-card { width: 85%; max-width: 350px; border-radius: 24px; padding: 30px 25px; text-align: center; }
         
-        .btn { width: 100%; border: none; padding: 14px; border-radius: 12px; font-weight: 700; cursor: pointer; font-family:'Outfit'; display:flex; align-items:center; justify-content:center; gap:8px; font-size:15px; transition: all 0.2s ease; }
+        /* SECTION TITLE (Untuk Layering yang Jelas) */
+        .section-title { font-size: 13px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: block; border-bottom: 2px dashed var(--glass-border); padding-bottom: 8px; }
+
+        .btn { width: 100%; border: none; padding: 16px; border-radius: 14px; font-weight: 800; cursor: pointer; font-family:'Outfit'; display:flex; align-items:center; justify-content:center; gap:8px; font-size:15px; transition: all 0.2s ease; }
         .btn:active { transform: scale(0.92); }
-        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(67, 97, 238, 0.4); }
-        .btn-success { background: var(--success); color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); }
-        .btn-danger { background: #ef4444; color: white; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); }
-        .btn-warning { background: var(--warning); color: white; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4); }
-        .btn-ghost { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4); }
+        .btn-success { background: var(--success); color: white; box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); }
+        .btn-danger { background: #ef4444; color: white; box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4); }
+        .btn-warning { background: var(--warning); color: white; box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4); }
+        .btn-ghost { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--glass-border); }
         .btn-disabled { background: var(--text-muted); color: white; cursor: not-allowed; opacity: 0.6; }
         
-        input, select { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--glass-border); margin-bottom: 10px; font-family: 'Outfit'; box-sizing: border-box; outline:none; background: var(--input-bg); color: var(--text-main); font-weight: 500;}
+        input, select { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border); margin-bottom: 15px; font-family: 'Outfit'; box-sizing: border-box; outline:none; background: var(--input-bg); color: var(--text-main); font-weight: bold; font-size:15px;}
         select { cursor: pointer; }
         
         .pwd-wrapper { position: relative; width: 100%; margin-bottom: 10px; }
@@ -123,25 +126,25 @@
         .pwd-toggle-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted); font-size: 16px; transition: 0.2s; }
         .pwd-toggle-icon:active { transform: translateY(-50%) scale(0.8); }
 
-        .p-item { display: flex; align-items: center; gap: 12px; }
+        .p-item { display: flex; align-items: center; gap: 12px; background: var(--input-bg); padding: 12px; border-radius: 14px; border: 1px solid var(--glass-border); margin-bottom:10px;}
         .p-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #eee; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
-        .segmented-control { display:flex; gap:5px; background:var(--input-bg); padding:5px; border-radius:12px; margin-bottom:15px; border: 1px solid var(--glass-border); }
-        .seg-btn { flex:1; padding:10px; border-radius:8px; border:none; background:transparent; cursor:pointer; font-weight:bold; color:var(--text-muted); transition: all 0.3s; font-family: 'Outfit'; font-size: 14px;}
-        .seg-btn.active { background:var(--glass-bg); color:var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid var(--glass-border); }
+        .segmented-control { display:flex; gap:8px; background:var(--input-bg); padding:6px; border-radius:14px; margin-bottom:20px; border: 1px solid var(--glass-border); }
+        .seg-btn { flex:1; padding:12px; border-radius:10px; border:none; background:transparent; cursor:pointer; font-weight:800; color:var(--text-muted); transition: all 0.3s; font-family: 'Outfit'; font-size: 14px;}
+        .seg-btn.active { background:var(--glass-bg); color:var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 1px solid var(--glass-border); }
 
-        .gender-select { display:flex; gap:8px; margin-bottom:10px; }
-        .g-btn { flex:1; padding:10px; border-radius:10px; border:1px solid var(--glass-border); background:var(--input-bg); cursor:pointer; font-weight:bold; color:var(--text-muted); transition: 0.2s;}
+        .gender-select { display:flex; gap:10px; margin-bottom:15px; }
+        .g-btn { flex:1; padding:12px; border-radius:12px; border:1px solid var(--glass-border); background:var(--input-bg); cursor:pointer; font-weight:bold; color:var(--text-muted); transition: 0.2s;}
         .g-btn.active-m { border-color: var(--primary); color: var(--primary); background: rgba(67, 97, 238, 0.1); }
         .g-btn.active-f { border-color: var(--accent); color: var(--accent); background: rgba(247, 37, 133, 0.1); }
 
-        .dialog-box { width: 85%; max-width: 350px; border-radius: 20px; padding: 25px; text-align: center; transform: scale(0.9); animation: popIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .dialog-icon { font-size: 40px; margin-bottom: 15px; }
+        .dialog-box { width: 85%; max-width: 350px; border-radius: 24px; padding: 30px; text-align: center; transform: scale(0.9); animation: popIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .dialog-icon { font-size: 45px; margin-bottom: 20px; }
         .dialog-icon.success { color: var(--success); }
         .dialog-icon.warning { color: var(--warning); }
         .dialog-icon.error { color: #ef4444; }
         .dialog-icon.info { color: var(--primary); }
-        .dialog-title { font-size: 20px; font-weight: 900; margin-bottom: 10px; color: var(--text-main); }
+        .dialog-title { font-size: 22px; font-weight: 900; margin-bottom: 10px; color: var(--text-main); }
         .dialog-msg { font-size: 14px; color: var(--text-muted); margin-bottom: 25px; line-height: 1.5; }
         .dialog-actions { display: flex; gap: 10px; }
 
@@ -151,7 +154,7 @@
         .score-team-name { font-weight: 900; font-size: 15px; color: var(--text-main); }
         .score-controls { display: flex; align-items: center; gap: 10px; }
         
-        .point-display { width: 60px; height: 50px; display: flex; justify-content: center; align-items: center; border-radius: 10px; font-size: 24px; font-weight: 900; color: #fff; transition: transform 0.1s; }
+        .point-display { width: 60px; height: 50px; display: flex; justify-content: center; align-items: center; border-radius: 12px; font-size: 24px; font-weight: 900; color: #fff; transition: transform 0.1s; }
         .score-box-a { background: var(--accent); border: 2px solid var(--accent); box-shadow: 0 0 15px rgba(247, 37, 133, 0.5); }
         .score-box-b { background: var(--primary); border: 2px solid var(--primary); box-shadow: 0 0 15px rgba(67, 97, 238, 0.5); }
         
@@ -160,13 +163,17 @@
         
         .btn-score { width: 40px; height: 40px; border-radius: 50%; font-size: 18px; display: flex; justify-content: center; align-items: center; padding: 0; cursor: pointer; transition: transform 0.1s; }
         .btn-score:active { transform: scale(0.85); }
-        .btn-score-minus { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); }
+        .btn-score-minus { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--glass-border); }
 
-        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
-        th { text-align: left; color: var(--text-muted); font-size: 12px; text-transform: uppercase; padding: 0 5px; letter-spacing: 0.5px;}
-        td { padding: 8px 5px; vertical-align: middle; font-size: 14px; }
-        .rank-row { background: var(--input-bg); transition: 0.2s; border-radius: 10px; cursor: pointer; border: 1px solid var(--glass-border);}
-        .rank-row:active { transform: scale(0.95); }
+        table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+        th { text-align: left; color: var(--text-muted); font-size: 12px; text-transform: uppercase; padding: 0 10px; letter-spacing: 1px;}
+        td { padding: 0; vertical-align: middle; }
+        
+        .rank-row { transition: 0.2s; cursor: pointer; }
+        .rank-row td { background: var(--input-bg); padding: 12px; border-top: 1px solid var(--glass-border); border-bottom: 1px solid var(--glass-border); }
+        .rank-row td:first-child { border-left: 1px solid var(--glass-border); border-top-left-radius: 14px; border-bottom-left-radius: 14px; }
+        .rank-row td:last-child { border-right: 1px solid var(--glass-border); border-top-right-radius: 14px; border-bottom-right-radius: 14px; }
+        .rank-row:active { transform: scale(0.96); }
 
         .nav-dock { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 85%; max-width: 400px; border-radius: 25px; display: flex; justify-content: space-around; padding: 12px 15px; z-index: 99; }
         .nav-item { border: none; background: none; font-size: 22px; color: var(--text-muted); cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); padding: 10px; flex:1;}
@@ -193,7 +200,7 @@
         .share-ticket::before { content:''; position:absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%); pointer-events:none; }
         .ticket-header { font-size: 18px; font-weight: 900; letter-spacing: 2px; margin-bottom: 5px; color: var(--gold); text-transform: uppercase; text-shadow: 0 2px 5px rgba(0,0,0,0.3);}
         
-        .badge-role { font-size:10px; padding:3px 8px; border-radius:10px; font-weight:bold; color:#fff; text-transform:uppercase; }
+        .badge-role { font-size:10px; padding:4px 8px; border-radius:10px; font-weight:bold; color:#fff; text-transform:uppercase; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
         .role-host { background:var(--warning); }
         .role-admin { background:var(--primary); }
         .role-viewer { background:var(--text-muted); }
@@ -240,7 +247,7 @@
 <div id="adminScreen" class="modal-overlay hidden">
     <div class="card animate__animated animate__fadeInUp" style="width: 100%; max-width: 500px; margin-top: 20px; text-align:center;">
         <h2 style="color: var(--primary);"><i class="fas fa-user-shield"></i> SUPERADMIN</h2>
-        <button class="btn btn-danger" onclick="doLogout()" style="margin-bottom: 20px; padding:12px;"><i class="fas fa-sign-out-alt"></i> Logout Admin</button>
+        <button class="btn btn-danger" onclick="doLogout()" style="margin-bottom: 20px;"><i class="fas fa-sign-out-alt"></i> Logout Admin</button>
         <h4 style="margin:0 0 10px 0; color:var(--text-main); border-bottom:2px dashed var(--border-color); padding-bottom:10px; text-align:left;">Daftar Akun Terdaftar:</h4>
         <div id="adminUserList" style="display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto; padding-bottom:20px;"></div>
     </div>
@@ -287,13 +294,13 @@
 </div>
 
 <div id="editMatchPlayersModal" class="modal-overlay glass-modal hidden">
-    <div class="dialog-box" style="width: 90%; max-width: 400px; padding: 20px; max-height:80vh; overflow-y:auto;">
+    <div class="dialog-box" style="width: 90%; max-width: 400px; padding: 25px; max-height:80vh; overflow-y:auto;">
         <h3 style="color:var(--primary); margin-top:0;">Ganti Pemain Manual</h3>
-        <p style="font-size:12px; color:var(--text-main);">Pilih pemain pengganti dari daftar yang hadir.</p>
-        <div id="editMatchPlayersContainer" style="text-align:left; margin-bottom:15px;"></div>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:20px;">Pilih pemain pengganti dari daftar yang hadir.</p>
+        <div id="editMatchPlayersContainer" style="text-align:left; margin-bottom:20px;"></div>
         <div style="display:flex; gap:10px;">
             <button class="btn btn-ghost" onclick="document.getElementById('editMatchPlayersModal').classList.add('hidden')">Batal</button>
-            <button class="btn btn-primary" onclick="saveManualPlayerEdit()">Simpan Perubahan</button>
+            <button class="btn btn-primary" onclick="saveManualPlayerEdit()">Simpan</button>
         </div>
     </div>
 </div>
@@ -312,18 +319,16 @@
 </div>
 
 <div id="fixedPairsDialog" class="modal-overlay glass-modal hidden">
-    <div class="dialog-box" style="width: 90%; max-width: 400px; max-height: 80vh; overflow-y:auto; padding: 20px;">
+    <div class="dialog-box" style="width: 90%; max-width: 400px; max-height: 80vh; overflow-y:auto; padding: 25px;">
         <h3 style="color:var(--primary); margin-top:0;">Kelola Pasangan Tetap</h3>
-        <p style="font-size:12px; color:var(--text-main);">Hanya pemain yang berstatus "Hadir" yang bisa dijadikan pasangan.</p>
-        <button class="btn btn-warning" onclick="generateRandomPairs()" style="margin-bottom:15px;"><i class="fas fa-dice"></i> Acak Pasangan Otomatis</button>
-        <hr style="border:0; border-top:1px dashed var(--glass-border); margin:15px 0;">
-        <h4 style="margin:0 0 10px 0; text-align:left;">Buat Pasangan Manual</h4>
+        <p style="font-size:12px; color:var(--text-muted);">Hanya pemain yang berstatus "Hadir" yang bisa dijadikan pasangan.</p>
+        <button class="btn btn-warning" onclick="generateRandomPairs()" style="margin-bottom:20px;"><i class="fas fa-dice"></i> Acak Otomatis</button>
+        <span class="section-title">Buat Pasangan Manual</span>
         <select id="selP1"></select>
-        <div style="text-align:center; font-weight:bold; color:var(--text-main);">+</div>
+        <div style="text-align:center; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">+</div>
         <select id="selP2"></select>
-        <button class="btn btn-primary" onclick="addManualPair()" style="margin-bottom:15px;">Tambah Pasangan</button>
-        <hr style="border:0; border-top:1px dashed var(--glass-border); margin:15px 0;">
-        <h4 style="margin:0 0 10px 0; text-align:left;">Daftar Pasangan (<span id="pairCount">0</span>)</h4>
+        <button class="btn btn-primary" onclick="addManualPair()" style="margin-bottom:20px;">Tambah Pasangan</button>
+        <span class="section-title">Daftar Pasangan (<span id="pairCount">0</span>)</span>
         <div id="fixedPairsList" style="text-align:left; font-size:14px; max-height: 150px; overflow-y: auto;"></div>
         <button class="btn btn-ghost" onclick="document.getElementById('fixedPairsDialog').classList.add('hidden')" style="margin-top:20px;">Tutup</button>
     </div>
@@ -336,12 +341,12 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <div style="flex:1; text-align:center;">
                 <label id="editLblT1" style="font-size:11px; font-weight:bold; color:var(--accent);">TIM 1</label>
-                <input type="number" id="editInpS1" style="text-align:center; font-size:20px; font-weight:900;">
+                <input type="number" id="editInpS1" style="text-align:center; font-size:24px; font-weight:900; padding:10px;">
             </div>
             <div style="font-weight:900; font-size:24px; padding:0 15px;">-</div>
             <div style="flex:1; text-align:center;">
                 <label id="editLblT2" style="font-size:11px; font-weight:bold; color:var(--primary);">TIM 2</label>
-                <input type="number" id="editInpS2" style="text-align:center; font-size:20px; font-weight:900;">
+                <input type="number" id="editInpS2" style="text-align:center; font-size:24px; font-weight:900; padding:10px;">
             </div>
         </div>
         <div style="display:flex; gap:10px;">
@@ -352,10 +357,9 @@
 </div>
 
 <div id="archivesDialog" class="modal-overlay glass-modal hidden">
-    <div class="dialog-box" style="width: 90%; max-width: 400px; max-height: 80vh; overflow-y:auto; padding: 20px;">
+    <div class="dialog-box" style="width: 90%; max-width: 400px; max-height: 80vh; overflow-y:auto; padding: 25px;">
         <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-archive"></i> Arsip Turnamen</h3>
-        <p style="font-size:12px; color:var(--text-main);">Daftar turnamen yang telah selesai atau diarsipkan.</p>
-        <hr style="border:0; border-top:1px dashed var(--glass-border); margin:15px 0;">
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:20px;">Daftar turnamen yang telah selesai atau diarsipkan.</p>
         <div id="archiveListContent" style="max-height:300px; overflow-y:auto; padding-bottom:10px;"></div>
         <button class="btn btn-ghost" onclick="document.getElementById('archivesDialog').classList.add('hidden')" style="margin-top:15px;">Tutup</button>
     </div>
@@ -363,14 +367,14 @@
 
 <!-- MODAL MANAJEMEN AKSES TURNAMEN (HOST ONLY) -->
 <div id="accessModal" class="modal-overlay glass-modal hidden">
-    <div class="dialog-box" style="width: 90%; max-width: 400px; max-height: 85vh; overflow-y:auto; padding: 20px; text-align:left;">
+    <div class="dialog-box" style="width: 90%; max-width: 400px; max-height: 85vh; overflow-y:auto; padding: 25px; text-align:left;">
         <h3 style="color:var(--primary); margin-top:0; text-align:center;"><i class="fas fa-shield-alt"></i> Kelola Akses</h3>
-        <p style="font-size:12px; color:var(--text-muted); text-align:center;">Atur siapa yang bisa melihat dan mengedit turnamen ini.</p>
+        <p style="font-size:12px; color:var(--text-muted); text-align:center; margin-bottom:20px;">Atur siapa yang bisa melihat dan mengedit turnamen ini.</p>
         
-        <h4 style="margin:10px 0; border-bottom:1px dashed var(--border-color); padding-bottom:5px;">Permintaan Bergabung (<span id="reqCount">0</span>)</h4>
-        <div id="accessRequestsList" style="margin-bottom:15px;"></div>
+        <span class="section-title">Permintaan Bergabung (<span id="reqCount">0</span>)</span>
+        <div id="accessRequestsList" style="margin-bottom:20px;"></div>
 
-        <h4 style="margin:10px 0; border-bottom:1px dashed var(--border-color); padding-bottom:5px;">Anggota Turnamen</h4>
+        <span class="section-title">Anggota Turnamen</span>
         <div id="accessMembersList"></div>
 
         <button class="btn btn-ghost" onclick="document.getElementById('accessModal').classList.add('hidden')" style="margin-top:20px;">Tutup</button>
@@ -393,44 +397,48 @@
         </div>
     </header>
 
-    <div id="returnToMyRoomBtn" class="hidden" style="background:var(--warning); color:white; text-align:center; padding:8px; font-size:12px; font-weight:bold; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2);" onclick="returnToMyRoom()">
-        <i class="fas fa-arrow-left"></i> Anda sedang di Turnamen teman. Klik untuk kembali ke Turnamen Anda.
+    <div id="returnToMyRoomBtn" class="hidden" style="background:var(--warning); color:white; text-align:center; padding:10px; font-size:13px; font-weight:bold; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2);" onclick="returnToMyRoom()">
+        <i class="fas fa-arrow-left"></i> Sedang di Turnamen teman. Klik untuk kembali.
     </div>
 
-    <!-- TAB HOME -->
-    <div id="tab-home" class="content active">
-        <div id="titleArea" class="card" style="text-align:center; margin-top:20px;">
-            <h3 style="color:var(--primary); font-weight:900; margin-top:0;">NAMA TURNAMEN BARU</h3>
-            <p style="font-size:13px; color:var(--text-main);">Masukkan judul permainan untuk memulai turnamen baru.</p>
-            <input type="text" id="tourTitleInp" placeholder="Misal: Game Sabtu 8 Agustus" style="text-align:center; font-weight:bold;">
-            <button class="btn btn-primary host-only" onclick="saveTitle()">SIMPAN JUDUL & MULAI</button>
-            
-            <div id="quickArchiveSection" class="hidden" style="margin-top: 25px; border-top: 2px dashed var(--glass-border); padding-top: 20px;">
-                <h4 style="margin:0 0 15px 0; color:var(--text-main); font-size:13px; text-transform:uppercase;">Atau Lanjutkan Turnamen</h4>
-                <div id="quickArchiveList" style="display:flex; flex-direction:column; gap:10px; text-align:left;"></div>
-            </div>
+    <!-- STAGE 1: INIT TOURNAMENT (LAYAR SETUP AWAL) -->
+    <div id="initScreen" class="content active animate__animated animate__fadeIn" style="padding-top:40px;">
+        <div class="card" style="text-align:center;">
+            <h2 style="color:var(--primary); font-weight:900; margin-top:0;">TURNAMEN BARU</h2>
+            <p style="font-size:13px; color:var(--text-muted); margin-bottom:25px;">Masukkan judul permainan untuk memulai turnamen baru.</p>
+            <input type="text" id="tourTitleInp" placeholder="Misal: Game Sabtu 8 Agustus" style="text-align:center; font-weight:bold; font-size:18px; padding:18px;">
+            <button class="btn btn-primary" style="font-size:16px; padding:18px;" onclick="saveTitle()">SIMPAN & MULAI</button>
         </div>
 
-        <div id="playerArea" class="hidden">
-            <div class="card" style="display:flex; justify-content:space-between; align-items:center; border: 2px dashed var(--primary);">
+        <div id="quickArchiveSection" class="hidden" style="margin-top: 30px;">
+            <span class="section-title" style="text-align:center; border:none; margin-bottom:20px;">Atau Lanjutkan Turnamen</span>
+            <div id="quickArchiveList" style="display:flex; flex-direction:column; gap:12px; text-align:left;"></div>
+        </div>
+    </div>
+
+    <!-- STAGE 2: MAIN TABS (LAYAR APLIKASI UTAMA) -->
+    <div id="mainTabs" class="hidden">
+        <!-- TAB HOME (PEMAIN) -->
+        <div id="tab-home" class="content">
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center; border: 2px dashed var(--primary); background:rgba(67, 97, 238, 0.05);">
                 <div style="display:flex; flex-direction:column;">
-                    <span style="font-size:11px; color:var(--text-main); font-weight:bold;">NAMA TURNAMEN:</span>
-                    <b id="tourTitleDisplay" style="color:var(--primary); font-size:16px;"></b>
+                    <span style="font-size:11px; color:var(--text-muted); font-weight:bold;">NAMA TURNAMEN:</span>
+                    <b id="tourTitleDisplay" style="color:var(--primary); font-size:18px;"></b>
                 </div>
-                <button class="host-only" onclick="editTitle()" style="background:var(--input-bg); border:1px solid var(--glass-border); color:var(--text-main); border-radius:8px; padding:6px 12px; font-weight:bold; cursor:pointer;">Ubah</button>
+                <button class="host-only btn btn-ghost" onclick="editTitle()" style="width:auto; padding:8px 15px; font-size:12px;"><i class="fas fa-edit"></i> Ubah</button>
             </div>
 
-            <!-- Bagian ini disembunyikan untuk Viewer -->
+            <!-- Tampilan hanya untuk admin/host -->
             <div class="card admin-only">
                 <h3 style="margin:0 0 15px 0; color:var(--primary); font-weight:900;">+ Tambah Pemain Baru</h3>
-                <div style="display:flex; gap:15px; align-items:center;">
-                    <div style="width:75px; height:75px; background:var(--input-bg); border-radius:50%; border: 1px solid var(--glass-border); display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden;" onclick="chooseImageSource()">
+                <div style="display:flex; gap:15px; align-items:center; margin-bottom:15px;">
+                    <div style="width:80px; height:80px; background:var(--input-bg); border-radius:50%; border: 2px dashed var(--glass-border); display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden;" onclick="chooseImageSource()">
                         <img id="prevImg" src="" style="width:100%; height:100%; object-fit:cover; display:none;">
-                        <i id="camIcon" class="fas fa-camera" style="color:var(--text-muted); font-size: 20px;"></i>
+                        <i id="camIcon" class="fas fa-camera" style="color:var(--text-muted); font-size: 24px;"></i>
                     </div>
                     <div style="flex:1;">
-                        <input type="text" id="pName" placeholder="Nama Pemain (Max 12)" maxlength="12">
-                        <div class="gender-select">
+                        <input type="text" id="pName" placeholder="Nama Pemain (Max 12)" maxlength="12" style="margin-bottom:10px;">
+                        <div class="gender-select" style="margin-bottom:0;">
                             <button id="btnM" class="g-btn active-m" onclick="setGender('M')"><i class="fas fa-mars"></i> Pria</button>
                             <button id="btnF" class="g-btn" onclick="setGender('F')"><i class="fas fa-venus"></i> Wanita</button>
                         </div>
@@ -438,158 +446,157 @@
                 </div>
                 <input type="file" id="fileInCam" hidden accept="image/*" capture="environment" onchange="handleImg(this)">
                 <input type="file" id="fileInGal" hidden accept="image/*" onchange="handleImg(this)">
-                <button class="btn btn-primary" onclick="addPlayer()" style="margin-top:10px;">Simpan Ke Daftar</button>
+                <button class="btn btn-primary" onclick="addPlayer()">Simpan Ke Daftar</button>
             </div>
 
-            <div style="display:flex; justify-content:space-between; margin:25px 5px 15px 5px; color:var(--text-main); font-size:13px; font-weight:800;">
-                <span>DAFTAR PEMAIN (<span id="pCount">0</span>)</span>
-                <span class="host-only" onclick="toggleTools()" style="cursor:pointer; color:var(--primary); background:var(--glass-bg); padding:4px 10px; border-radius:12px; border:1px solid var(--glass-border);"><i class="fas fa-cog"></i> Pengaturan</span>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin:30px 5px 15px 5px;">
+                <span style="font-weight:900; font-size:14px; color:var(--text-main);">DAFTAR PEMAIN (<span id="pCount">0</span>)</span>
+                <span class="host-only" onclick="toggleTools()" style="cursor:pointer; color:var(--primary); background:var(--glass-bg); padding:6px 12px; border-radius:12px; border:1px solid var(--glass-border); font-size:12px; font-weight:bold;"><i class="fas fa-cog"></i> Pengaturan</span>
             </div>
 
             <div id="toolsPanel" class="card hidden animate__animated animate__fadeIn">
-                <div style="display:flex; flex-direction:column; gap:10px;">
-                    <button class="btn btn-warning host-only" style="padding:10px; font-size:12px;" onclick="openAccessModal()"><i class="fas fa-users-cog"></i> Kelola Akses Admin & Penonton</button>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <button class="btn btn-warning host-only" onclick="openAccessModal()"><i class="fas fa-users-cog"></i> Kelola Akses Admin & Penonton</button>
                     <div style="display:flex; gap:10px;">
-                        <button class="btn btn-ghost" style="padding:10px; font-size:12px; flex:1;" onclick="exportData()"><i class="fas fa-save"></i> Simpan File (.json)</button>
-                        <button class="btn btn-ghost host-only" style="padding:10px; font-size:12px; flex:1;" onclick="document.getElementById('impFile').click()"><i class="fas fa-upload"></i> Restore File</button>
+                        <button class="btn btn-ghost" style="font-size:12px; flex:1;" onclick="exportData()"><i class="fas fa-save"></i> Simpan Game (.json)</button>
+                        <button class="btn btn-ghost host-only" style="font-size:12px; flex:1;" onclick="document.getElementById('impFile').click()"><i class="fas fa-upload"></i> Restore File</button>
                     </div>
-                    <button class="btn btn-ghost host-only" style="padding:10px; font-size:12px; border-color:var(--primary); color:var(--primary);" onclick="openArchives()"><i class="fas fa-archive"></i> Arsip Turnamen</button>
-                    <button class="btn btn-ghost host-only" style="padding:10px; font-size:12px; color:#ef4444; border-color:rgba(239, 68, 68, 0.3);" onclick="resetConfirm()"><i class="fas fa-trash"></i> Reset Keseluruhan</button>
+                    <button class="btn btn-ghost host-only" style="font-size:12px; border-color:var(--primary); color:var(--primary);" onclick="openArchives()"><i class="fas fa-archive"></i> Arsip Turnamen</button>
+                    <button class="btn btn-ghost host-only" style="font-size:12px; color:#ef4444; border-color:rgba(239, 68, 68, 0.3);" onclick="resetConfirm()"><i class="fas fa-trash"></i> Hapus Semua Data</button>
                 </div>
                 <input type="file" id="impFile" hidden accept=".json" onchange="importData(this)">
             </div>
 
-            <div id="playerList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            <div id="playerList" style="display: flex; flex-direction: column; gap: 5px;"></div>
         </div>
-    </div>
 
-    <!-- TAB PLAY -->
-    <div id="tab-play" class="content">
-        <div id="setupArea" class="card admin-only" style="padding:20px;">
-            <h3 style="margin:0 0 15px 0; text-align:center; color:var(--text-main);"><i class="fas fa-sliders-h"></i> Pengaturan Match</h3>
-            
-            <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">JUMLAH LAPANGAN AKTIF</label>
-            <input type="number" id="numCourts" value="1" min="1" max="10" style="text-align:center; font-weight:900; font-size:16px;">
+        <!-- TAB PLAY -->
+        <div id="tab-play" class="content">
+            <div id="setupArea" class="card admin-only" style="padding:25px 20px;">
+                <h3 style="margin:0 0 20px 0; text-align:center; color:var(--primary); font-weight:900;"><i class="fas fa-sliders-h"></i> PENGATURAN MATCH</h3>
+                
+                <span class="section-title">Jumlah Lapangan</span>
+                <input type="number" id="numCourts" value="1" min="1" max="10" style="text-align:center; font-weight:900; font-size:18px; margin-bottom:20px;">
 
-            <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">JENIS OLAHRAGA</label>
-            <div class="segmented-control">
-                <button id="btnSportTennis" class="seg-btn active" onclick="setSport('tennis')">🎾 TENNIS</button>
-                <button id="btnSportPadel" class="seg-btn" onclick="setSport('padel')">🏸 PADEL</button>
+                <span class="section-title">Jenis Olahraga & Format</span>
+                <div class="segmented-control">
+                    <button id="btnSportTennis" class="seg-btn active" onclick="setSport('tennis')">🎾 TENNIS</button>
+                    <button id="btnSportPadel" class="seg-btn" onclick="setSport('padel')">🏸 PADEL</button>
+                </div>
+                <div class="segmented-control" id="formatToggleDiv" style="margin-bottom:20px;">
+                    <button id="btnFormatSingles" class="seg-btn" onclick="setFormat('singles')"><i class="fas fa-user"></i> 1 VS 1</button>
+                    <button id="btnFormatDoubles" class="seg-btn active" onclick="setFormat('doubles')"><i class="fas fa-user-friends"></i> 2 VS 2</button>
+                </div>
+
+                <span class="section-title">Sistem Pasangan</span>
+                <div class="segmented-control">
+                    <button id="btnPasanganAcak" class="seg-btn active" onclick="setPartnerMode('acak')"><i class="fas fa-random"></i> ACAK</button>
+                    <button id="btnPasanganTetap" class="seg-btn" onclick="setPartnerMode('tetap')"><i class="fas fa-link"></i> TETAP (FIXED)</button>
+                </div>
+
+                <div id="fixedPartnerSetup" class="hidden" style="margin-bottom:20px; text-align:center;">
+                    <button class="btn btn-ghost" onclick="openFixedPairsDialog()"><i class="fas fa-users-cog"></i> Kelola Pasangan Tetap</button>
+                </div>
+
+                <div id="logicPadelOnly" class="hidden" style="margin-bottom:20px;">
+                    <span class="section-title">Logika Acak Pasangan</span>
+                    <select id="selPadelLogic">
+                        <option value="standard">Standar (Prioritas jarang main)</option>
+                        <option value="americano">Americano (Prioritas partner baru)</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary" style="font-size:16px; padding:18px; margin-top: 10px;" onclick="generateMatch()">
+                    <i class="fas fa-play"></i> MULAI PERTANDINGAN
+                </button>
             </div>
 
-            <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">FORMAT PERTANDINGAN</label>
-            <div class="segmented-control" id="formatToggleDiv">
-                <button id="btnFormatSingles" class="seg-btn" onclick="setFormat('singles')"><i class="fas fa-user"></i> 1 VS 1</button>
-                <button id="btnFormatDoubles" class="seg-btn active" onclick="setFormat('doubles')"><i class="fas fa-user-friends"></i> 2 VS 2</button>
+            <div id="matchArea" class="hidden animate__animated animate__fadeInUp">
+                <div id="multiCourtContainer"></div>
+            </div>
+        </div>
+
+        <!-- TAB RANK -->
+        <div id="tab-rank" class="content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3 style="margin:0; font-weight:900;">KLASEMEN LIVE</h3>
+                <small style="color:var(--text-muted); font-size:11px; font-weight:bold;">(Tap nama u/ Profil)</small>
             </div>
 
-            <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">SISTEM PASANGAN (PARTNER)</label>
-            <div class="segmented-control">
-                <button id="btnPasanganAcak" class="seg-btn active" onclick="setPartnerMode('acak')"><i class="fas fa-random"></i> ACAK</button>
-                <button id="btnPasanganTetap" class="seg-btn" onclick="setPartnerMode('tetap')"><i class="fas fa-link"></i> TETAP (FIXED)</button>
-            </div>
-
-            <div id="fixedPartnerSetup" class="hidden" style="margin-bottom:15px; text-align:center;">
-                <button class="btn btn-ghost" onclick="openFixedPairsDialog()"><i class="fas fa-users-cog"></i> Kelola Pasangan Tetap</button>
-            </div>
-
-            <div id="logicPadelOnly" class="hidden" style="margin-top:10px;">
-                <label id="lblPadelLogic" style="font-size:12px; font-weight:bold; color:var(--text-muted); display:block; margin-bottom:5px;">LOGIKA ACAK PASANGAN</label>
-                <select id="selPadelLogic">
-                    <option value="standard">Standar (Prioritas jarang main)</option>
-                    <option value="americano">Americano (Prioritas partner baru)</option>
-                </select>
-            </div>
-
-            <button class="btn btn-primary" style="font-size:16px; padding:16px; margin-top: 15px;" onclick="generateMatch()">
-                <i class="fas fa-play"></i> MULAI PERTANDINGAN
+            <button class="btn btn-primary" style="margin-bottom:20px;" onclick="openShareLeaderboard()">
+                <i class="fas fa-share-alt"></i> BAGIKAN KLASEMEN
             </button>
-        </div>
 
-        <div id="matchArea" class="hidden animate__animated animate__fadeInUp">
-            <div id="multiCourtContainer"></div>
-        </div>
-    </div>
+            <button id="btnNewTournament" class="btn btn-success hidden host-only" style="margin-bottom:20px; padding:16px;" onclick="createNewTournament()">
+                <i class="fas fa-plus-circle"></i> BUAT TURNAMEN BARU
+            </button>
 
-    <!-- TAB RANK -->
-    <div id="tab-rank" class="content">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <h3 style="margin:0; font-weight:900;">KLASEMEN LIVE</h3>
-            <small style="color:var(--text-main); font-size:10px;">(Tap nama u/ Profil)</small>
-        </div>
-
-        <button class="btn btn-primary" style="margin-bottom:15px; width:100%; box-shadow:0 4px 15px rgba(67, 97, 238, 0.4);" onclick="openShareLeaderboard()">
-            <i class="fas fa-share-alt"></i> BAGIKAN KLASEMEN
-        </button>
-
-        <button id="btnNewTournament" class="btn btn-success hidden host-only" style="margin-bottom:15px; padding:16px; width:100%; box-shadow:0 4px 15px rgba(16, 185, 129, 0.4);" onclick="createNewTournament()">
-            <i class="fas fa-plus-circle"></i> BUAT TURNAMEN BARU
-        </button>
-
-        <div id="rankCaptureArea" class="card" style="padding:20px;">
-            <div style="text-align:center; margin-bottom:20px; border-bottom:2px dashed var(--glass-border); padding-bottom:15px;">
-                <h4 style="margin:0; color:var(--primary); font-weight:900; letter-spacing:1px; font-size: 18px;">LEADERBOARD</h4>
-                <div id="finishBadge" class="hidden" style="background:var(--gold); color:#000; display:inline-block; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:900; margin-top:8px;">🏆 TURNAMEN SELESAI</div>
+            <div id="rankCaptureArea" class="card" style="padding:20px 15px;">
+                <div style="text-align:center; margin-bottom:15px;">
+                    <h4 style="margin:0; color:var(--primary); font-weight:900; letter-spacing:1px; font-size: 20px;">LEADERBOARD</h4>
+                    <div id="finishBadge" class="hidden" style="background:var(--gold); color:#000; display:inline-block; padding:5px 15px; border-radius:20px; font-size:12px; font-weight:900; margin-top:10px; box-shadow:0 4px 10px rgba(0,0,0,0.3);">🏆 TURNAMEN SELESAI</div>
+                </div>
+                <div id="rankTableContainer">
+                    <table>
+                        <thead>
+                            <tr><th style="width:30px">#</th><th>Pemain</th><th style="text-align:center">Main</th><th style="text-align:right">Poin</th></tr>
+                        </thead>
+                        <tbody id="rankBody"></tbody>
+                    </table>
+                </div>
             </div>
-            <div id="rankTableContainer">
-                <table>
-                    <thead>
-                        <tr><th style="width:30px">#</th><th>Pemain</th><th style="text-align:center">Main</th><th style="text-align:right">Poin</th></tr>
-                    </thead>
-                    <tbody id="rankBody"></tbody>
-                </table>
+
+            <div id="finishArea" style="margin-top:25px;">
+                <button id="btnFinish" class="btn btn-danger host-only" onclick="finishConfirm()"><i class="fas fa-flag-checkered"></i> SELESAIKAN TURNAMEN</button>
+                <button id="btnResume" class="btn btn-ghost hidden host-only" onclick="data.isFinished = false; save();"><i class="fas fa-undo"></i> Buka Kembali Turnamen</button>
             </div>
-        </div>
 
-        <div id="finishArea" style="margin-top:20px;">
-            <button id="btnFinish" class="btn btn-danger host-only" style="padding:16px;" onclick="finishConfirm()"><i class="fas fa-flag-checkered"></i> SELESAIKAN TURNAMEN</button>
-            <button id="btnResume" class="btn btn-ghost hidden host-only" style="padding:16px;" onclick="data.isFinished = false; save();"><i class="fas fa-undo"></i> Buka Kembali Turnamen</button>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; margin:30px 0 15px 0;">
-            <h4 style="margin:0; color:var(--text-main); font-weight:800;">Riwayat Pertandingan</h4>
-        </div>
-        <div id="histList" style="padding-bottom:30px; display:flex; flex-direction:column; gap:10px; max-height:450px; overflow-y:auto; overflow-x:hidden;"></div>
-    </div>
-
-    <!-- TAB SOCIAL (TEMAN & KOMUNITAS) -->
-    <div id="tab-social" class="content">
-        <div class="card" style="text-align:center;">
-            <img src="logo.png" style="width:50px; height:50px; margin-bottom:10px; border-radius:10px;">
-            <h3 style="margin:0 0 5px 0; color:var(--primary);">Koneksi Pemain</h3>
-            <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px;">Username Anda: <b id="myUsernameDisplay" style="color:var(--accent);"></b></p>
-            
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="searchFriendInp" placeholder="Ketik Username Teman..." style="margin-bottom:0;">
-                <button class="btn btn-primary" style="width:auto; padding:0 20px;" onclick="searchAndAddFriend()"><i class="fas fa-search"></i></button>
+            <div style="margin:35px 0 15px 0;">
+                <span class="section-title" style="border:none;">Riwayat Pertandingan</span>
             </div>
+            <div id="histList" style="padding-bottom:30px; display:flex; flex-direction:column; gap:12px; max-height:450px; overflow-y:auto; overflow-x:hidden;"></div>
         </div>
 
-        <h4 style="margin:20px 0 10px 0; font-size:14px;"><i class="fas fa-bell"></i> Permintaan Pertemanan</h4>
-        <div id="friendRequestsList" style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;"></div>
+        <!-- TAB SOCIAL -->
+        <div id="tab-social" class="content">
+            <div class="card" style="text-align:center; padding:30px 20px;">
+                <img src="logo.png" style="width:60px; height:60px; margin-bottom:15px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+                <h3 style="margin:0 0 5px 0; color:var(--primary); font-weight:900;">KONEKSI PEMAIN</h3>
+                <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">Username Anda: <b id="myUsernameDisplay" style="color:var(--accent); font-size:15px;"></b></p>
+                
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="searchFriendInp" placeholder="Ketik Username Teman..." style="margin-bottom:0;">
+                    <button class="btn btn-primary" style="width:auto; padding:0 25px;" onclick="searchAndAddFriend()"><i class="fas fa-search"></i></button>
+                </div>
+            </div>
 
-        <h4 style="margin:20px 0 10px 0; font-size:14px;"><i class="fas fa-user-friends"></i> Daftar Teman & Turnamen Aktif</h4>
-        <div id="friendsList" style="display:flex; flex-direction:column; gap:10px;"></div>
-    </div>
+            <span class="section-title"><i class="fas fa-bell"></i> Permintaan Pertemanan</span>
+            <div id="friendRequestsList" style="display:flex; flex-direction:column; gap:10px; margin-bottom:30px;"></div>
 
-    <div class="nav-dock">
-        <button id="nav-home" class="nav-item active" onclick="nav('home')"><i class="fas fa-home"></i></button>
-        <button id="nav-play" class="nav-item" onclick="nav('play')"><i class="fas fa-play-circle"></i></button>
-        <button id="nav-rank" class="nav-item" onclick="nav('rank')"><i class="fas fa-trophy"></i></button>
-        <button id="nav-social" class="nav-item" onclick="nav('social')"><i class="fas fa-users"></i></button>
+            <span class="section-title"><i class="fas fa-user-friends"></i> Teman & Turnamen Aktif</span>
+            <div id="friendsList" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+
+        <div class="nav-dock" id="mainNavDock">
+            <button id="nav-home" class="nav-item active" onclick="nav('home')"><i class="fas fa-home"></i></button>
+            <button id="nav-play" class="nav-item" onclick="nav('play')"><i class="fas fa-play-circle"></i></button>
+            <button id="nav-rank" class="nav-item" onclick="nav('rank')"><i class="fas fa-trophy"></i></button>
+            <button id="nav-social" class="nav-item" onclick="nav('social')"><i class="fas fa-users"></i></button>
+        </div>
     </div>
 </div>
 
 <script>
     // --- FIREBASE CONFIGURATION (WAJIB DIISI) ---
     const firebaseConfig = {
-        apiKey: "ISI_API_KEY_ANDA_DISINI",
-        authDomain: "ISI_PROJECT_ID.firebaseapp.com",
-        projectId: "ISI_PROJECT_ID",
-        storageBucket: "ISI_PROJECT_ID.appspot.com",
-        messagingSenderId: "ISI_SENDER_ID",
-        appId: "ISI_APP_ID"
-    };
+  apiKey: "AIzaSyCv-wlyi4DXxhA-z5mI52-8DeLxpwLaNj8",
+  authDomain: "bazaar-inventory.firebaseapp.com",
+  databaseURL: "https://bazaar-inventory-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "bazaar-inventory",
+  storageBucket: "bazaar-inventory.firebasestorage.app",
+  messagingSenderId: "324285970033",
+  appId: "1:324285970033:web:c255a12baa85c259e9cdd0"
+};
     
     let auth, db;
     if(firebaseConfig.apiKey !== "ISI_API_KEY_ANDA_DISINI") {
@@ -606,11 +613,10 @@
     let isMuted = false;
     let currentTheme = localStorage.getItem('HH_THEME') || 'auto';
     
-    // RBAC & State Vars
     let myUid = null;
     let myUsername = "";
     let currentRoomId = null;
-    let currentRole = 'host'; // 'host', 'admin', 'viewer'
+    let currentRole = 'host'; 
     let dbUnsubscribe = null;
     let profileUnsubscribe = null;
     let myProfileData = { friends: [], friendRequests: [] };
@@ -658,7 +664,6 @@
                             document.getElementById('appContainer').classList.add('visible');
                             
                             listenToMyProfile();
-                            // Secara bawaan masuk ke kamar sendiri
                             joinRoom(myUid); 
                         }
                     });
@@ -670,12 +675,12 @@
                 }
             });
         } else {
+            // OFFLINE MODE (Tanpa Firebase)
             document.getElementById('welcomeScreen').classList.add('hidden');
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('appContainer').classList.add('visible');
             const s = localStorage.getItem(DB_KEY);
             if(s) { data = JSON.parse(s); }
-            nav(data.activeTab || 'home', false);
             renderTitleSetup();
             applyRBAC();
             renderAll();
@@ -689,13 +694,12 @@
         playSfx('pop'); 
         
         if(!auth) {
-            appAlert("Peringatan", "Firebase belum dikonfigurasi. Aplikasi berjalan dalam mode OFFLINE LOKAL (sementara) dan data tidak akan sinkron ke perangkat lain.");
+            appAlert("Peringatan", "Firebase belum dikonfigurasi. Aplikasi berjalan dalam mode OFFLINE LOKAL (sementara).");
             document.getElementById('welcomeScreen').classList.add('hidden');
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('appContainer').classList.add('visible');
             const s = localStorage.getItem(DB_KEY);
             if(s) { data = JSON.parse(s); }
-            nav(data.activeTab || 'home', false);
             renderTitleSetup();
             applyRBAC();
             renderAll();
@@ -833,7 +837,6 @@
             let isAlreadyFriend = myProfileData.friends.find(x => x.uid === fUid);
             if(isAlreadyFriend) return appAlert("Info", "Pengguna ini sudah menjadi teman Anda.");
             
-            // Tambahkan request ke akun teman
             let reqs = fData.friendRequests || [];
             let alreadyReq = reqs.find(x => x.uid === myUid);
             if(alreadyReq) return appAlert("Info", "Permintaan pertemanan sudah dikirim sebelumnya.");
@@ -847,13 +850,11 @@
     }
 
     function acceptFriend(fUid, fUsername) {
-        // Hapus dari requests, tambah ke friends (milik saya)
         let myReqs = myProfileData.friendRequests.filter(x => x.uid !== fUid);
         let myFriends = myProfileData.friends;
         myFriends.push({uid: fUid, username: fUsername});
         
         db.collection('users').doc(myUid).update({ friendRequests: myReqs, friends: myFriends }).then(() => {
-            // Tambah juga ke akun teman secara otomatis
             db.collection('users').doc(fUid).get().then(doc => {
                 if(doc.exists) {
                     let fData = doc.data();
@@ -871,27 +872,24 @@
     }
 
     function renderSocialTab() {
-        // Render Requests
         let reqHtml = myProfileData.friendRequests.map(r => `
-            <div style="background:var(--input-bg); padding:10px 15px; border-radius:10px; border:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
-                <b style="color:var(--text-main);">${r.username}</b>
-                <div style="display:flex; gap:5px;">
-                    <button class="btn btn-success" style="padding:5px 10px; width:auto; font-size:11px;" onclick="acceptFriend('${r.uid}', '${r.username}')"><i class="fas fa-check"></i> Terima</button>
-                    <button class="btn btn-danger" style="padding:5px 10px; width:auto; font-size:11px;" onclick="rejectFriend('${r.uid}')"><i class="fas fa-times"></i></button>
+            <div style="background:var(--input-bg); padding:12px 15px; border-radius:12px; border:1px solid var(--glass-border); display:flex; justify-content:space-between; align-items:center;">
+                <b style="color:var(--text-main); font-size:14px;">${r.username}</b>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-success" style="padding:6px 12px; width:auto; font-size:12px;" onclick="acceptFriend('${r.uid}', '${r.username}')"><i class="fas fa-check"></i> Terima</button>
+                    <button class="btn btn-danger" style="padding:6px 12px; width:auto; font-size:12px;" onclick="rejectFriend('${r.uid}')"><i class="fas fa-times"></i></button>
                 </div>
             </div>
         `).join('');
-        document.getElementById('friendRequestsList').innerHTML = reqHtml || '<div style="font-size:12px; color:var(--text-muted);">Tidak ada permintaan baru.</div>';
+        document.getElementById('friendRequestsList').innerHTML = reqHtml || '<div style="font-size:13px; color:var(--text-muted); text-align:center;">Tidak ada permintaan baru.</div>';
 
-        // Render Friends & Check if they have an active tournament
         if(myProfileData.friends.length === 0) {
-            document.getElementById('friendsList').innerHTML = '<div style="font-size:12px; color:var(--text-muted);">Anda belum memiliki teman.</div>';
+            document.getElementById('friendsList').innerHTML = '<div style="font-size:13px; color:var(--text-muted); text-align:center;">Anda belum memiliki teman.</div>';
             return;
         }
 
         let friendsHtml = '';
         myProfileData.friends.forEach(f => {
-            // Cek room turnamen milik teman ini
             let fRoomId = f.uid;
             db.collection("tournaments").doc(fRoomId).get().then(doc => {
                 let statusHtml = '';
@@ -899,35 +897,32 @@
                     let tData = doc.data();
                     let acc = tData.access || { requests:[], viewers:[], admins:[] };
                     
-                    // Cek peran kita di room teman
-                    let roleStr = '';
-                    let actionBtn = '';
-                    
+                    let roleStr = ''; let actionBtn = '';
                     if(acc.admins && acc.admins.find(x=>x.uid === myUid)) {
                         roleStr = '<span class="badge-role role-admin">Admin</span>';
-                        actionBtn = `<button class="btn btn-primary" style="padding:6px 12px; font-size:11px; width:auto;" onclick="joinRoom('${fRoomId}')">Masuk Room</button>`;
+                        actionBtn = `<button class="btn btn-primary" style="padding:8px 15px; font-size:12px; width:auto;" onclick="joinRoom('${fRoomId}')">Masuk Room</button>`;
                     } else if(acc.viewers && acc.viewers.find(x=>x.uid === myUid)) {
                         roleStr = '<span class="badge-role role-viewer">Viewer</span>';
-                        actionBtn = `<button class="btn btn-primary" style="padding:6px 12px; font-size:11px; width:auto;" onclick="joinRoom('${fRoomId}')">Masuk Room</button>`;
+                        actionBtn = `<button class="btn btn-primary" style="padding:8px 15px; font-size:12px; width:auto;" onclick="joinRoom('${fRoomId}')">Masuk Room</button>`;
                     } else if(acc.requests && acc.requests.find(x=>x.uid === myUid)) {
-                        actionBtn = `<button class="btn btn-ghost" style="padding:6px 12px; font-size:11px; width:auto;" disabled>Menunggu Host...</button>`;
+                        actionBtn = `<button class="btn btn-ghost" style="padding:8px 15px; font-size:12px; width:auto;" disabled>Menunggu Host...</button>`;
                     } else {
-                        actionBtn = `<button class="btn btn-success" style="padding:6px 12px; font-size:11px; width:auto;" onclick="requestJoinTournament('${fRoomId}')">Minta Gabung</button>`;
+                        actionBtn = `<button class="btn btn-success" style="padding:8px 15px; font-size:12px; width:auto;" onclick="requestJoinTournament('${fRoomId}')">Minta Gabung</button>`;
                     }
 
                     statusHtml = `
-                        <div style="font-size:11px; margin-top:5px; padding-top:5px; border-top:1px dashed var(--border-color);">
-                            <span style="color:var(--success);"><i class="fas fa-circle" style="font-size:8px;"></i> Aktif:</span> <b>${tData.title}</b> ${roleStr}
-                            <div style="margin-top:5px;">${actionBtn}</div>
+                        <div style="font-size:12px; margin-top:10px; padding-top:10px; border-top:1px dashed var(--glass-border);">
+                            <span style="color:var(--success);"><i class="fas fa-circle" style="font-size:8px;"></i> Aktif:</span> <b style="color:var(--text-main);">${tData.title}</b> ${roleStr}
+                            <div style="margin-top:10px;">${actionBtn}</div>
                         </div>
                     `;
                 } else {
-                    statusHtml = `<div style="font-size:11px; margin-top:5px; color:var(--text-muted);">- Sedang offline -</div>`;
+                    statusHtml = `<div style="font-size:12px; margin-top:10px; color:var(--text-muted); padding-top:10px; border-top:1px dashed var(--glass-border);">- Sedang offline -</div>`;
                 }
 
                 friendsHtml += `
-                    <div class="card" style="margin-bottom:0; padding:12px 15px; text-align:left;">
-                        <b style="font-size:15px; color:var(--primary);"><i class="fas fa-user"></i> ${f.username}</b>
+                    <div class="card" style="margin-bottom:0; padding:15px; text-align:left;">
+                        <b style="font-size:16px; color:var(--primary);"><i class="fas fa-user" style="margin-right:8px;"></i> ${f.username}</b>
                         ${statusHtml}
                     </div>
                 `;
@@ -941,11 +936,8 @@
         currentRoomId = roomId;
         if (dbUnsubscribe) dbUnsubscribe();
 
-        // Tampilkan badge status
         document.getElementById('roomStatusBadge').innerHTML = (roomId === myUid) 
-            ? '<i class="fas fa-wifi"></i> Turnamen Saya' 
-            : '<i class="fas fa-wifi"></i> Room Teman';
-            
+            ? '<i class="fas fa-wifi"></i> Turnamen Saya' : '<i class="fas fa-wifi"></i> Room Teman';
         document.getElementById('returnToMyRoomBtn').classList.toggle('hidden', roomId === myUid);
 
         dbUnsubscribe = db.collection("tournaments").doc(roomId).onSnapshot(doc => {
@@ -961,11 +953,13 @@
                 data.dateArchived = loadedData.dateArchived || null;
                 data.access = loadedData.access || { requests: [], viewers: [], admins: [] };
             } else {
-                if(roomId === myUid) save(); // Buat jika milik sendiri dan kosong
-                else return appAlert("Oops", "Turnamen ini sudah ditutup atau tidak ada.");
+                if(roomId === myUid) {
+                    // Turnamen baru
+                    data = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', access: { requests: [], viewers: [], admins: [] } };
+                    save(); 
+                } else return appAlert("Oops", "Turnamen ini sudah ditutup atau tidak ada.");
             }
 
-            // Tentukan peran (Role)
             if(roomId === myUid) {
                 currentRole = 'host';
             } else {
@@ -973,15 +967,11 @@
                 if(acc.admins && acc.admins.find(x=>x.uid === myUid)) currentRole = 'admin';
                 else if(acc.viewers && acc.viewers.find(x=>x.uid === myUid)) currentRole = 'viewer';
                 else {
-                    // Terlempar keluar (di-kick)
-                    appAlert("Info", "Anda sudah tidak memiliki akses ke Turnamen ini.");
+                    appAlert("Info", "Anda tidak memiliki akses ke Turnamen ini.");
                     return returnToMyRoom();
                 }
             }
 
-            nav(localStorage.getItem('HH_ACTIVE_TAB') || 'home', false);
-            setPartnerMode(currentPartnerMode, false);
-            
             if(data.currentMatches && data.currentMatches.length > 0) {
                 let sample = data.currentMatches[0];
                 if(sample.sport) setSport(sample.sport, false);
@@ -999,15 +989,9 @@
     function returnToMyRoom() { joinRoom(myUid); }
 
     function applyRBAC() {
-        // Tampilkan/Sembunyikan elemen berdasarkan class
-        document.querySelectorAll('.host-only').forEach(el => {
-            el.style.display = (currentRole === 'host') ? '' : 'none';
-        });
-        document.querySelectorAll('.admin-only').forEach(el => {
-            el.style.display = (currentRole === 'host' || currentRole === 'admin') ? '' : 'none';
-        });
+        document.querySelectorAll('.host-only').forEach(el => { el.style.display = (currentRole === 'host') ? '' : 'none'; });
+        document.querySelectorAll('.admin-only').forEach(el => { el.style.display = (currentRole === 'host' || currentRole === 'admin') ? '' : 'none'; });
 
-        // Paksa tombol skor untuk Viewer menjadi tidak aktif
         let scoreBtns = document.querySelectorAll('.btn-score');
         scoreBtns.forEach(b => {
             if(currentRole === 'viewer') { b.style.opacity = '0.3'; b.style.pointerEvents = 'none'; }
@@ -1019,10 +1003,11 @@
         renderAll(); 
         applyRBAC();
         if(auth && auth.currentUser) {
-            // Hanya Host atau Admin yang bisa nyimpan data ke cloud
             if(currentRole === 'host' || currentRole === 'admin') {
                 db.collection("tournaments").doc(currentRoomId).set(data).catch(err => console.error("Gagal save:", err));
             }
+        } else {
+            localStorage.setItem(DB_KEY, JSON.stringify(data));
         }
     }
 
@@ -1043,7 +1028,6 @@
         });
     }
 
-    // --- HOST KELOLA AKSES ---
     function openAccessModal() {
         if(currentRole !== 'host') return;
         document.getElementById('accessModal').classList.remove('hidden');
@@ -1054,30 +1038,28 @@
         let acc = data.access || { requests:[], viewers:[], admins:[] };
         document.getElementById('reqCount').innerText = acc.requests.length;
 
-        // Render Requests
         let reqHtml = acc.requests.map(r => `
-            <div style="background:var(--input-bg); padding:10px; border-radius:8px; border:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                <b style="font-size:13px;">${r.username}</b>
-                <div style="display:flex; gap:5px;">
-                    <button class="btn btn-success" style="padding:4px 8px; font-size:10px; width:auto;" onclick="approveJoin('${r.uid}', '${r.username}')">Terima</button>
-                    <button class="btn btn-danger" style="padding:4px 8px; font-size:10px; width:auto;" onclick="rejectJoin('${r.uid}')">Tolak</button>
+            <div style="background:var(--input-bg); padding:12px; border-radius:12px; border:1px solid var(--glass-border); display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <b style="font-size:14px; color:var(--text-main);">${r.username}</b>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-success" style="padding:6px 12px; font-size:12px; width:auto;" onclick="approveJoin('${r.uid}', '${r.username}')">Terima</button>
+                    <button class="btn btn-danger" style="padding:6px 12px; font-size:12px; width:auto;" onclick="rejectJoin('${r.uid}')">Tolak</button>
                 </div>
             </div>
         `).join('');
         document.getElementById('accessRequestsList').innerHTML = reqHtml || '<div style="font-size:12px; color:var(--text-muted);">Tidak ada permintaan.</div>';
 
-        // Render Members
         let membersHtml = '';
         const memberCard = (m, role) => `
-            <div style="background:var(--input-bg); padding:10px; border-radius:8px; border:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <div style="background:var(--input-bg); padding:12px; border-radius:12px; border:1px solid var(--glass-border); display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                 <div style="text-align:left;">
-                    <b style="font-size:13px; display:block;">${m.username}</b>
+                    <b style="font-size:15px; color:var(--text-main); display:block; margin-bottom:4px;">${m.username}</b>
                     <span class="badge-role ${role === 'admin' ? 'role-admin' : 'role-viewer'}">${role}</span>
                 </div>
-                <div style="display:flex; gap:5px;">
-                    ${role === 'viewer' ? `<button class="btn btn-primary" style="padding:4px 8px; font-size:10px; width:auto;" onclick="promoteAdmin('${m.uid}', '${m.username}')">Jadikan Admin</button>` : ''}
-                    ${role === 'admin' ? `<button class="btn btn-warning" style="padding:4px 8px; font-size:10px; width:auto;" onclick="demoteViewer('${m.uid}', '${m.username}')">Jadikan Viewer</button>` : ''}
-                    <button class="btn btn-danger" style="padding:4px 8px; font-size:10px; width:auto;" onclick="kickMember('${m.uid}', '${role}')">Kick</button>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    ${role === 'viewer' ? `<button class="btn btn-primary" style="padding:5px 10px; font-size:10px; width:100px;" onclick="promoteAdmin('${m.uid}', '${m.username}')">Jadikan Admin</button>` : ''}
+                    ${role === 'admin' ? `<button class="btn btn-warning" style="padding:5px 10px; font-size:10px; width:100px;" onclick="demoteViewer('${m.uid}', '${m.username}')">Jadikan Viewer</button>` : ''}
+                    <button class="btn btn-danger" style="padding:5px 10px; font-size:10px; width:100px;" onclick="kickMember('${m.uid}', '${role}')">Kick Keluar</button>
                 </div>
             </div>
         `;
@@ -1088,123 +1070,92 @@
         document.getElementById('accessMembersList').innerHTML = membersHtml || '<div style="font-size:12px; color:var(--text-muted);">Belum ada anggota yang bergabung.</div>';
     }
 
-    function approveJoin(uid, uname) {
-        data.access.requests = data.access.requests.filter(x=>x.uid !== uid);
-        data.access.viewers.push({uid: uid, username: uname});
-        save(); renderAccessModal();
-    }
-    function rejectJoin(uid) {
-        data.access.requests = data.access.requests.filter(x=>x.uid !== uid);
-        save(); renderAccessModal();
-    }
-    function promoteAdmin(uid, uname) {
-        data.access.viewers = data.access.viewers.filter(x=>x.uid !== uid);
-        data.access.admins.push({uid: uid, username: uname});
-        save(); renderAccessModal();
-    }
-    function demoteViewer(uid, uname) {
-        data.access.admins = data.access.admins.filter(x=>x.uid !== uid);
-        data.access.viewers.push({uid: uid, username: uname});
-        save(); renderAccessModal();
-    }
+    function approveJoin(uid, uname) { data.access.requests = data.access.requests.filter(x=>x.uid !== uid); data.access.viewers.push({uid: uid, username: uname}); save(); renderAccessModal(); }
+    function rejectJoin(uid) { data.access.requests = data.access.requests.filter(x=>x.uid !== uid); save(); renderAccessModal(); }
+    function promoteAdmin(uid, uname) { data.access.viewers = data.access.viewers.filter(x=>x.uid !== uid); data.access.admins.push({uid: uid, username: uname}); save(); renderAccessModal(); }
+    function demoteViewer(uid, uname) { data.access.admins = data.access.admins.filter(x=>x.uid !== uid); data.access.viewers.push({uid: uid, username: uname}); save(); renderAccessModal(); }
     function kickMember(uid, role) {
         if(role === 'admin') data.access.admins = data.access.admins.filter(x=>x.uid !== uid);
         else data.access.viewers = data.access.viewers.filter(x=>x.uid !== uid);
         save(); renderAccessModal();
     }
 
-    // --- DIALOG & UTILS ---
-    function showAppDialog(type, title, msg, onConfirm, onCancel) {
-        const dialog = document.getElementById('customDialog');
-        document.getElementById('dialogTitle').innerText = title;
-        document.getElementById('dialogMsg').innerText = msg;
-        const icon = document.getElementById('dialogIcon');
-        icon.className = 'fas dialog-icon ';
-        if(type === 'alert') icon.className += 'fa-exclamation-circle error';
-        else if(type === 'success') icon.className += 'fa-check-circle success';
-        else if(type === 'confirm') icon.className += 'fa-question-circle warning';
-        else icon.className += 'fa-info-circle info';
-        
-        const acts = document.getElementById('dialogActions'); acts.innerHTML = ''; acts.style.flexDirection = 'row';
-        if(type === 'confirm') {
-            const btnC = document.createElement('button'); btnC.className = 'btn btn-ghost'; btnC.innerText = 'Batal';
-            btnC.onclick = () => { playSfx('pop'); dialog.classList.add('hidden'); if(onCancel) onCancel(); };
-            const btnO = document.createElement('button'); btnO.className = 'btn btn-primary'; btnO.innerText = 'Ya, Lanjutkan';
-            btnO.onclick = () => { playSfx('pop'); dialog.classList.add('hidden'); if(onConfirm) onConfirm(); };
-            acts.appendChild(btnC); acts.appendChild(btnO);
+    // --- TAHAPAN / STAGES LOGIC (Perbaikan Utama) ---
+    function renderTitleSetup() {
+        if(data.title) {
+            document.getElementById('initScreen').classList.add('hidden');
+            document.getElementById('initScreen').classList.remove('active');
+            
+            document.getElementById('mainTabs').classList.remove('hidden');
+            document.getElementById('tourTitleDisplay').innerText = data.title;
+            
+            nav(data.activeTab || 'home', false);
         } else {
-            const btnO = document.createElement('button'); btnO.className = 'btn btn-primary'; btnO.innerText = 'Tutup';
-            btnO.onclick = () => { playSfx('pop'); dialog.classList.add('hidden'); if(onConfirm) onConfirm(); };
-            acts.appendChild(btnO);
-        }
-        dialog.classList.remove('hidden');
-    }
-    function appAlert(title, msg) { showAppDialog('alert', title, msg); }
-    function appSuccess(title, msg) { showAppDialog('success', title, msg); }
-    function appConfirm(title, msg, onConfirm) { showAppDialog('confirm', title, msg, onConfirm); }
-
-    function initTheme() {
-        if (currentTheme === 'auto') document.documentElement.setAttribute('data-theme', window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        else document.documentElement.setAttribute('data-theme', currentTheme);
-    }
-    function getAvatar(p) { return (p.img && p.img.length > 100) ? p.img : (p.gender === 'M' ? DEF_M : DEF_F); }
-
-    function playSfx(type) {
-        if(isMuted) return;
-        if(audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        if(type === 'pop') {
-            osc.frequency.setValueAtTime(600, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-        } else if (type === 'whistle') {
-            osc.frequency.setValueAtTime(2000, audioCtx.currentTime); gain.gain.value = 0.05;
-            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            document.getElementById('mainTabs').classList.add('hidden');
+            
+            document.getElementById('initScreen').classList.remove('hidden');
+            document.getElementById('initScreen').classList.add('active');
+            renderQuickArchives();
         }
     }
-    
-    function toggleMute() { isMuted = !isMuted; document.getElementById('soundIcon').className = isMuted ? 'fas fa-volume-mute' : 'fas fa-volume-up'; }
-    function toggleTheme() { currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', currentTheme); localStorage.setItem('HH_THEME', currentTheme); }
+
+    function nav(id, playSound=true) {
+        if(playSound) playSfx('pop');
+        if(!data.title) return; // Kunci tab jika belum ada judul
+        
+        let oldIndex = tabOrder.indexOf(data.activeTab);
+        let newIndex = tabOrder.indexOf(id);
+        if(oldIndex === -1) oldIndex = 0;
+        
+        let animClass = newIndex > oldIndex ? 'slide-in-right' : (newIndex < oldIndex ? 'slide-in-left' : 'fadeIn');
+
+        document.querySelectorAll('#mainTabs .content').forEach(c => { 
+            c.classList.remove('active', 'slide-in-right', 'slide-in-left', 'fadeIn'); 
+        });
+        
+        let target = document.getElementById('tab-'+id);
+        if(target) target.classList.add('active', animClass);
+        
+        document.querySelectorAll('.nav-item').forEach((b,i) => b.classList.toggle('active', tabOrder[i]===id));
+        
+        if (data.activeTab !== id) {
+            data.activeTab = id; 
+            localStorage.setItem("HH_ACTIVE_TAB", id);
+            save();
+        }
+    }
 
     function saveTitle() {
         if(currentRole !== 'host') return appAlert("Ditolak", "Hanya pembuat turnamen yang bisa mengubah data ini.");
         let t = document.getElementById('tourTitleInp').value.trim();
         if(!t) return appAlert("Peringatan", "Silakan masukkan judul game/turnamen terlebih dahulu.");
-        data.title = t; save(); renderTitleSetup();
+        data.title = t; 
+        save(); 
+        renderTitleSetup();
     }
+    
     function editTitle() {
         if(currentRole !== 'host') return;
-        let t = prompt("Ubah Judul Game/Turnamen:", data.title);
+        let t = prompt("Ubah Judul Turnamen:", data.title);
         if(t !== null && t.trim() !== '') { data.title = t.trim(); save(); renderTitleSetup(); }
-    }
-    function renderTitleSetup() {
-        if(data.title) {
-            document.getElementById('titleArea').classList.add('hidden');
-            document.getElementById('playerArea').classList.remove('hidden');
-            document.getElementById('tourTitleDisplay').innerText = data.title;
-        } else {
-            document.getElementById('titleArea').classList.remove('hidden');
-            document.getElementById('playerArea').classList.add('hidden');
-            renderQuickArchives();
-        }
     }
 
     function renderQuickArchives() {
         let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
         let section = document.getElementById('quickArchiveSection');
         let listContainer = document.getElementById('quickArchiveList');
+        
         if(archives.length === 0) { section.classList.add('hidden'); } else {
             section.classList.remove('hidden');
             let html = archives.map((arc, i) => `
-                <div style="background:var(--input-bg); padding:12px; border-radius:12px; border:1px solid var(--glass-border); display:flex; justify-content:space-between; align-items:center;">
+                <div class="card" style="padding:15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
                     <div style="flex:1;">
-                        <div style="font-weight:bold; color:var(--primary); font-size:15px;">${arc.title || 'Tanpa Judul'}</div>
-                        <div style="font-size:11px; color:var(--text-muted);">${arc.players.length} Pemain | ${arc.matches.length} Match</div>
+                        <div style="font-weight:900; color:var(--primary); font-size:16px; margin-bottom:5px;">${arc.title || 'Tanpa Judul'}</div>
+                        <div style="font-size:12px; color:var(--text-muted);"><i class="fas fa-users"></i> ${arc.players.length} Pemain | <i class="fas fa-trophy"></i> ${arc.matches.length} Match</div>
                     </div>
                     <div style="display:flex; gap:8px;">
-                        <button class="btn btn-success" style="padding:6px 12px; font-size:12px; width:auto;" onclick="viewArchive(${i})"><i class="fas fa-folder-open"></i> Buka</button>
-                        <button class="btn btn-danger" style="padding:6px 12px; font-size:12px; width:auto;" onclick="deleteArchive(${i})"><i class="fas fa-trash"></i></button>
+                        <button class="btn btn-success" style="padding:8px 15px; font-size:13px; width:auto;" onclick="viewArchive(${i})"><i class="fas fa-folder-open"></i></button>
+                        <button class="btn btn-danger" style="padding:8px 15px; font-size:13px; width:auto;" onclick="deleteArchive(${i})"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             `).join('');
@@ -1222,7 +1173,6 @@
             data = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', access: { requests: [], viewers: [], admins: [] } };
             save();
             appSuccess("Berhasil", "Turnamen baru siap dimulai!");
-            nav('home');
             renderTitleSetup();
         });
     }
@@ -1232,13 +1182,12 @@
         let html = '';
         if(archives.length === 0) { html = '<p style="color:var(--text-muted); font-size:13px;">Belum ada turnamen yang diarsipkan.</p>'; } else {
             html = archives.map((arc, i) => `
-                <div class="card" style="padding:15px; margin-bottom:10px; text-align:left; background:var(--input-bg);">
-                    <div style="font-weight:900; color:var(--primary); font-size:16px;">${arc.title || 'Turnamen Tanpa Judul'}</div>
-                    <div style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Diarsipkan: ${arc.dateArchived || '-'}</div>
-                    <div style="font-size:13px; margin-bottom:10px;">Total Pemain: ${arc.players.length} | Match Dimainkan: ${arc.matches.length}</div>
+                <div class="card" style="padding:15px; margin-bottom:15px; text-align:left;">
+                    <div style="font-weight:900; color:var(--primary); font-size:18px; margin-bottom:5px;">${arc.title || 'Turnamen Tanpa Judul'}</div>
+                    <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;"><i class="far fa-calendar-alt"></i> Diarsipkan: ${arc.dateArchived || '-'}</div>
                     <div style="display:flex; gap:10px;">
-                        <button class="btn btn-primary" style="padding:8px; font-size:12px; flex:1;" onclick="viewArchive(${i})"><i class="fas fa-folder-open"></i> Buka Arsip</button>
-                        <button class="btn btn-danger" style="padding:8px; font-size:12px;" onclick="deleteArchive(${i})"><i class="fas fa-trash"></i></button>
+                        <button class="btn btn-primary" style="padding:10px; font-size:13px; flex:1;" onclick="viewArchive(${i})"><i class="fas fa-folder-open"></i> Buka Arsip</button>
+                        <button class="btn btn-danger" style="padding:10px; font-size:13px;" onclick="deleteArchive(${i})"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             `).join('');
@@ -1265,7 +1214,6 @@
             save();
             document.getElementById('archivesDialog').classList.add('hidden');
             appSuccess("Berhasil", "Data turnamen berhasil dimuat.");
-            nav('home');
             renderTitleSetup();
         };
 
@@ -1276,13 +1224,14 @@
         }
     }
 
+    // --- CROPPER & GAMBAR ---
     function chooseImageSource() {
         playSfx('pop');
         const dialog = document.getElementById('customDialog');
         document.getElementById('dialogTitle').innerText = "Pilih Foto Profil";
         document.getElementById('dialogMsg').innerText = "Ambil foto langsung dari kamera atau pilih dari galeri HP Anda.";
-        
         const icon = document.getElementById('dialogIcon'); icon.className = 'fas fa-camera dialog-icon info';
+        
         const acts = document.getElementById('dialogActions'); acts.innerHTML = ''; acts.style.flexDirection = 'column'; 
         
         const btnCam = document.createElement('button'); btnCam.className = 'btn btn-primary'; btnCam.innerHTML = '<i class="fas fa-camera"></i> Buka Kamera';
@@ -1304,21 +1253,15 @@
             r.onload = e => {
                 document.getElementById('imageToCrop').src = e.target.result;
                 document.getElementById('cropModal').classList.remove('hidden');
-                
                 if(cropper) cropper.destroy();
-                cropper = new Cropper(document.getElementById('imageToCrop'), {
-                    aspectRatio: 1, viewMode: 1, background: false, dragMode: 'move', autoCropArea: 0.8
-                });
+                cropper = new Cropper(document.getElementById('imageToCrop'), { aspectRatio: 1, viewMode: 1, background: false, dragMode: 'move', autoCropArea: 0.8 });
             }; 
             r.readAsDataURL(input.files[0]);
         }
         input.value = '';
     }
 
-    function cancelCrop() {
-        document.getElementById('cropModal').classList.add('hidden');
-        if(cropper) { cropper.destroy(); cropper = null; }
-    }
+    function cancelCrop() { document.getElementById('cropModal').classList.add('hidden'); if(cropper) { cropper.destroy(); cropper = null; } }
 
     function doCrop() {
         if(!cropper) return;
@@ -1336,7 +1279,6 @@
         if(currentRole === 'viewer') return appAlert("Ditolak", "Hanya Admin yang bisa menambah pemain.");
         const name = document.getElementById('pName').value.trim().substring(0,12);
         if(!name) return appAlert("Peringatan", "Isi nama pemain terlebih dahulu!");
-        
         let exists = data.players.find(p => p.name.toLowerCase() === name.toLowerCase());
         if(exists) return appAlert("Peringatan", "Nama pemain sudah terdaftar! Gunakan nama yang berbeda.");
 
@@ -1355,28 +1297,7 @@
         if(p) { p.isPresent = (p.isPresent === false) ? true : false; save(); }
     }
 
-    function nav(id, playSound=true) {
-        if(playSound) playSfx('pop');
-        let oldIndex = tabOrder.indexOf(data.activeTab);
-        let newIndex = tabOrder.indexOf(id);
-        if(oldIndex === -1) oldIndex = 0;
-        
-        let animClass = newIndex > oldIndex ? 'slide-in-right' : (newIndex < oldIndex ? 'slide-in-left' : 'fadeIn');
-
-        document.querySelectorAll('.content').forEach(c => { c.classList.remove('active', 'slide-in-right', 'slide-in-left'); });
-        
-        let target = document.getElementById('tab-'+id);
-        if(target) target.classList.add('active', animClass);
-        
-        document.querySelectorAll('.nav-item').forEach((b,i) => b.classList.toggle('active', tabOrder[i]===id));
-        
-        if (data.activeTab !== id) {
-            data.activeTab = id; 
-            localStorage.setItem("HH_ACTIVE_TAB", id);
-            save(); // Walaupun viewer, kita simpan secara lokal agar ingat tab terakhir
-        }
-    }
-
+    // --- MATCH SETTINGS ---
     function setSport(s, playSnd=true) {
         if(playSnd) playSfx('pop');
         selectedSport = s;
@@ -1403,25 +1324,19 @@
         currentPartnerMode = mode;
         document.getElementById('btnPasanganAcak').className = mode === 'acak' ? 'seg-btn active' : 'seg-btn';
         document.getElementById('btnPasanganTetap').className = mode === 'tetap' ? 'seg-btn active' : 'seg-btn';
-        
         document.getElementById('fixedPartnerSetup').classList.toggle('hidden', mode !== 'tetap');
         if (mode === 'tetap') { document.getElementById('logicPadelOnly').classList.add('hidden'); } 
         else if (selectedSport === 'padel') { document.getElementById('logicPadelOnly').classList.remove('hidden'); }
     }
 
-    function openFixedPairsDialog() {
-        document.getElementById('fixedPairsDialog').classList.remove('hidden');
-        renderFixedPairsUI();
-    }
+    function openFixedPairsDialog() { document.getElementById('fixedPairsDialog').classList.remove('hidden'); renderFixedPairsUI(); }
     function renderFixedPairsUI() {
         let activePlayers = data.players.filter(p => p.isPresent !== false);
         let opts = '<option value="">-- Pilih Pemain --</option>';
         activePlayers.forEach(p => opts += `<option value="${p.id}">${p.name}</option>`);
         document.getElementById('selP1').innerHTML = opts; document.getElementById('selP2').innerHTML = opts;
-
         if(!data.fixedPairs) data.fixedPairs = [];
         document.getElementById('pairCount').innerText = data.fixedPairs.length;
-        
         let listHtml = data.fixedPairs.map((fp, i) => {
             let p1 = data.players.find(x=>x.id===fp.p1); let p2 = data.players.find(x=>x.id===fp.p2);
             if(!p1 || !p2) return '';
@@ -1441,13 +1356,11 @@
         data.fixedPairs.push({p1, p2, playCount:0}); save(); renderFixedPairsUI();
     }
     function generateRandomPairs() {
-        appConfirm("Acak Pasangan Tetap", "Ini akan menghapus pasangan tetap yang ada saat ini dan mengacak ulang semua pemain berstatus HADIR. Lanjutkan?", () => {
+        appConfirm("Acak Pasangan Tetap", "Ini akan menghapus pasangan tetap saat ini dan mengacak ulang semua pemain berstatus HADIR. Lanjutkan?", () => {
             let active = data.players.filter(p => p.isPresent !== false);
             active.sort(() => Math.random() - 0.5);
             data.fixedPairs = [];
-            for(let i=0; i<active.length-1; i+=2) {
-                data.fixedPairs.push({ p1: active[i].id, p2: active[i+1].id, playCount: 0 });
-            }
+            for(let i=0; i<active.length-1; i+=2) { data.fixedPairs.push({ p1: active[i].id, p2: active[i+1].id, playCount: 0 }); }
             save(); renderFixedPairsUI();
             if(active.length % 2 !== 0) appAlert("Info", `Pemain ${active[active.length-1].name} tidak mendapat pasangan karena jumlah pemain ganjil.`);
         });
@@ -1616,10 +1529,8 @@
     function updateCourtScoreUI(matchId) {
         let m = data.currentMatches.find(x => x.id === matchId);
         if(!m) return;
-        
         let gD1 = document.getElementById(`gDisp1_${matchId}`);
         let gD2 = document.getElementById(`gDisp2_${matchId}`);
-        
         if (gD1 && gD1.innerText != m.g1) { gD1.innerText = m.g1; popAnim(gD1); }
         if (gD2 && gD2.innerText != m.g2) { gD2.innerText = m.g2; popAnim(gD2); }
     }
@@ -1632,7 +1543,6 @@
         let t = team === 1 ? 'g1' : 'g2';
         m[t] += change;
         if(m[t] < 0) m[t] = 0;
-        
         save(); updateCourtScoreUI(matchId);
     }
 
@@ -1666,7 +1576,6 @@
                 <select id="emp_t2_0" style="margin-bottom:15px;">${opts}</select>
             `;
         }
-
         document.getElementById('editMatchPlayersContainer').innerHTML = html;
 
         if(document.getElementById('emp_t1_0') && m.t1[0]) document.getElementById('emp_t1_0').value = m.t1[0].id;
@@ -1683,7 +1592,6 @@
         
         let t1_0 = document.getElementById('emp_t1_0').value;
         let t2_0 = document.getElementById('emp_t2_0').value;
-        
         if(!t1_0 || !t2_0) return appAlert("Error", "Pemain pertama di tiap tim tidak boleh kosong!");
 
         let nt1 = [data.players.find(x => x.id === t1_0)];
@@ -1701,18 +1609,15 @@
             nt2.push(data.players.find(x => x.id === t2_1));
             
             if(!isValidCourtGender(nt1, nt2)) {
-                appAlert("Peringatan Aturan Gender", "Susunan ini mempertemukan Ganda Putri (2 Wanita) vs Ganda Putra (2 Pria). Perubahan tetap disimpan.");
+                appAlert("Peringatan", "Susunan ini mempertemukan Ganda Putri vs Ganda Putra. Perubahan tetap disimpan.");
             }
         } else {
             if(t1_0 === t2_0) return appAlert("Error", "Pemain tidak boleh sama!");
         }
 
-        m.t1 = nt1;
-        m.t2 = nt2;
-
+        m.t1 = nt1; m.t2 = nt2;
         document.getElementById('editMatchPlayersModal').classList.add('hidden');
-        save();
-        renderMatches();
+        save(); renderMatches();
     }
 
     function cancelCourtConfirm(matchId) {
@@ -1728,9 +1633,8 @@
         let idx = data.currentMatches.findIndex(x => x.id === matchId);
         if(idx === -1) return;
         let m = data.currentMatches[idx];
-        if(m.g1 === 0 && m.g2 === 0) {
-            return appAlert("Peringatan", "Skor masih 0-0! Silakan catat skor pemenang terlebih dahulu.");
-        }
+        if(m.g1 === 0 && m.g2 === 0) return appAlert("Peringatan", "Skor masih 0-0! Silakan catat skor pemenang terlebih dahulu.");
+        
         appConfirm("Simpan Hasil", `Simpan hasil akhir Lapangan ${m.court} ke klasemen?`, () => {
             let s1 = m.g1; let s2 = m.g2;
             const upd = (arr, ms, os) => {
@@ -1763,10 +1667,7 @@
             });
             
             confetti({ particleCount: 100, origin: { y: 0.6 }, spread: 70, colors: ['#4361ee', '#f72585', '#10b981'] });
-            
-            data.currentMatches.splice(idx, 1); 
-            save(); 
-            renderMatches();
+            data.currentMatches.splice(idx, 1); save(); renderMatches();
         });
     }
 
@@ -1820,7 +1721,7 @@
     function resetConfirm() {
         appConfirm("RESET DATA", "PERINGATAN: Semua data turnamen aktif ini akan dihapus. Yakin?", () => {
             let defaultData = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', access: {requests:[], viewers:[], admins:[]} };
-            if(db && auth.currentUser) {
+            if(auth && auth.currentUser) {
                 db.collection("tournaments").doc(auth.currentUser.uid).set(defaultData).then(() => location.reload());
             } else {
                 localStorage.setItem(DB_KEY, JSON.stringify(defaultData)); 
@@ -1884,7 +1785,6 @@
     function openShareLeaderboard() {
         playSfx('pop');
         let allPlayers = [...data.players].sort((a,b) => b.stats.pts - a.stats.pts || b.stats.gd - a.stats.gd);
-        
         document.getElementById('shareTourTitle').innerText = data.title || 'Turnamen Happy Hitters';
         
         let listHtml = allPlayers.map((p, i) => {
@@ -1920,7 +1820,6 @@
             let stText = pStatus ? '<i class="fas fa-check"></i> Hadir' : '<i class="fas fa-times"></i> Absen';
             let stClass = pStatus ? 'btn-success' : 'btn-danger';
             
-            // Viewer tidak bisa ubah status / hapus
             let btnAction = currentRole === 'viewer' ? '' : `
                 <div style="display:flex; gap:8px;">
                     <button onclick="togglePresent('${p.id}')" class="btn ${stClass}" style="padding:6px 10px; font-size:11px; width:auto; border-radius:8px;">${stText}</button>
