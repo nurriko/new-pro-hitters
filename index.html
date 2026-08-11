@@ -573,13 +573,13 @@
 <script>
     // --- FIREBASE CONFIGURATION ---
     const firebaseConfig = {
-  apiKey: "AIzaSyB71_NTi3ijqt2Qxm7SgJLLjmoCjYXOt0I",
-  authDomain: "happy-hitters-app.firebaseapp.com",
-  projectId: "happy-hitters-app",
-  storageBucket: "happy-hitters-app.firebasestorage.app",
-  messagingSenderId: "1001816853311",
-  appId: "1:1001816853311:web:84c0fb7b1b9679756ea18a"
-};
+        apiKey: "AIzaSyB71_NTi3ijqt2Qxm7SgJLLjmoCjYXOt0I",
+        authDomain: "happy-hitters-app.firebaseapp.com",
+        projectId: "happy-hitters-app",
+        storageBucket: "happy-hitters-app.firebasestorage.app",
+        messagingSenderId: "1001816853311",
+        appId: "1:1001816853311:web:84c0fb7b1b9679756ea18a"
+    };
     
     let auth, db;
     if(firebaseConfig.apiKey !== "ISI_API_KEY_ANDA_DISINI") {
@@ -623,13 +623,20 @@
             auth.onAuthStateChanged(user => {
                 if (user) {
                     db.collection('users').doc(user.uid).get().then(doc => {
-                        if(!doc.exists && user.email !== 'admin@happyhitters.app') {
+                        let uData = doc.exists ? doc.data() : null;
+                        
+                        // Cek apakah user adalah admin atau superadmin
+                        let isSuperAdmin = user.email === 'admin@happyhitters.app' || 
+                                           user.email === 'superadmin@happyhitters.app' || 
+                                           (uData && (uData.role === 'admin' || uData.username.toLowerCase() === 'superadmin' || uData.username.toLowerCase() === 'admin'));
+
+                        if(!doc.exists && !isSuperAdmin) {
                             auth.signOut();
                             appAlert("Akses Ditolak", "Akun Anda tidak ditemukan atau telah dihapus oleh Admin.");
                             return;
                         }
 
-                        if(user.email === 'admin@happyhitters.app') {
+                        if(isSuperAdmin) {
                             showAdminScreen();
                         } else {
                             document.getElementById('welcomeScreen').classList.add('hidden');
@@ -702,9 +709,14 @@
         const pass = document.getElementById('authPassword').value.trim();
         if(!userInp || !pass) return appAlert('Error', 'Username dan Password wajib diisi!');
         
+        let isSuperAdmin = (userInp.toLowerCase() === 'admin' || userInp.toLowerCase() === 'superadmin');
         let loginEmail = userInp;
-        if(userInp === 'admin') loginEmail = 'admin@happyhitters.app';
-        else if(!userInp.includes('@')) loginEmail = userInp.replace(/\s+/g, '').toLowerCase() + '@happyhitters.app';
+
+        if(isSuperAdmin) {
+            loginEmail = userInp.toLowerCase() + '@happyhitters.app'; // Jadinya admin@... atau superadmin@...
+        } else if(!userInp.includes('@')) {
+            loginEmail = userInp.replace(/\s+/g, '').toLowerCase() + '@happyhitters.app';
+        }
 
         if(authMode === 'register') {
             auth.createUserWithEmailAndPassword(loginEmail, pass)
@@ -712,7 +724,7 @@
                     db.collection('users').doc(cred.user.uid).set({
                         username: userInp,
                         email: loginEmail,
-                        role: userInp === 'admin' ? 'admin' : 'user',
+                        role: isSuperAdmin ? 'admin' : 'user',
                         friends: [],
                         friendRequests: [],
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -733,6 +745,43 @@
         });
     }
 
+    function showAdminScreen() {
+        document.getElementById('welcomeScreen').classList.add('hidden');
+        document.getElementById('authScreen').classList.add('hidden');
+        document.getElementById('appContainer').classList.remove('visible');
+        document.getElementById('adminScreen').classList.remove('hidden');
+        loadAdminUsers();
+    }
+
+    function loadAdminUsers() {
+        db.collection('users').get().then(snap => {
+            let html = '';
+            snap.forEach(doc => {
+                let u = doc.data();
+                // Sembunyikan akun superadmin dan admin di list agar tidak terhapus sendiri
+                if(u.role !== 'admin' && u.username.toLowerCase() !== 'superadmin' && u.username.toLowerCase() !== 'admin') {
+                    html += `
+                    <div class="card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:15px; text-align:left;">
+                        <div>
+                            <b style="font-size:16px; color:var(--primary);">${u.username}</b><br>
+                            <small style="color:var(--text-muted);">${u.email}</small>
+                        </div>
+                        <button class="btn btn-danger" style="width:auto; padding:8px 12px; font-size:12px;" onclick="deleteUserByAdmin('${doc.id}')"><i class="fas fa-trash"></i> Hapus</button>
+                    </div>`;
+                }
+            });
+            document.getElementById('adminUserList').innerHTML = html || '<p style="color:var(--text-muted);">Belum ada user terdaftar.</p>';
+        });
+    }
+
+    function deleteUserByAdmin(uid) {
+        appConfirm("Hapus User", "Yakin ingin menghapus user ini? Mereka tidak akan bisa mengakses datanya lagi.", () => {
+            db.collection('users').doc(uid).delete().then(() => {
+                loadAdminUsers();
+            });
+        });
+    }
+
     // --- FITUR SOSIAL & PERTEMANAN ---
     function initSocial(uid) {
         db.collection('users').doc(uid).onSnapshot(doc => {
@@ -745,7 +794,6 @@
         });
     }
 
-    // MODIFIKASI: Pencarian di client side agar support case-insensitive (huruf besar/kecil tidak ngaruh) dan kompatibel akun lama
     function searchFriend() {
         let q = document.getElementById('searchFriendInp').value.trim().toLowerCase();
         if(!q) return;
@@ -756,7 +804,6 @@
                 let u = doc.data();
                 if(doc.id === auth.currentUser.uid) return; 
                 
-                // Pengecekan username secara fleksibel dan aman untuk akun lama
                 if(u.username && u.username.toLowerCase().includes(q)) {
                     let isFriend = myUserData.friends && myUserData.friends.includes(doc.id);
                     let isReq = u.friendRequests && u.friendRequests.includes(auth.currentUser.uid);
@@ -790,14 +837,11 @@
         });
     }
 
-    // MODIFIKASI: Menambahkan tombol dan fungsi Hapus Teman
     function removeFriend(uid) {
         appConfirm("Hapus Teman", "Apakah Anda yakin ingin menghapus teman ini?", () => {
-            // Hapus di akun kita
             db.collection('users').doc(auth.currentUser.uid).update({
                 friends: firebase.firestore.FieldValue.arrayRemove(uid)
             });
-            // Hapus di akun teman tersebut
             db.collection('users').doc(uid).update({
                 friends: firebase.firestore.FieldValue.arrayRemove(auth.currentUser.uid)
             });
@@ -848,7 +892,6 @@
                     actionBtn = `<span style="font-size:11px; color:var(--text-muted);">Tidak ada match aktif</span>`;
                 }
 
-                // Tambahkan tombol hapus teman di sampingnya
                 actionBtn = `<div style="display:flex; gap:5px; align-items:center;">
                                 ${actionBtn}
                                 <button class="btn btn-danger" style="padding:6px 10px; width:auto; font-size:12px;" onclick="removeFriend('${id}')" title="Hapus Teman"><i class="fas fa-user-times"></i></button>
@@ -1035,12 +1078,14 @@
 
     function save() { 
         renderAll(); 
-        if(!auth.currentUser || auth.currentUser.email === 'admin@happyhitters.app') return;
+        if(!auth.currentUser) return;
+        
+        // Cegah superadmin/admin dari merewrite tournament jika tidak sengaja trigger
+        if(auth.currentUser.email === 'admin@happyhitters.app' || auth.currentUser.email === 'superadmin@happyhitters.app') return;
         
         let isOwner = currentViewingId === auth.currentUser.uid;
         let isAdmin = data.matchAdmins && data.matchAdmins.includes(auth.currentUser.uid);
         
-        // Hanya Owner atau Admin yang boleh menyimpan perubahan ke server (Admin biasanya hanyak ubah skor)
         if (isOwner || isAdmin) {
             db.collection("tournaments").doc(currentViewingId).set(data, {merge: true}).catch(err => {
                 console.error("Gagal menyimpan ke server:", err);
