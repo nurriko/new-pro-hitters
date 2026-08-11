@@ -50,9 +50,13 @@
 
         body { font-family: 'Outfit', sans-serif; background: var(--bg-grad); margin: 0; padding: 0; min-height: 100vh; color: var(--text-main); overflow-x: hidden; user-select: none; transition: background 0.3s, color 0.3s; }
 
-        #welcomeScreen, #authScreen, #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #adminScreen, #cropModal, #editMatchPlayersModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-grad); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: opacity 0.5s ease, visibility 0.5s; }
-        #welcomeScreen.hidden, #authScreen.hidden, #fixedPairsDialog.hidden, #editScoreDialog.hidden, #archivesDialog.hidden, #playerCardModal.hidden, #shareMatchModal.hidden, #adminScreen.hidden, #cropModal.hidden, #editMatchPlayersModal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-        #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #editMatchPlayersModal { background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001; }
+        /* MODE AKSES CSS */
+        body.not-owner .owner-only { display: none !important; pointer-events: none; }
+        body.viewer-only .admin-only { display: none !important; pointer-events: none; }
+
+        #welcomeScreen, #authScreen, #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #adminScreen, #cropModal, #editMatchPlayersModal, #accessManagerModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-grad); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: opacity 0.5s ease, visibility 0.5s; }
+        #welcomeScreen.hidden, #authScreen.hidden, #fixedPairsDialog.hidden, #editScoreDialog.hidden, #archivesDialog.hidden, #playerCardModal.hidden, #shareMatchModal.hidden, #adminScreen.hidden, #cropModal.hidden, #editMatchPlayersModal.hidden, #accessManagerModal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #editMatchPlayersModal, #accessManagerModal { background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001; }
         #cropModal { background: #000; z-index: 10005; }
         
         #adminScreen { align-items: center; justify-content: flex-start; padding: 20px; box-sizing: border-box; overflow-y: auto; }
@@ -140,7 +144,7 @@
         .rank-row { background: var(--input-bg); transition: 0.3s; border-radius: 10px; cursor: pointer; border: 1px solid var(--border-color);}
         .rank-row:active { transform: scale(0.98); }
 
-        .nav-dock { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 85%; max-width: 400px; background: var(--dock-bg); border-radius: 25px; display: flex; justify-content: space-around; padding: 12px 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); z-index: 99; border: 1px solid var(--border-color); backdrop-filter: blur(10px);}
+        .nav-dock { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 420px; background: var(--dock-bg); border-radius: 25px; display: flex; justify-content: space-around; padding: 12px 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); z-index: 99; border: 1px solid var(--border-color); backdrop-filter: blur(10px);}
         .nav-item { border: none; background: none; font-size: 22px; color: var(--text-muted); cursor: pointer; transition: all 0.3s; padding: 10px;}
         .nav-item.active { color: var(--primary); transform: translateY(-5px) scale(1.1); text-shadow: 0 10px 15px rgba(67, 97, 238, 0.4);}
 
@@ -224,7 +228,26 @@
     </div>
 </div>
 
-<!-- MODAL CROPPER FOTO -->
+<!-- MODAL MANAJER AKSES PERTANDINGAN (HOST ONLY) -->
+<div id="accessManagerModal" class="hidden">
+    <div class="dialog-box" style="width: 90%; max-width: 450px; max-height: 85vh; overflow-y:auto; padding: 20px;">
+        <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-key"></i> Manajer Akses</h3>
+        <p style="font-size:12px; color:var(--text-muted);">Kelola teman yang dapat melihat dan mengelola skor pertandingan Anda.</p>
+        
+        <h4 style="margin:15px 0 5px 0; text-align:left; color:var(--warning); font-size:14px;">Permintaan Menonton (<span id="countViewReq">0</span>)</h4>
+        <div id="viewReqList" style="text-align:left; font-size:13px; margin-bottom:15px; max-height:150px; overflow-y:auto;"></div>
+        
+        <h4 style="margin:10px 0 5px 0; text-align:left; color:var(--success); font-size:14px;">Penonton Disetujui</h4>
+        <div id="approvedViewersList" style="text-align:left; font-size:13px; margin-bottom:15px; max-height:150px; overflow-y:auto;"></div>
+
+        <h4 style="margin:10px 0 5px 0; text-align:left; color:var(--primary); font-size:14px;">Admin Pertandingan (Isi Skor)</h4>
+        <div id="matchAdminsList" style="text-align:left; font-size:13px; margin-bottom:15px; max-height:150px; overflow-y:auto;"></div>
+        
+        <button class="btn btn-ghost" onclick="document.getElementById('accessManagerModal').classList.add('hidden')" style="margin-top:15px;">Tutup</button>
+    </div>
+</div>
+
+<!-- MODAL LAINNYA (Cropper, Player Card, Edit Match Players, Share, Fixed Pairs, Edit Score, Archives) -->
 <div id="cropModal" class="hidden">
     <div style="flex:1; width:100%; display:flex; justify-content:center; align-items:center; overflow:hidden; background:#111;">
         <img id="imageToCrop" style="max-width:100%; max-height:100%; display:block;">
@@ -235,11 +258,9 @@
     </div>
 </div>
 
-<!-- MODAL PLAYER 3D CARD -->
 <div id="playerCardModal" class="hidden" onclick="if(event.target.id === 'playerCardModal') closePlayerCard()">
     <div class="flip-card" id="pCard">
         <div class="flip-card-inner">
-            <!-- BAGIAN DEPAN (Klik untuk putar) -->
             <div class="flip-card-front" onclick="toggleCardFlip()">
                 <div style="position:absolute; top:15px; right:20px; color:var(--gold); font-size:24px;"><i class="fas fa-medal"></i></div>
                 <img id="pcAvatar" src="" class="card-avatar">
@@ -248,21 +269,17 @@
                 <div id="pcPts" class="card-pts">0</div>
                 <div style="margin-top:auto; padding-bottom:15px; font-size:11px; opacity:0.6;"><i class="fas fa-sync"></i> Tap kartu untuk melihat statistik</div>
             </div>
-            
-            <!-- BAGIAN BELAKANG (Bisa di scroll, ada tombol kembali) -->
             <div class="flip-card-back">
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid white; padding-bottom:10px; margin-bottom:15px;">
                     <h3 style="margin:0;">STATISTIK DETAIL</h3>
                     <button class="btn btn-ghost" style="width:auto; padding:5px 10px; font-size:11px; color:white; border-color:white;" onclick="toggleCardFlip()"><i class="fas fa-undo"></i> Depan</button>
                 </div>
-                
                 <div class="stat-row"><span class="stat-label">Main</span><span id="pcP" class="stat-val">0</span></div>
                 <div class="stat-row"><span class="stat-label">Menang</span><span id="pcW" class="stat-val">0</span></div>
                 <div class="stat-row"><span class="stat-label">Kalah</span><span id="pcL" class="stat-val">0</span></div>
                 <div class="stat-row"><span class="stat-label">Seri</span><span id="pcD" class="stat-val">0</span></div>
                 <div class="stat-row"><span class="stat-label">Selisih Game</span><span id="pcGD" class="stat-val">0</span></div>
                 <div class="stat-row" style="margin-bottom:20px;"><span class="stat-label">Win Rate</span><span id="pcWR" class="stat-val">0%</span></div>
-
                 <h4 style="margin: 0 0 10px 0; border-bottom:1px solid rgba(255,255,255,0.3); padding-bottom:5px; text-transform:uppercase; font-size:12px;"><i class="fas fa-history"></i> Riwayat Pertandingan</h4>
                 <div id="pcHistoryContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
             </div>
@@ -271,14 +288,11 @@
     <button class="btn btn-ghost" style="width:200px; background:rgba(255,255,255,0.1); color:white; border-color:rgba(255,255,255,0.3); margin-top:10px;" onclick="closePlayerCard()">Tutup Profil</button>
 </div>
 
-<!-- MODAL EDIT PEMAIN MANUAL -->
 <div id="editMatchPlayersModal" class="hidden">
     <div class="dialog-box" style="width: 90%; max-width: 400px; padding: 20px; max-height:80vh; overflow-y:auto;">
         <h3 style="color:var(--primary); margin-top:0;">Ganti Pemain Manual</h3>
         <p style="font-size:12px; color:var(--text-muted);">Pilih pemain pengganti dari daftar yang hadir.</p>
-        
         <div id="editMatchPlayersContainer" style="text-align:left; margin-bottom:15px;"></div>
-        
         <div style="display:flex; gap:10px;">
             <button class="btn btn-ghost" onclick="document.getElementById('editMatchPlayersModal').classList.add('hidden')">Batal</button>
             <button class="btn btn-primary" onclick="saveManualPlayerEdit()">Simpan Perubahan</button>
@@ -286,14 +300,11 @@
     </div>
 </div>
 
-<!-- MODAL SHARE TICKET LEADERBOARD -->
 <div id="shareMatchModal" class="hidden" onclick="if(event.target.id === 'shareMatchModal') closeShareLeaderboard()">
     <div id="shareableTicket" class="share-ticket" style="padding:30px;">
         <div id="shareTitle" class="ticket-header">🏆 KLASEMEN TURNAMEN</div>
         <div id="shareTourTitle" style="font-size:14px; font-weight:bold; margin-bottom:20px; text-transform:uppercase; color:#fff;">HAPPY HITTERS</div>
-        
         <div id="shareLBRank" style="text-align:left; font-size:14px;"></div>
-        
         <div style="margin-top:25px; font-size:10px; opacity:0.6; border-top:1px dashed rgba(255,255,255,0.3); padding-top:10px;">
             Generated by Happy Hitters App
         </div>
@@ -304,9 +315,8 @@
     </div>
 </div>
 
-<!-- MODAL FIXED PAIRS -->
 <div id="fixedPairsDialog" class="hidden">
-    <div class="dialog-box" style="width: 90%; max-width: 400px; max-height: 80vh; overflow-y:auto; padding: 20px;">
+    <div class="dialog-box owner-only" style="width: 90%; max-width: 400px; max-height: 80vh; overflow-y:auto; padding: 20px;">
         <h3 style="color:var(--primary); margin-top:0;">Kelola Pasangan Tetap</h3>
         <p style="font-size:12px; color:var(--text-muted);">Hanya pemain yang berstatus "Hadir" yang bisa dijadikan pasangan.</p>
         
@@ -327,9 +337,8 @@
     </div>
 </div>
 
-<!-- MODAL EDIT SKOR -->
 <div id="editScoreDialog" class="hidden">
-    <div class="dialog-box" style="width: 90%; max-width: 350px; padding: 25px;">
+    <div class="dialog-box admin-only" style="width: 90%; max-width: 350px; padding: 25px;">
         <h3 style="color:var(--primary); margin-top:0;">Edit Skor Pertandingan</h3>
         <p id="editScoreTeams" style="font-size:13px; font-weight:bold;"></p>
         
@@ -352,9 +361,8 @@
     </div>
 </div>
 
-<!-- MODAL ARSIP -->
 <div id="archivesDialog" class="hidden">
-    <div class="dialog-box" style="width: 90%; max-width: 400px; max-height: 80vh; overflow-y:auto; padding: 20px;">
+    <div class="dialog-box owner-only" style="width: 90%; max-width: 400px; max-height: 80vh; overflow-y:auto; padding: 20px;">
         <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-archive"></i> Arsip Turnamen</h3>
         <p style="font-size:12px; color:var(--text-muted);">Daftar turnamen yang telah selesai atau diarsipkan.</p>
         <hr style="border:0; border-top:1px dashed var(--border-color); margin:15px 0;">
@@ -364,21 +372,27 @@
 </div>
 
 <div class="app-container" id="appContainer">
+    <div id="viewingAlert" class="hidden" style="background:var(--warning); color:#fff; text-align:center; padding:10px; font-size:12px; font-weight:bold; cursor:pointer;" onclick="returnToMyMatch()">
+        <i class="fas fa-arrow-left"></i> ANDA MELIHAT PERTANDINGAN TEMAN. KLIK UNTUK KEMBALI.
+    </div>
+
     <header>
         <div style="display:flex; align-items:center; gap:10px;">
             <i class="fas fa-table-tennis-paddle-ball" style="color:var(--primary); font-size:24px;"></i>
             <h1>HAPPY HITTERS</h1>
         </div>
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 8px;">
+            <button class="sound-toggle owner-only" title="Manajer Akses" onclick="openAccessManager()"><i class="fas fa-key"></i></button>
             <button class="sound-toggle" title="Ubah Tema" onclick="toggleTheme()" id="themeBtn"><i id="themeIcon" class="fas fa-moon"></i></button>
             <button class="sound-toggle" title="Suara" onclick="toggleMute()"><i id="soundIcon" class="fas fa-volume-up"></i></button>
             <button class="sound-toggle" title="Logout" onclick="doLogout()" style="color:#ef4444; border-color:rgba(239, 68, 68, 0.3);"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </header>
 
+    <!-- TAB HOME -->
     <div id="tab-home" class="content active">
         <!-- SETUP JUDUL TURNAMEN -->
-        <div id="titleArea" class="card" style="text-align:center; margin-top:20px;">
+        <div id="titleArea" class="card owner-only" style="text-align:center; margin-top:20px;">
             <h3 style="color:var(--primary); font-weight:900; margin-top:0;">NAMA TURNAMEN BARU</h3>
             <p style="font-size:13px; color:var(--text-muted);">Masukkan judul permainan untuk memulai turnamen baru.</p>
             <input type="text" id="tourTitleInp" placeholder="Misal: Game Sabtu 8 Agustus" style="text-align:center; font-weight:bold;">
@@ -397,10 +411,10 @@
                     <span style="font-size:11px; color:var(--text-muted); font-weight:bold;">NAMA TURNAMEN:</span>
                     <b id="tourTitleDisplay" style="color:var(--primary); font-size:16px;"></b>
                 </div>
-                <button onclick="editTitle()" style="background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-main); border-radius:8px; padding:6px 12px; font-weight:bold; cursor:pointer;">Ubah</button>
+                <button onclick="editTitle()" class="owner-only" style="background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-main); border-radius:8px; padding:6px 12px; font-weight:bold; cursor:pointer;">Ubah</button>
             </div>
 
-            <div class="card">
+            <div class="card owner-only">
                 <h3 style="margin:0 0 15px 0; color:var(--primary); font-weight:900;">+ Tambah Pemain Baru</h3>
                 <div style="display:flex; gap:15px; align-items:center;">
                     <div style="width:75px; height:75px; background:var(--input-bg); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; border:2px dashed var(--text-muted);" onclick="chooseImageSource()">
@@ -424,10 +438,10 @@
 
             <div style="display:flex; justify-content:space-between; margin:25px 5px 15px 5px; color:var(--text-muted); font-size:13px; font-weight:800;">
                 <span>DAFTAR PEMAIN (<span id="pCount">0</span>)</span>
-                <span onclick="toggleTools()" style="cursor:pointer; color:var(--primary); background:var(--input-bg); padding:4px 10px; border-radius:12px;"><i class="fas fa-cog"></i> Pengaturan</span>
+                <span onclick="toggleTools()" class="owner-only" style="cursor:pointer; color:var(--primary); background:var(--input-bg); padding:4px 10px; border-radius:12px;"><i class="fas fa-cog"></i> Pengaturan</span>
             </div>
 
-            <div id="toolsPanel" class="card hidden animate__animated animate__fadeIn">
+            <div id="toolsPanel" class="card owner-only hidden animate__animated animate__fadeIn">
                 <div style="display:flex; flex-direction:column; gap:10px;">
                     <div style="display:flex; gap:10px;">
                         <button class="btn btn-ghost" style="padding:10px; font-size:12px; flex:1;" onclick="exportData()"><i class="fas fa-save"></i> Simpan Game (.json)</button>
@@ -445,7 +459,7 @@
 
     <!-- TAB PLAY -->
     <div id="tab-play" class="content">
-        <div id="setupArea" class="card" style="padding:20px;">
+        <div id="setupArea" class="card owner-only" style="padding:20px;">
             <h3 style="margin:0 0 15px 0; text-align:center; color:var(--text-main);"><i class="fas fa-sliders-h"></i> Pengaturan Match</h3>
             
             <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">JUMLAH LAPANGAN AKTIF</label>
@@ -470,10 +484,10 @@
             </div>
 
             <div id="fixedPartnerSetup" class="hidden" style="margin-bottom:15px; text-align:center;">
-                <button class="btn btn-ghost" onclick="openFixedPairsDialog()"><i class="fas fa-users-cog"></i> Kelola Pasangan Tetap</button>
+                <button class="btn btn-ghost owner-only" onclick="openFixedPairsDialog()"><i class="fas fa-users-cog"></i> Kelola Pasangan Tetap</button>
             </div>
 
-            <button class="btn btn-primary" style="font-size:16px; padding:16px; margin-top: 15px;" onclick="generateMatch()">
+            <button class="btn btn-primary owner-only" style="font-size:16px; padding:16px; margin-top: 15px;" onclick="generateMatch()">
                 <i class="fas fa-play"></i> MULAI PERTANDINGAN
             </button>
         </div>
@@ -494,7 +508,7 @@
             <i class="fas fa-share-alt"></i> BAGIKAN KLASEMEN
         </button>
 
-        <button id="btnNewTournament" class="btn btn-success hidden" style="margin-bottom:15px; padding:16px; width:100%; box-shadow:0 4px 15px rgba(16, 185, 129, 0.4);" onclick="createNewTournament()">
+        <button id="btnNewTournament" class="btn btn-success owner-only hidden" style="margin-bottom:15px; padding:16px; width:100%; box-shadow:0 4px 15px rgba(16, 185, 129, 0.4);" onclick="createNewTournament()">
             <i class="fas fa-plus-circle"></i> BUAT TURNAMEN BARU
         </button>
 
@@ -513,7 +527,7 @@
             </div>
         </div>
 
-        <div id="finishArea" style="margin-top:20px;">
+        <div id="finishArea" class="owner-only" style="margin-top:20px;">
             <button id="btnFinish" class="btn btn-danger" style="padding:16px;" onclick="finishConfirm()"><i class="fas fa-flag-checkered"></i> SELESAIKAN TURNAMEN</button>
             <button id="btnResume" class="btn btn-ghost hidden" style="padding:16px;" onclick="data.isFinished = false; save();"><i class="fas fa-undo"></i> Buka Kembali Turnamen</button>
         </div>
@@ -524,15 +538,40 @@
         <div id="histList" style="padding-bottom:30px; display:flex; flex-direction:column; gap:10px; max-height:450px; overflow-y:auto; overflow-x:hidden;"></div>
     </div>
 
+    <!-- TAB SOCIAL / FRIENDS -->
+    <div id="tab-social" class="content">
+        <h3 style="margin:0 0 15px 0; font-weight:900; color:var(--primary);"><i class="fas fa-user-friends"></i> SOSIAL & TEMAN</h3>
+        
+        <div class="card">
+            <h4 style="margin:0 0 10px 0; font-size:14px; color:var(--primary);">Cari Teman</h4>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="searchFriendInp" placeholder="Masukkan nama..." style="margin-bottom:0;">
+                <button class="btn btn-primary" style="width:auto; padding:0 20px;" onclick="searchFriend()"><i class="fas fa-search"></i></button>
+            </div>
+            <div id="searchFriendResult" style="margin-top:10px; text-align:left;"></div>
+        </div>
+
+        <div class="card">
+            <h4 style="margin:0 0 10px 0; font-size:14px; color:var(--warning);">Permintaan Pertemanan</h4>
+            <div id="friendRequestsList" style="text-align:left;">Belum ada permintaan.</div>
+        </div>
+
+        <div class="card">
+            <h4 style="margin:0 0 10px 0; font-size:14px; color:var(--success);">Daftar Teman</h4>
+            <div id="friendsList" style="text-align:left;">Belum ada teman.</div>
+        </div>
+    </div>
+
     <div class="nav-dock">
-        <button id="nav-home" class="nav-item active" onclick="nav('home')"><i class="fas fa-users"></i></button>
+        <button id="nav-home" class="nav-item active" onclick="nav('home')"><i class="fas fa-table-tennis"></i></button>
         <button id="nav-play" class="nav-item" onclick="nav('play')"><i class="fas fa-play-circle"></i></button>
         <button id="nav-rank" class="nav-item" onclick="nav('rank')"><i class="fas fa-trophy"></i></button>
+        <button id="nav-social" class="nav-item" onclick="nav('social')"><i class="fas fa-users"></i></button>
     </div>
 </div>
 
 <script>
-    // --- FIREBASE CONFIGURATION (ISI DENGAN DATA DARI FIREBASE CONSOLE) ---
+    // --- FIREBASE CONFIGURATION ---
     const firebaseConfig = {
   apiKey: "AIzaSyB71_NTi3ijqt2Qxm7SgJLLjmoCjYXOt0I",
   authDomain: "happy-hitters-app.firebaseapp.com",
@@ -557,9 +596,14 @@
     let isMuted = false;
     let currentTheme = localStorage.getItem('HH_THEME') || 'auto';
     
+    // VARIABEL DATA & AKSES
+    let currentViewingId = null;
+    let myUserData = { friends: [], friendRequests: [] };
+
     let data = { 
         title: "", players: [], matches: [], fixedPairs: [],
-        isFinished: false, currentMatches: [], activeTab: 'home' 
+        isFinished: false, currentMatches: [], activeTab: 'home',
+        viewRequests: [], approvedViewers: [], matchAdmins: []
     };
     
     let tempImg = '', tempGender = 'M';
@@ -592,6 +636,8 @@
                             document.getElementById('authScreen').classList.add('hidden');
                             document.getElementById('adminScreen').classList.add('hidden');
                             document.getElementById('appContainer').classList.add('visible');
+                            
+                            initSocial(user.uid);
                             setupRealtimeListener(user.uid); 
                         }
                     });
@@ -612,7 +658,7 @@
         playSfx('pop'); 
         
         if(!auth) {
-            appAlert("Peringatan", "Firebase belum dikonfigurasi. Silakan isi konfigurasi di dalam kode HTML terlebih dahulu.");
+            appAlert("Peringatan", "Firebase belum dikonfigurasi.");
             return;
         }
 
@@ -667,6 +713,8 @@
                         username: userInp,
                         email: loginEmail,
                         role: userInp === 'admin' ? 'admin' : 'user',
+                        friends: [],
+                        friendRequests: [],
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     appSuccess('Berhasil', 'Akun berhasil didaftarkan. Anda akan segera masuk.');
@@ -685,44 +733,265 @@
         });
     }
 
-    function showAdminScreen() {
-        document.getElementById('welcomeScreen').classList.add('hidden');
-        document.getElementById('authScreen').classList.add('hidden');
-        document.getElementById('appContainer').classList.remove('visible');
-        document.getElementById('adminScreen').classList.remove('hidden');
-        loadAdminUsers();
+    // --- FITUR SOSIAL & PERTEMANAN ---
+    function initSocial(uid) {
+        db.collection('users').doc(uid).onSnapshot(doc => {
+            if(doc.exists) {
+                myUserData = doc.data();
+                if(!myUserData.friends) myUserData.friends = [];
+                if(!myUserData.friendRequests) myUserData.friendRequests = [];
+                renderSocialTab();
+            }
+        });
     }
 
-    function loadAdminUsers() {
+    // MODIFIKASI: Pencarian di client side agar support case-insensitive (huruf besar/kecil tidak ngaruh) dan kompatibel akun lama
+    function searchFriend() {
+        let q = document.getElementById('searchFriendInp').value.trim().toLowerCase();
+        if(!q) return;
+        
         db.collection('users').get().then(snap => {
             let html = '';
             snap.forEach(doc => {
                 let u = doc.data();
-                if(u.role !== 'admin') {
-                    html += `
-                    <div class="card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:15px; text-align:left;">
-                        <div>
-                            <b style="font-size:16px; color:var(--primary);">${u.username}</b><br>
-                            <small style="color:var(--text-muted);">${u.email}</small>
-                        </div>
-                        <button class="btn btn-danger" style="width:auto; padding:8px 12px; font-size:12px;" onclick="deleteUserByAdmin('${doc.id}')"><i class="fas fa-trash"></i> Hapus</button>
+                if(doc.id === auth.currentUser.uid) return; 
+                
+                // Pengecekan username secara fleksibel dan aman untuk akun lama
+                if(u.username && u.username.toLowerCase().includes(q)) {
+                    let isFriend = myUserData.friends && myUserData.friends.includes(doc.id);
+                    let isReq = u.friendRequests && u.friendRequests.includes(auth.currentUser.uid);
+                    
+                    let btn = isFriend ? '<button class="btn btn-ghost" style="padding:6px 12px; width:auto; font-size:12px;" disabled>Sudah Berteman</button>' : 
+                             (isReq ? '<button class="btn btn-warning" style="padding:6px 12px; width:auto; font-size:12px;" disabled>Menunggu</button>' : 
+                             `<button class="btn btn-primary" style="padding:6px 12px; width:auto; font-size:12px;" onclick="addFriend('${doc.id}')">Add Friend</button>`);
+                    
+                    html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; padding:10px; background:var(--input-bg); border-radius:8px; border:1px solid var(--border-color);">
+                        <b>${u.username}</b> ${btn}
                     </div>`;
                 }
             });
-            document.getElementById('adminUserList').innerHTML = html || '<p style="color:var(--text-muted);">Belum ada user terdaftar.</p>';
+            
+            if(!html) {
+                html = '<span style="color:#ef4444; font-size:12px;">User tidak ditemukan.</span>';
+            }
+            document.getElementById('searchFriendResult').innerHTML = html;
+        }).catch(err => {
+            console.error(err);
+            document.getElementById('searchFriendResult').innerHTML = '<span style="color:#ef4444; font-size:12px;">Gagal mencari user.</span>';
         });
     }
 
-    function deleteUserByAdmin(uid) {
-        appConfirm("Hapus User", "Yakin ingin menghapus user ini? Mereka tidak akan bisa mengakses datanya lagi.", () => {
-            db.collection('users').doc(uid).delete().then(() => {
-                loadAdminUsers();
+    function addFriend(uid) {
+        db.collection('users').doc(uid).update({
+            friendRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)
+        }).then(() => {
+            appSuccess("Terkirim", "Permintaan pertemanan berhasil dikirim.");
+            searchFriend();
+        });
+    }
+
+    // MODIFIKASI: Menambahkan tombol dan fungsi Hapus Teman
+    function removeFriend(uid) {
+        appConfirm("Hapus Teman", "Apakah Anda yakin ingin menghapus teman ini?", () => {
+            // Hapus di akun kita
+            db.collection('users').doc(auth.currentUser.uid).update({
+                friends: firebase.firestore.FieldValue.arrayRemove(uid)
             });
+            // Hapus di akun teman tersebut
+            db.collection('users').doc(uid).update({
+                friends: firebase.firestore.FieldValue.arrayRemove(auth.currentUser.uid)
+            });
+            appSuccess("Berhasil", "Teman berhasil dihapus.");
         });
     }
 
+    async function renderSocialTab() {
+        if(!myUserData) return;
+        
+        let reqHtml = '';
+        for(let id of myUserData.friendRequests) {
+            let d = await db.collection('users').doc(id).get();
+            if(d.exists) {
+                reqHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
+                    <b>${d.data().username}</b>
+                    <div>
+                        <button class="btn btn-success" style="padding:5px 10px; width:auto; display:inline-block;" onclick="acceptFriend('${id}')"><i class="fas fa-check"></i></button>
+                        <button class="btn btn-danger" style="padding:5px 10px; width:auto; display:inline-block;" onclick="rejectFriend('${id}')"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>`;
+            }
+        }
+        document.getElementById('friendRequestsList').innerHTML = reqHtml || '<span style="font-size:12px; color:var(--text-muted);">Belum ada permintaan.</span>';
+        
+        let frHtml = '';
+        for(let id of myUserData.friends) {
+            let d = await db.collection('users').doc(id).get();
+            if(d.exists) {
+                let uName = d.data().username;
+                let t = await db.collection('tournaments').doc(id).get();
+                let tData = t.exists ? t.data() : null;
+                let actionBtn = '';
+                
+                if(tData && tData.title && !tData.isFinished) {
+                    let isViewReq = tData.viewRequests && tData.viewRequests.includes(auth.currentUser.uid);
+                    let isAppr = tData.approvedViewers && tData.approvedViewers.includes(auth.currentUser.uid);
+                    let isAdm = tData.matchAdmins && tData.matchAdmins.includes(auth.currentUser.uid);
+                    
+                    if(isAppr || isAdm) {
+                        actionBtn = `<button class="btn btn-success" style="padding:6px 10px; width:auto; font-size:12px;" onclick="viewFriendMatch('${id}')" title="Tonton Match"><i class="fas fa-eye"></i></button>`;
+                    } else if(isViewReq) {
+                        actionBtn = `<span style="font-size:11px; color:var(--warning); font-weight:bold;">Menunggu...</span>`;
+                    } else {
+                        actionBtn = `<button class="btn btn-primary" style="padding:6px 10px; width:auto; font-size:12px;" onclick="reqJoinMatch('${id}')" title="Request Join"><i class="fas fa-door-open"></i></button>`;
+                    }
+                } else {
+                    actionBtn = `<span style="font-size:11px; color:var(--text-muted);">Tidak ada match aktif</span>`;
+                }
+
+                // Tambahkan tombol hapus teman di sampingnya
+                actionBtn = `<div style="display:flex; gap:5px; align-items:center;">
+                                ${actionBtn}
+                                <button class="btn btn-danger" style="padding:6px 10px; width:auto; font-size:12px;" onclick="removeFriend('${id}')" title="Hapus Teman"><i class="fas fa-user-times"></i></button>
+                             </div>`;
+                
+                frHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
+                    <b>${uName}</b> ${actionBtn}
+                </div>`;
+            }
+        }
+        document.getElementById('friendsList').innerHTML = frHtml || '<span style="font-size:12px; color:var(--text-muted);">Belum ada teman.</span>';
+    }
+
+    function acceptFriend(uid) {
+        db.collection('users').doc(auth.currentUser.uid).update({
+            friendRequests: firebase.firestore.FieldValue.arrayRemove(uid),
+            friends: firebase.firestore.FieldValue.arrayUnion(uid)
+        });
+        db.collection('users').doc(uid).update({
+            friends: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)
+        });
+    }
+
+    function rejectFriend(uid) {
+        db.collection('users').doc(auth.currentUser.uid).update({
+            friendRequests: firebase.firestore.FieldValue.arrayRemove(uid)
+        });
+    }
+
+    function reqJoinMatch(uid) {
+        db.collection('tournaments').doc(uid).set({
+            viewRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)
+        }, {merge: true}).then(() => {
+            appSuccess("Terkirim", "Request untuk menonton pertandingan telah dikirim ke pembuat match.");
+            renderSocialTab();
+        });
+    }
+
+    function viewFriendMatch(uid) {
+        appSuccess("Berhasil", "Memasuki pertandingan teman...");
+        setupRealtimeListener(uid);
+        nav('home');
+    }
+
+    function returnToMyMatch() {
+        setupRealtimeListener(auth.currentUser.uid);
+        nav('home');
+    }
+
+    // --- MANAJER AKSES (UNTUK HOST) ---
+    async function openAccessManager() {
+        if(!data.viewRequests) data.viewRequests = [];
+        if(!data.approvedViewers) data.approvedViewers = [];
+        if(!data.matchAdmins) data.matchAdmins = [];
+        
+        document.getElementById('countViewReq').innerText = data.viewRequests.length;
+        
+        const getUser = async (id) => { let d = await db.collection('users').doc(id).get(); return d.exists ? d.data().username : 'Unknown'; };
+        
+        let vHtml = '';
+        for(let id of data.viewRequests) {
+            let un = await getUser(id);
+            vHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
+                <b>${un}</b>
+                <div>
+                    <button class="btn btn-success" style="padding:4px 8px; width:auto; display:inline-block; font-size:12px;" onclick="actViewReq('${id}', true)">Terima</button>
+                    <button class="btn btn-danger" style="padding:4px 8px; width:auto; display:inline-block; font-size:12px;" onclick="actViewReq('${id}', false)">Tolak</button>
+                </div>
+            </div>`;
+        }
+        document.getElementById('viewReqList').innerHTML = vHtml || '<span style="color:var(--text-muted);">Tidak ada permintaan.</span>';
+        
+        let aHtml = '';
+        for(let id of data.approvedViewers) {
+            if(data.matchAdmins.includes(id)) continue;
+            let un = await getUser(id);
+            aHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
+                <b>${un}</b>
+                <div>
+                    <button class="btn btn-primary" style="padding:4px 8px; width:auto; display:inline-block; font-size:12px;" onclick="setAdmin('${id}', true)">Jadikan Admin</button>
+                    <button class="btn btn-ghost" style="padding:4px 8px; width:auto; display:inline-block; font-size:12px;" onclick="kickViewer('${id}')">Hapus</button>
+                </div>
+            </div>`;
+        }
+        document.getElementById('approvedViewersList').innerHTML = aHtml || '<span style="color:var(--text-muted);">Tidak ada penonton biasa.</span>';
+        
+        let mHtml = '';
+        for(let id of data.matchAdmins) {
+            let un = await getUser(id);
+            mHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
+                <b>${un} <i class="fas fa-shield-alt" style="color:var(--primary);"></i></b>
+                <button class="btn btn-warning" style="padding:4px 8px; width:auto; font-size:12px;" onclick="setAdmin('${id}', false)">Cabut Admin</button>
+            </div>`;
+        }
+        document.getElementById('matchAdminsList').innerHTML = mHtml || '<span style="color:var(--text-muted);">Belum ada admin tambahan.</span>';
+        
+        document.getElementById('accessManagerModal').classList.remove('hidden');
+    }
+    
+    function actViewReq(id, accept) {
+        if(accept) {
+            data.viewRequests = data.viewRequests.filter(x=>x!==id);
+            if(!data.approvedViewers.includes(id)) data.approvedViewers.push(id);
+        } else {
+            data.viewRequests = data.viewRequests.filter(x=>x!==id);
+        }
+        save(); openAccessManager();
+    }
+
+    function setAdmin(id, isAdmin) {
+        if(isAdmin) {
+            if(!data.matchAdmins.includes(id)) data.matchAdmins.push(id);
+        } else {
+            data.matchAdmins = data.matchAdmins.filter(x=>x!==id);
+        }
+        save(); openAccessManager();
+    }
+
+    function kickViewer(id) {
+        data.approvedViewers = data.approvedViewers.filter(x=>x!==id);
+        data.matchAdmins = data.matchAdmins.filter(x=>x!==id);
+        save(); openAccessManager();
+    }
+
+    function checkPermissions() {
+        if(!auth.currentUser) return;
+        let isOwner = currentViewingId === auth.currentUser.uid;
+        let isAdmin = data.matchAdmins && data.matchAdmins.includes(auth.currentUser.uid);
+        
+        document.body.classList.remove('not-owner', 'viewer-only');
+        
+        if(!isOwner) document.body.classList.add('not-owner');
+        if(!isOwner && !isAdmin) document.body.classList.add('viewer-only');
+        
+        let alertEl = document.getElementById('viewingAlert');
+        if(!isOwner) alertEl.classList.remove('hidden');
+        else alertEl.classList.add('hidden');
+    }
+
+    // --- SISTEM UTAMA TURNAMEN ---
     function setupRealtimeListener(uid) {
         if (dbUnsubscribe) dbUnsubscribe();
+        currentViewingId = uid;
         
         dbUnsubscribe = db.collection("tournaments").doc(uid)
             .onSnapshot(doc => {
@@ -736,11 +1005,19 @@
                     data.currentMatches = loadedData.currentMatches || (loadedData.currentMatch ? [loadedData.currentMatch] : []);
                     data.activeTab = loadedData.activeTab || 'home';
                     data.dateArchived = loadedData.dateArchived || null;
+                    data.viewRequests = loadedData.viewRequests || [];
+                    data.approvedViewers = loadedData.approvedViewers || [];
+                    data.matchAdmins = loadedData.matchAdmins || [];
                 } else {
-                    save(); 
+                    if(uid === auth.currentUser.uid) save(); 
                 }
                 
-                nav(localStorage.getItem('HH_ACTIVE_TAB') || 'home', false);
+                checkPermissions();
+
+                let t = localStorage.getItem('HH_ACTIVE_TAB');
+                if(!t) t = 'home';
+                nav(t, false);
+
                 setPartnerMode(currentPartnerMode, false);
                 
                 if(data.currentMatches && data.currentMatches.length > 0) {
@@ -758,8 +1035,14 @@
 
     function save() { 
         renderAll(); 
-        if(auth.currentUser && auth.currentUser.email !== 'admin@happyhitters.app') {
-            db.collection("tournaments").doc(auth.currentUser.uid).set(data).catch(err => {
+        if(!auth.currentUser || auth.currentUser.email === 'admin@happyhitters.app') return;
+        
+        let isOwner = currentViewingId === auth.currentUser.uid;
+        let isAdmin = data.matchAdmins && data.matchAdmins.includes(auth.currentUser.uid);
+        
+        // Hanya Owner atau Admin yang boleh menyimpan perubahan ke server (Admin biasanya hanyak ubah skor)
+        if (isOwner || isAdmin) {
+            db.collection("tournaments").doc(currentViewingId).set(data, {merge: true}).catch(err => {
                 console.error("Gagal menyimpan ke server:", err);
             });
         }
@@ -876,7 +1159,7 @@
             archives.push(data);
             localStorage.setItem('HH_ARCHIVES', JSON.stringify(archives));
             
-            data = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home' };
+            data = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [] };
             save();
             appSuccess("Berhasil", "Turnamen baru siap dimulai!");
             nav('home');
@@ -1020,7 +1303,7 @@
         if(playSound) playSfx('pop');
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
         document.getElementById('tab-'+id).classList.add('active');
-        document.querySelectorAll('.nav-item').forEach((b,i) => b.classList.toggle('active', ['home','play','rank'][i]===id));
+        document.querySelectorAll('.nav-item').forEach((b,i) => b.classList.toggle('active', ['home','play','rank','social'][i]===id));
         if (data.activeTab !== id) {
             data.activeTab = id; 
             localStorage.setItem("HH_ACTIVE_TAB", id);
@@ -1100,18 +1383,11 @@
         let m1 = (t1[0].gender === 'M' && t1[1].gender === 'M');
         let f2 = (t2[0].gender === 'F' && t2[1].gender === 'F');
         let m2 = (t2[0].gender === 'M' && t2[1].gender === 'M');
-        
         if ((f1 && m2) || (m1 && f2)) return false; 
         return true;
     }
-
-    function countPartnership(id1, id2) {
-        return data.matches.filter(m => (m.ids1 && m.ids1.includes(id1) && m.ids1.includes(id2)) || (m.ids2 && m.ids2.includes(id1) && m.ids2.includes(id2))).length;
-    }
-
-    function countOpponent(id1, id2) {
-        return data.matches.filter(m => (m.ids1 && m.ids1.includes(id1) && m.ids2 && m.ids2.includes(id2)) || (m.ids1 && m.ids1.includes(id2) && m.ids2 && m.ids2.includes(id1))).length;
-    }
+    function countPartnership(id1, id2) { return data.matches.filter(m => (m.ids1 && m.ids1.includes(id1) && m.ids1.includes(id2)) || (m.ids2 && m.ids2.includes(id1) && m.ids2.includes(id2))).length; }
+    function countOpponent(id1, id2) { return data.matches.filter(m => (m.ids1 && m.ids1.includes(id1) && m.ids2 && m.ids2.includes(id2)) || (m.ids1 && m.ids1.includes(id2) && m.ids2 && m.ids2.includes(id1))).length; }
 
     function generateMatch() {
         if(data.isFinished) return appAlert("Perhatian", "Turnamen sudah selesai! Buka kembali turnamen di menu Ranking jika ingin melanjutkan.");
@@ -1238,7 +1514,7 @@
             <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:var(--primary); color:white; padding:4px 15px; border-radius:20px; font-weight:900; font-size:13px; box-shadow:0 4px 10px rgba(67, 97, 238, 0.4);">LAPANGAN ${m.court}</div>
             
             <div style="position:absolute; top:10px; right:15px; z-index:10;">
-                <button class="btn btn-ghost" style="padding:4px 8px; font-size:11px; background:var(--input-bg);" onclick="openEditMatchPlayers('${m.id}')"><i class="fas fa-user-edit"></i> Edit Pemain</button>
+                <button class="btn btn-ghost admin-only" style="padding:4px 8px; font-size:11px; background:var(--input-bg);" onclick="openEditMatchPlayers('${m.id}')"><i class="fas fa-user-edit"></i> Edit Pemain</button>
             </div>
 
             <div style="margin-top:15px;">
@@ -1251,9 +1527,9 @@
                             <span style="font-size:11px; color:var(--text-muted); font-weight:bold;">Skor Akhir:</span>
                         </div>
                         <div class="score-controls">
-                            <button class="btn btn-score btn-score-minus" onclick="adjGame('${m.id}', 1, -1)"><i class="fas fa-minus"></i></button>
+                            <button class="btn btn-score btn-score-minus admin-only" onclick="adjGame('${m.id}', 1, -1)"><i class="fas fa-minus"></i></button>
                             <div id="gDisp1_${m.id}" class="point-display score-box-a">${m.g1}</div>
-                            <button class="btn btn-score btn-primary" onclick="adjGame('${m.id}', 1, 1)"><i class="fas fa-plus"></i></button>
+                            <button class="btn btn-score btn-primary admin-only" onclick="adjGame('${m.id}', 1, 1)"><i class="fas fa-plus"></i></button>
                         </div>
                     </div>
 
@@ -1263,16 +1539,16 @@
                             <span style="font-size:11px; color:var(--text-muted); font-weight:bold;">Skor Akhir:</span>
                         </div>
                         <div class="score-controls">
-                            <button class="btn btn-score btn-score-minus" onclick="adjGame('${m.id}', 2, -1)"><i class="fas fa-minus"></i></button>
+                            <button class="btn btn-score btn-score-minus admin-only" onclick="adjGame('${m.id}', 2, -1)"><i class="fas fa-minus"></i></button>
                             <div id="gDisp2_${m.id}" class="point-display score-box-b">${m.g2}</div>
-                            <button class="btn btn-score btn-primary" onclick="adjGame('${m.id}', 2, 1)"><i class="fas fa-plus"></i></button>
+                            <button class="btn btn-score btn-primary admin-only" onclick="adjGame('${m.id}', 2, 1)"><i class="fas fa-plus"></i></button>
                         </div>
                     </div>
                 </div>
 
                 <div style="display:flex; gap:10px; margin-top:20px;">
-                    <button class="btn btn-ghost" onclick="cancelCourtConfirm('${m.id}')">Batal Lap ${m.court}</button>
-                    <button class="btn btn-success" onclick="submitCourtConfirm('${m.id}')"><i class="fas fa-check-circle"></i> Selesai Lap ${m.court}</button>
+                    <button class="btn btn-ghost admin-only" onclick="cancelCourtConfirm('${m.id}')">Batal Lap ${m.court}</button>
+                    <button class="btn btn-success admin-only" onclick="submitCourtConfirm('${m.id}')"><i class="fas fa-check-circle"></i> Selesai Lap ${m.court}</button>
                 </div>
             </div>
         </div>
@@ -1345,7 +1621,7 @@
             nt2.push(data.players.find(x => x.id === t2_1));
             
             if(!isValidCourtGender(nt1, nt2)) {
-                appAlert("Peringatan Aturan Gender", "Susunan manual ini mempertemukan Ganda Putri (2 Wanita) vs Ganda Putra (2 Pria). Perubahan tetap disimpan, harap perhatikan.");
+                appAlert("Peringatan Aturan Gender", "Susunan manual ini mempertemukan Ganda Putri (2 Wanita) vs Ganda Putra (2 Pria). Perubahan tetap disimpan.");
             }
         } else {
             if(t1_0 === t2_0) return appAlert("Error", "Pemain tidak boleh sama!");
@@ -1362,10 +1638,8 @@
     function updateCourtScoreUI(matchId) {
         let m = data.currentMatches.find(x => x.id === matchId);
         if(!m) return;
-        
         let gD1 = document.getElementById(`gDisp1_${matchId}`);
         let gD2 = document.getElementById(`gDisp2_${matchId}`);
-        
         if (gD1) gD1.innerText = m.g1;
         if (gD2) gD2.innerText = m.g2;
     }
@@ -1484,7 +1758,7 @@
 
     function resetConfirm() {
         appConfirm("RESET DATA", "PERINGATAN: Semua data pemain, judul, dan riwayat pertandingan aktif akan dihapus. Yakin?", () => {
-            let defaultData = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home' };
+            let defaultData = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [] };
             if(db && auth.currentUser) {
                 db.collection("tournaments").doc(auth.currentUser.uid).set(defaultData).then(() => location.reload());
             } else {
@@ -1591,7 +1865,7 @@
                     <img src="${getAvatar(p)}" class="p-img">
                     <div><b style="font-size:15px;">${p.name}</b><br><small style="color:var(--text-muted); font-weight:bold;">${p.gender==='M'?'Pria':'Wanita'}</small></div>
                 </div>
-                <div style="display:flex; gap:8px;">
+                <div class="owner-only" style="display:flex; gap:8px;">
                     <button onclick="togglePresent('${p.id}')" class="btn ${stClass}" style="padding:6px 10px; font-size:11px; width:auto; border-radius:8px;">${stText}</button>
                     <button onclick="delPlayerConfirm('${p.id}')" style="background:none; border:none; color:#ef4444; font-size:18px; padding:5px;"><i class="fas fa-trash-alt"></i></button>
                 </div>
@@ -1622,7 +1896,7 @@
                     <span style="flex:1; text-align:right;">${m.t1}</span>
                     <div style="display:flex; align-items:center;">
                         <b style="font-size:16px; color:var(--primary); padding:0 10px;">${m.s1} - ${m.s2}</b>
-                        <div style="display:flex; flex-direction:column; gap:5px;">
+                        <div class="admin-only" style="display:flex; flex-direction:column; gap:5px;">
                             <button onclick="openEditScore('${m.id}')" style="background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-muted); border-radius:5px; padding:4px 8px; cursor:pointer;"><i class="fas fa-edit"></i></button>
                         </div>
                     </div>
