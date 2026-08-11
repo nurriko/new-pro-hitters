@@ -148,6 +148,11 @@
         .nav-item { border: none; background: none; font-size: 22px; color: var(--text-muted); cursor: pointer; transition: all 0.3s; padding: 10px;}
         .nav-item.active { color: var(--primary); transform: translateY(-5px) scale(1.1); text-shadow: 0 10px 15px rgba(67, 97, 238, 0.4);}
 
+        /* TOAST NOTIFICATION CSS */
+        #toastContainer { position: fixed; top: 20px; right: 20px; z-index: 100000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { background: var(--card-bg); border-left: 4px solid var(--primary); padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); color: var(--text-main); font-size: 13px; animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; display: flex; align-items: center; gap: 12px; pointer-events: auto; }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+
         /* 3D COLLECTIBLE CARD CSS */
         .flip-card { background-color: transparent; width: 280px; height: 500px; perspective: 1000px; margin-bottom: 20px; }
         .flip-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-style: preserve-3d; }
@@ -176,6 +181,8 @@
     </style>
 </head>
 <body>
+
+<div id="toastContainer"></div>
 
 <div id="customDialog">
     <div class="dialog-box">
@@ -613,6 +620,10 @@
     let dbUnsubscribe = null;
     let cropper = null;
     
+    // VARIABEL UNTUK TRIGGER NOTIFIKASI
+    let prevFriendReqs = null;
+    let prevViewReqs = null;
+    
     const DEF_M = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23dbeafe'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%233b82f6'/%3E%3C/svg%3E";
     const DEF_F = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23fce7f3'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%23ec4899'/%3E%3C/svg%3E";
 
@@ -624,8 +635,6 @@
                 if (user) {
                     db.collection('users').doc(user.uid).get().then(doc => {
                         let uData = doc.exists ? doc.data() : null;
-                        
-                        // Cek apakah user adalah admin atau superadmin
                         let isSuperAdmin = user.email === 'admin@happyhitters.app' || 
                                            user.email === 'superadmin@happyhitters.app' || 
                                            (uData && (uData.role === 'admin' || uData.username.toLowerCase() === 'superadmin' || uData.username.toLowerCase() === 'admin'));
@@ -663,12 +672,7 @@
     function enterAppFlow() {
         if(audioCtx.state === 'suspended') audioCtx.resume();
         playSfx('pop'); 
-        
-        if(!auth) {
-            appAlert("Peringatan", "Firebase belum dikonfigurasi.");
-            return;
-        }
-
+        if(!auth) return appAlert("Peringatan", "Firebase belum dikonfigurasi.");
         document.getElementById('welcomeScreen').classList.add('hidden');
         document.getElementById('authScreen').classList.remove('hidden');
     }
@@ -682,25 +686,15 @@
         document.getElementById('authToggleText').innerText = authMode === 'login' ? 'Belum punya akun?' : 'Sudah punya akun?';
         document.getElementById('authToggleLink').innerText = authMode === 'login' ? 'Daftar Disini' : 'Login Disini';
         
-        document.getElementById('authUsername').value = ''; 
-        document.getElementById('authPassword').value = '';
-        
-        document.getElementById('authPassword').type = 'password';
-        document.getElementById('pwdToggleIcon').className = 'fas fa-eye pwd-toggle-icon';
+        document.getElementById('authUsername').value = ''; document.getElementById('authPassword').value = '';
+        document.getElementById('authPassword').type = 'password'; document.getElementById('pwdToggleIcon').className = 'fas fa-eye pwd-toggle-icon';
     }
 
     function togglePasswordVisibility() {
         const pwdInput = document.getElementById('authPassword');
         const pwdIcon = document.getElementById('pwdToggleIcon');
-        if (pwdInput.type === 'password') {
-            pwdInput.type = 'text';
-            pwdIcon.classList.remove('fa-eye');
-            pwdIcon.classList.add('fa-eye-slash');
-        } else {
-            pwdInput.type = 'password';
-            pwdIcon.classList.remove('fa-eye-slash');
-            pwdIcon.classList.add('fa-eye');
-        }
+        if (pwdInput.type === 'password') { pwdInput.type = 'text'; pwdIcon.classList.replace('fa-eye', 'fa-eye-slash'); } 
+        else { pwdInput.type = 'password'; pwdIcon.classList.replace('fa-eye-slash', 'fa-eye'); }
     }
 
     function handleAuthSubmit() {
@@ -710,39 +704,25 @@
         if(!userInp || !pass) return appAlert('Error', 'Username dan Password wajib diisi!');
         
         let isSuperAdmin = (userInp.toLowerCase() === 'admin' || userInp.toLowerCase() === 'superadmin');
-        let loginEmail = userInp;
-
-        if(isSuperAdmin) {
-            loginEmail = userInp.toLowerCase() + '@happyhitters.app'; // Jadinya admin@... atau superadmin@...
-        } else if(!userInp.includes('@')) {
-            loginEmail = userInp.replace(/\s+/g, '').toLowerCase() + '@happyhitters.app';
-        }
+        let loginEmail = isSuperAdmin ? (userInp.toLowerCase() + '@happyhitters.app') : (userInp.replace(/\s+/g, '').toLowerCase() + '@happyhitters.app');
 
         if(authMode === 'register') {
             auth.createUserWithEmailAndPassword(loginEmail, pass)
                 .then((cred) => {
                     db.collection('users').doc(cred.user.uid).set({
-                        username: userInp,
-                        email: loginEmail,
-                        role: isSuperAdmin ? 'admin' : 'user',
-                        friends: [],
-                        friendRequests: [],
+                        username: userInp, email: loginEmail, role: isSuperAdmin ? 'admin' : 'user', friends: [], friendRequests: [],
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     appSuccess('Berhasil', 'Akun berhasil didaftarkan. Anda akan segera masuk.');
                 })
                 .catch(err => appAlert("Registrasi Gagal", err.message));
         } else {
-            auth.signInWithEmailAndPassword(loginEmail, pass)
-                .catch(err => appAlert("Login Gagal", err.message));
+            auth.signInWithEmailAndPassword(loginEmail, pass).catch(err => appAlert("Login Gagal", err.message));
         }
     }
 
     function doLogout() {
-        appConfirm('Logout', 'Yakin ingin keluar dari aplikasi?', () => {
-            if(dbUnsubscribe) dbUnsubscribe();
-            auth.signOut().then(() => location.reload());
-        });
+        appConfirm('Logout', 'Yakin ingin keluar dari aplikasi?', () => { if(dbUnsubscribe) dbUnsubscribe(); auth.signOut().then(() => location.reload()); });
     }
 
     function showAdminScreen() {
@@ -758,14 +738,10 @@
             let html = '';
             snap.forEach(doc => {
                 let u = doc.data();
-                // Sembunyikan akun superadmin dan admin di list agar tidak terhapus sendiri
                 if(u.role !== 'admin' && u.username.toLowerCase() !== 'superadmin' && u.username.toLowerCase() !== 'admin') {
                     html += `
                     <div class="card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:15px; text-align:left;">
-                        <div>
-                            <b style="font-size:16px; color:var(--primary);">${u.username}</b><br>
-                            <small style="color:var(--text-muted);">${u.email}</small>
-                        </div>
+                        <div><b style="font-size:16px; color:var(--primary);">${u.username}</b><br><small style="color:var(--text-muted);">${u.email}</small></div>
                         <button class="btn btn-danger" style="width:auto; padding:8px 12px; font-size:12px;" onclick="deleteUserByAdmin('${doc.id}')"><i class="fas fa-trash"></i> Hapus</button>
                     </div>`;
                 }
@@ -775,11 +751,29 @@
     }
 
     function deleteUserByAdmin(uid) {
-        appConfirm("Hapus User", "Yakin ingin menghapus user ini? Mereka tidak akan bisa mengakses datanya lagi.", () => {
-            db.collection('users').doc(uid).delete().then(() => {
-                loadAdminUsers();
-            });
-        });
+        appConfirm("Hapus User", "Yakin ingin menghapus user ini?", () => { db.collection('users').doc(uid).delete().then(() => loadAdminUsers()); });
+    }
+
+    // --- FITUR TOAST NOTIFICATION ---
+    function showToast(title, msg, type='primary') {
+        let tc = document.getElementById('toastContainer');
+        let color = type==='success'?'var(--success)':(type==='warning'?'var(--warning)':'var(--primary)');
+        let icon = type==='success'?'fa-check-circle':(type==='warning'?'fa-exclamation-triangle':'fa-bell');
+        
+        let t = document.createElement('div');
+        t.className = 'toast';
+        t.style.borderLeftColor = color;
+        t.innerHTML = `<i class="fas ${icon}" style="color:${color}; font-size:24px;"></i> <div style="text-align:left;"><div style="font-weight:900; font-size:14px;">${title}</div><div style="font-size:12px; color:var(--text-muted); line-height:1.2; margin-top:2px;">${msg}</div></div>`;
+        
+        tc.appendChild(t);
+        playSfx('pop');
+        
+        setTimeout(() => {
+            t.style.opacity = '0';
+            t.style.transform = 'translateX(100%)';
+            t.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            setTimeout(() => t.remove(), 400);
+        }, 5000);
     }
 
     // --- FITUR SOSIAL & PERTEMANAN ---
@@ -789,6 +783,18 @@
                 myUserData = doc.data();
                 if(!myUserData.friends) myUserData.friends = [];
                 if(!myUserData.friendRequests) myUserData.friendRequests = [];
+
+                // Cek apakah ada request baru untuk dimunculkan Notifikasi
+                if(prevFriendReqs !== null) {
+                    let newReqs = myUserData.friendRequests.filter(x => !prevFriendReqs.includes(x));
+                    newReqs.forEach(async reqUid => {
+                        let d = await db.collection('users').doc(reqUid).get();
+                        let un = d.exists ? d.data().username : 'Seseorang';
+                        showToast('Request Pertemanan', `<b>${un}</b> ingin menambahkan Anda sebagai teman. Cek tab Sosial!`, 'primary');
+                    });
+                }
+                prevFriendReqs = [...myUserData.friendRequests];
+
                 renderSocialTab();
             }
         });
@@ -817,10 +823,7 @@
                     </div>`;
                 }
             });
-            
-            if(!html) {
-                html = '<span style="color:#ef4444; font-size:12px;">User tidak ditemukan.</span>';
-            }
+            if(!html) html = '<span style="color:#ef4444; font-size:12px;">User tidak ditemukan.</span>';
             document.getElementById('searchFriendResult').innerHTML = html;
         }).catch(err => {
             console.error(err);
@@ -829,22 +832,14 @@
     }
 
     function addFriend(uid) {
-        db.collection('users').doc(uid).update({
-            friendRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)
-        }).then(() => {
-            appSuccess("Terkirim", "Permintaan pertemanan berhasil dikirim.");
-            searchFriend();
-        });
+        db.collection('users').doc(uid).update({ friendRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) })
+        .then(() => { appSuccess("Terkirim", "Permintaan pertemanan berhasil dikirim."); searchFriend(); });
     }
 
     function removeFriend(uid) {
         appConfirm("Hapus Teman", "Apakah Anda yakin ingin menghapus teman ini?", () => {
-            db.collection('users').doc(auth.currentUser.uid).update({
-                friends: firebase.firestore.FieldValue.arrayRemove(uid)
-            });
-            db.collection('users').doc(uid).update({
-                friends: firebase.firestore.FieldValue.arrayRemove(auth.currentUser.uid)
-            });
+            db.collection('users').doc(auth.currentUser.uid).update({ friends: firebase.firestore.FieldValue.arrayRemove(uid) });
+            db.collection('users').doc(uid).update({ friends: firebase.firestore.FieldValue.arrayRemove(auth.currentUser.uid) });
             appSuccess("Berhasil", "Teman berhasil dihapus.");
         });
     }
@@ -906,40 +901,23 @@
     }
 
     function acceptFriend(uid) {
-        db.collection('users').doc(auth.currentUser.uid).update({
-            friendRequests: firebase.firestore.FieldValue.arrayRemove(uid),
-            friends: firebase.firestore.FieldValue.arrayUnion(uid)
-        });
-        db.collection('users').doc(uid).update({
-            friends: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)
-        });
+        db.collection('users').doc(auth.currentUser.uid).update({ friendRequests: firebase.firestore.FieldValue.arrayRemove(uid), friends: firebase.firestore.FieldValue.arrayUnion(uid) });
+        db.collection('users').doc(uid).update({ friends: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) });
     }
 
     function rejectFriend(uid) {
-        db.collection('users').doc(auth.currentUser.uid).update({
-            friendRequests: firebase.firestore.FieldValue.arrayRemove(uid)
-        });
+        db.collection('users').doc(auth.currentUser.uid).update({ friendRequests: firebase.firestore.FieldValue.arrayRemove(uid) });
     }
 
     function reqJoinMatch(uid) {
-        db.collection('tournaments').doc(uid).set({
-            viewRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)
-        }, {merge: true}).then(() => {
+        db.collection('tournaments').doc(uid).set({ viewRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) }, {merge: true}).then(() => {
             appSuccess("Terkirim", "Request untuk menonton pertandingan telah dikirim ke pembuat match.");
             renderSocialTab();
         });
     }
 
-    function viewFriendMatch(uid) {
-        appSuccess("Berhasil", "Memasuki pertandingan teman...");
-        setupRealtimeListener(uid);
-        nav('home');
-    }
-
-    function returnToMyMatch() {
-        setupRealtimeListener(auth.currentUser.uid);
-        nav('home');
-    }
+    function viewFriendMatch(uid) { appSuccess("Berhasil", "Memasuki pertandingan teman..."); setupRealtimeListener(uid); nav('home'); }
+    function returnToMyMatch() { setupRealtimeListener(auth.currentUser.uid); nav('home'); }
 
     // --- MANAJER AKSES (UNTUK HOST) ---
     async function openAccessManager() {
@@ -992,21 +970,14 @@
     }
     
     function actViewReq(id, accept) {
-        if(accept) {
-            data.viewRequests = data.viewRequests.filter(x=>x!==id);
-            if(!data.approvedViewers.includes(id)) data.approvedViewers.push(id);
-        } else {
-            data.viewRequests = data.viewRequests.filter(x=>x!==id);
-        }
+        if(accept) { data.viewRequests = data.viewRequests.filter(x=>x!==id); if(!data.approvedViewers.includes(id)) data.approvedViewers.push(id); } 
+        else { data.viewRequests = data.viewRequests.filter(x=>x!==id); }
         save(); openAccessManager();
     }
 
     function setAdmin(id, isAdmin) {
-        if(isAdmin) {
-            if(!data.matchAdmins.includes(id)) data.matchAdmins.push(id);
-        } else {
-            data.matchAdmins = data.matchAdmins.filter(x=>x!==id);
-        }
+        if(isAdmin) { if(!data.matchAdmins.includes(id)) data.matchAdmins.push(id); } 
+        else { data.matchAdmins = data.matchAdmins.filter(x=>x!==id); }
         save(); openAccessManager();
     }
 
@@ -1022,19 +993,18 @@
         let isAdmin = data.matchAdmins && data.matchAdmins.includes(auth.currentUser.uid);
         
         document.body.classList.remove('not-owner', 'viewer-only');
-        
         if(!isOwner) document.body.classList.add('not-owner');
         if(!isOwner && !isAdmin) document.body.classList.add('viewer-only');
         
         let alertEl = document.getElementById('viewingAlert');
-        if(!isOwner) alertEl.classList.remove('hidden');
-        else alertEl.classList.add('hidden');
+        if(!isOwner) alertEl.classList.remove('hidden'); else alertEl.classList.add('hidden');
     }
 
     // --- SISTEM UTAMA TURNAMEN ---
     function setupRealtimeListener(uid) {
         if (dbUnsubscribe) dbUnsubscribe();
         currentViewingId = uid;
+        prevViewReqs = null; // Reset prev checker saat buka turnamen baru
         
         dbUnsubscribe = db.collection("tournaments").doc(uid)
             .onSnapshot(doc => {
@@ -1051,8 +1021,21 @@
                     data.viewRequests = loadedData.viewRequests || [];
                     data.approvedViewers = loadedData.approvedViewers || [];
                     data.matchAdmins = loadedData.matchAdmins || [];
+
+                    // Cek Notifikasi Request Menonton (Hanya jika itu dashboard pertandingan kita sendiri)
+                    if (auth.currentUser && uid === auth.currentUser.uid) {
+                        if (prevViewReqs !== null) {
+                            let newReqs = data.viewRequests.filter(x => !prevViewReqs.includes(x));
+                            newReqs.forEach(async reqUid => {
+                                let d = await db.collection('users').doc(reqUid).get();
+                                let un = d.exists ? d.data().username : 'Seseorang';
+                                showToast('Permintaan Menonton', `<b>${un}</b> meminta akses untuk menonton pertandingan Anda. Cek ikon Kunci!`, 'warning');
+                            });
+                        }
+                        prevViewReqs = [...data.viewRequests];
+                    }
                 } else {
-                    if(uid === auth.currentUser.uid) save(); 
+                    if(auth.currentUser && uid === auth.currentUser.uid) save(); 
                 }
                 
                 checkPermissions();
@@ -1079,8 +1062,6 @@
     function save() { 
         renderAll(); 
         if(!auth.currentUser) return;
-        
-        // Cegah superadmin/admin dari merewrite tournament jika tidak sengaja trigger
         if(auth.currentUser.email === 'admin@happyhitters.app' || auth.currentUser.email === 'superadmin@happyhitters.app') return;
         
         let isOwner = currentViewingId === auth.currentUser.uid;
