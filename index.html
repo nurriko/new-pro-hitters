@@ -244,7 +244,7 @@
 <div id="accessManagerModal" class="hidden">
     <div class="dialog-box" style="width: 90%; max-width: 450px; max-height: 85vh; overflow-y:auto; padding: 20px;">
         <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-key"></i> Manajer Akses</h3>
-        <p style="font-size:12px; color:var(--text-muted);">Kelola teman yang dapat melihat dan mengelola skor pertandingan Anda.</p>
+        <p style="font-size:12px; color:var(--text-muted);">Kelola akses penonton dan admin pertandingan Anda.</p>
         
         <h4 style="margin:15px 0 5px 0; text-align:left; color:var(--warning); font-size:14px;">Permintaan Menonton (<span id="countViewReq">0</span>)</h4>
         <div id="viewReqList" style="text-align:left; font-size:13px; margin-bottom:15px; max-height:150px; overflow-y:auto;"></div>
@@ -575,12 +575,17 @@
 
     <!-- TAB SOCIAL / FRIENDS -->
     <div id="tab-social" class="content">
-        <!-- FITUR BARU: TOMBOL SCAN BERSAR DI MENU SOSIAL -->
         <button class="btn btn-success" style="width:100%; margin-bottom:20px; padding:16px; box-shadow:0 4px 15px rgba(16, 185, 129, 0.4);" onclick="openScanModal()">
             <i class="fas fa-camera"></i> SCAN QR MATCH TEMAN
         </button>
 
-        <h3 style="margin:0 0 15px 0; font-weight:900; color:var(--primary);"><i class="fas fa-user-friends"></i> SOSIAL & TEMAN</h3>
+        <!-- FITUR BARU: DAFTAR MATCH YANG DITONTON NON-TEMAN -->
+        <div class="card">
+            <h4 style="margin:0 0 10px 0; font-size:14px; color:var(--primary);">Pertandingan Ditonton</h4>
+            <div id="activeViewingList" style="text-align:left;">Memuat...</div>
+        </div>
+
+        <h3 style="margin:25px 0 15px 0; font-weight:900; color:var(--primary);"><i class="fas fa-user-friends"></i> SOSIAL & TEMAN</h3>
         
         <div class="card">
             <h4 style="margin:0 0 10px 0; font-size:14px; color:var(--primary);">Cari Teman</h4>
@@ -891,7 +896,8 @@
 
     async function renderSocialTab() {
         if(!myUserData) return;
-        
+
+        // 1. Tampilkan Request Teman
         let reqHtml = '';
         for(let id of myUserData.friendRequests) {
             let d = await db.collection('users').doc(id).get();
@@ -907,6 +913,38 @@
         }
         document.getElementById('friendRequestsList').innerHTML = reqHtml || '<span style="font-size:12px; color:var(--text-muted);">Belum ada permintaan.</span>';
         
+        // 2. Tampilkan Daftar Pertandingan yang Ditonton (Akses Non-Teman / Semua)
+        let activeViewHtml = '';
+        try {
+            // Cari turnamen di mana user ini masuk dalam daftar approvedViewers
+            let snap = await db.collection('tournaments').where('approvedViewers', 'array-contains', auth.currentUser.uid).get();
+            if(snap.empty) {
+                activeViewHtml = '<span style="font-size:12px; color:var(--text-muted);">Tidak ada pertandingan yang sedang ditonton.</span>';
+            } else {
+                for(let doc of snap.docs) {
+                    if(doc.id === auth.currentUser.uid) continue;
+                    let tData = doc.data();
+                    if(tData.isFinished || !tData.title) continue;
+
+                    let hostDoc = await db.collection('users').doc(doc.id).get();
+                    let hostName = hostDoc.exists ? hostDoc.data().username : 'Unknown Host';
+                    
+                    let isAdm = tData.matchAdmins && tData.matchAdmins.includes(auth.currentUser.uid);
+                    let badge = isAdm ? '<i class="fas fa-shield-alt" style="color:var(--primary);" title="Admin"></i>' : '<i class="fas fa-eye" style="color:var(--success);" title="Penonton"></i>';
+
+                    activeViewHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
+                        <div><b>${hostName}</b> ${badge}<br><small style="color:var(--text-muted);">${tData.title}</small></div>
+                        <button class="btn btn-success" style="padding:6px 10px; width:auto; font-size:12px;" onclick="viewFriendMatch('${doc.id}')">Masuk</button>
+                    </div>`;
+                }
+                if(!activeViewHtml) activeViewHtml = '<span style="font-size:12px; color:var(--text-muted);">Tidak ada pertandingan aktif yang ditonton.</span>';
+            }
+        } catch(e) {
+            activeViewHtml = '<span style="font-size:12px; color:#ef4444;">Gagal memuat data tontonan.</span>';
+        }
+        document.getElementById('activeViewingList').innerHTML = activeViewHtml;
+
+        // 3. Tampilkan Daftar Teman
         let frHtml = '';
         for(let id of myUserData.friends) {
             let d = await db.collection('users').doc(id).get();
@@ -954,10 +992,28 @@
         db.collection('users').doc(auth.currentUser.uid).update({ friendRequests: firebase.firestore.FieldValue.arrayRemove(uid) });
     }
 
+    // DIMODIFIKASI: Langsung masuk ke match jika scan QR dan sudah di-approve
     function reqJoinMatch(uid) {
-        db.collection('tournaments').doc(uid).set({ viewRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) }, {merge: true}).then(() => {
-            appSuccess("Terkirim", "Request untuk bergabung telah dikirim ke pembuat match.");
-            renderSocialTab();
+        db.collection('tournaments').doc(uid).get().then(doc => {
+            if(doc.exists) {
+                let t = doc.data();
+                let myUid = auth.currentUser.uid;
+                
+                if(t.approvedViewers && t.approvedViewers.includes(myUid)) {
+                    // Jika sudah disetujui sebelumnya, bypass request dan langsung masuk
+                    appSuccess("Akses Tersedia", "Anda sudah memiliki akses. Memasuki pertandingan...");
+                    viewFriendMatch(uid);
+                } else if (t.viewRequests && t.viewRequests.includes(myUid)) {
+                    appAlert("Menunggu", "Request Anda masih menunggu persetujuan dari host pertandingan.");
+                } else {
+                    db.collection('tournaments').doc(uid).set({ viewRequests: firebase.firestore.FieldValue.arrayUnion(myUid) }, {merge: true}).then(() => {
+                        appSuccess("Terkirim", "Request bergabung dikirim. Tunggu host menerima, lalu cek tab Sosial atau scan ulang QR Code.");
+                        renderSocialTab();
+                    });
+                }
+            } else {
+                appAlert("Error", "Pertandingan tidak ditemukan atau belum dimulai.");
+            }
         });
     }
 
@@ -991,10 +1047,18 @@
         for(let id of data.approvedViewers) {
             if(data.matchAdmins.includes(id)) continue;
             let un = await getUser(id);
+            
+            // CEK APAKAH VIEWER INI TEMAN ATAU BUKAN
+            let isFriend = myUserData.friends && myUserData.friends.includes(id);
+
+            let adminBtn = isFriend 
+                ? `<button class="btn btn-primary" style="padding:4px 8px; width:auto; display:inline-block; font-size:12px;" onclick="setAdmin('${id}', true)">Jadikan Admin</button>`
+                : `<span style="font-size:10px; color:var(--warning); font-weight:bold; margin-right:5px;">Bukan Teman</span>`;
+
             aHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
                 <b>${un}</b>
-                <div>
-                    <button class="btn btn-primary" style="padding:4px 8px; width:auto; display:inline-block; font-size:12px;" onclick="setAdmin('${id}', true)">Jadikan Admin</button>
+                <div style="display:flex; align-items:center; gap:5px;">
+                    ${adminBtn}
                     <button class="btn btn-ghost" style="padding:4px 8px; width:auto; display:inline-block; font-size:12px;" onclick="kickViewer('${id}')">Hapus</button>
                 </div>
             </div>`;
