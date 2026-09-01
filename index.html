@@ -24,7 +24,7 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     
-    <!-- Library Barcode / QR Code (Dipindah ke CDNjs agar lebih stabil dan tidak diblokir provider) -->
+    <!-- Library Barcode / QR Code -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 
@@ -469,7 +469,6 @@
             <h1>HAPPY HITTERS</h1>
         </div>
         <div style="display: flex; gap: 8px;">
-            <!-- Ikon QR dipisah dari Manajer Akses -->
             <button class="sound-toggle owner-only" title="Tampilkan QR Code" onclick="openQRModal()"><i class="fas fa-qrcode"></i></button>
             <button class="sound-toggle owner-only" title="Manajer Akses" onclick="openAccessManager()"><i class="fas fa-key"></i></button>
             <button class="sound-toggle" title="Ubah Tema" onclick="toggleTheme()" id="themeBtn"><i id="themeIcon" class="fas fa-moon"></i></button>
@@ -731,6 +730,7 @@
         });
     }
 
+    // AUDIO CONTEXT DIPERBAIKI: Dibiarkan null sampai dipanggil oleh interaksi user yang sah
     let audioCtx = null;
     let isMuted = false;
     let currentTheme = localStorage.getItem('HH_THEME') || 'auto';
@@ -835,16 +835,59 @@
     }
 
     function enterAppFlow() {
-        // Melindungi inisialisasi audio agar tidak crash di Safari iOS yang sangat ketat
+        // Melindungi inisialisasi audio agar tidak crash di Safari iOS atau browser Android
+        // yang secara ketat memblokir pembuatan memori audio.
         try { 
-            if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
-            if(audioCtx.state === 'suspended') audioCtx.resume(); 
-        } catch(e){}
+            if(!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if(AudioContext) audioCtx = new AudioContext();
+            }
+            if(audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume(); 
+            }
+        } catch(e) {
+            console.warn("AudioContext gagal diinisialisasi:", e);
+            audioCtx = null;
+        }
         
         playSfx('pop'); 
-        if(!auth) return appAlert("Peringatan", "Firebase belum dikonfigurasi.");
+        
+        // Pengecekan aman jika `auth` tidak terinisialisasi
+        if(!auth) {
+            appAlert("Peringatan", "Aplikasi gagal terhubung ke Firebase. Periksa koneksi internet Anda.");
+            return;
+        }
+
         document.getElementById('welcomeScreen').classList.add('hidden');
         document.getElementById('authScreen').classList.remove('hidden');
+    }
+
+    // PEMBARUAN PENTING: Pengamanan agar playSfx tidak merusak skrip
+    function playSfx(type) {
+        if(isMuted || !audioCtx) return; 
+        try {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator(); 
+            const gain = audioCtx.createGain();
+            osc.connect(gain); 
+            gain.connect(audioCtx.destination);
+            
+            if(type === 'pop') {
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime); 
+                osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime); 
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start(); 
+                osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'whistle') {
+                osc.frequency.setValueAtTime(2000, audioCtx.currentTime); 
+                gain.gain.value = 0.05;
+                osc.start(); 
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        } catch(e) {
+            console.warn("Gagal memainkan efek suara:", e);
+        }
     }
 
     function toggleAuthMode() {
@@ -925,7 +968,6 @@
         appConfirm("Hapus User", "Yakin ingin menghapus user ini?", () => { db.collection('users').doc(uid).delete().then(() => loadAdminUsers()); });
     }
 
-    // --- FITUR TOAST NOTIFICATION ---
     function showToast(title, msg, type='primary') {
         let tc = document.getElementById('toastContainer');
         let color = type==='success'?'var(--success)':(type==='warning'?'var(--warning)':'var(--primary)');
@@ -947,7 +989,6 @@
         }, 5000);
     }
 
-    // --- FITUR SOSIAL & PERTEMANAN ---
     function initSocial(uid) {
         db.collection('users').doc(uid).onSnapshot(doc => {
             if(doc.exists) {
@@ -1151,11 +1192,10 @@
             let params = new URLSearchParams(location.search);
             let joinUid = params.get('join');
             if(!joinUid) return;
-            // Melindungi history.replaceState yang kadang crash jika dibuka dari Local File / file:/// protocol
             if(location.protocol !== 'file:') {
                 history.replaceState({}, '', location.pathname); 
             }
-            if(!auth.currentUser) { window._pendingJoinUid = joinUid; return; }
+            if(!auth || !auth.currentUser) { window._pendingJoinUid = joinUid; return; }
             processJoin(joinUid);
         } catch(e) { console.error("URL Params error", e); }
     }
@@ -1307,7 +1347,6 @@
         if(!isOwner) alertEl.classList.remove('hidden'); else alertEl.classList.add('hidden');
     }
 
-    // --- FITUR QR CODE (DIPERBAIKI) ---
     function openQRModal() {
         playSfx('pop');
         document.getElementById('qrModal').classList.remove('hidden');
@@ -1381,7 +1420,6 @@
 
     function onScanFailure(error) {}
 
-    // --- SISTEM UTAMA TURNAMEN ---
     function setupRealtimeListener(uid) {
         if (dbUnsubscribe) dbUnsubscribe();
         currentViewingId = uid;
@@ -1753,7 +1791,6 @@
         return `BABAK ${idx+1}`;
     }
 
-    // --- GENERATOR BRACKET KNOCKOUT ---
     function generateBracket() {
         if(data.isFinished) return appAlert("Perhatian", "Turnamen sudah selesai! Buka kembali turnamen di menu Ranking jika ingin membuat bracket baru.");
         if(data.currentMatches && data.currentMatches.length > 0) return appAlert("Perhatian", "Selesaikan pertandingan yang sedang berjalan terlebih dahulu.");
@@ -1884,7 +1921,6 @@
         document.getElementById('bracketViewModal').classList.remove('hidden');
     }
 
-    // --- RINGKASAN SESI (untuk mode turnamen terjadwal) ---
     function openSessionSummary() {
         playSfx('pop');
         let totalMatches = data.matches.length;
