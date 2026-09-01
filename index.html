@@ -725,9 +725,7 @@
         db = firebase.firestore();
 
         // Mencegah Crash: Kembali ke opsi persistensi standar yang lebih stabil di berbagai HP
-        db.enablePersistence().catch(err => {
-            console.error("Firebase Offline Error:", err);
-        });
+        // Persistence dihilangkan agar menghindari stuck "fetching dari cache" di beberapa Android
     }
 
     // AUDIO CONTEXT DIPERBAIKI: Dibiarkan null sampai dipanggil oleh interaksi user yang sah
@@ -774,41 +772,30 @@
         if (auth) {
             auth.onAuthStateChanged(user => {
                 if (user) {
-                    db.collection('users').doc(user.uid).get().then(doc => {
-                        let uData = doc.exists ? doc.data() : null;
-                        let uName = (uData && uData.username) ? uData.username.toLowerCase() : '';
-                        let isSuperAdmin = user.email === 'admin@happyhitters.app' || 
-                                           user.email === 'superadmin@happyhitters.app' || 
-                                           (uData && (uData.role === 'admin' || uName === 'superadmin' || uName === 'admin'));
-
-                        if(!doc.exists && !isSuperAdmin) {
-                            auth.signOut();
-                            appAlert("Akses Ditolak", "Akun Anda tidak ditemukan atau telah dihapus oleh Admin.");
-                            return;
-                        }
-
-                        if(isSuperAdmin) {
-                            showAdminScreen();
-                        } else {
-                            document.getElementById('welcomeScreen').classList.add('hidden');
-                            document.getElementById('authScreen').classList.add('hidden');
-                            document.getElementById('adminScreen').classList.add('hidden');
-                            document.getElementById('appContainer').classList.add('visible');
-                            
-                            initSocial(user.uid);
-                            setupRealtimeListener(user.uid); 
-
-                            if(window._pendingJoinUid) {
-                                let pending = window._pendingJoinUid;
-                                window._pendingJoinUid = null;
-                                setTimeout(() => processJoin(pending), 800);
+                    // Delay sejenak untuk menghindari race condition saat registrasi baru
+                    setTimeout(() => {
+                        db.collection('users').doc(user.uid).get().then(doc => {
+                            if(!doc.exists) {
+                                // Jika db hang sesaat, beri kesempatan kedua
+                                setTimeout(() => {
+                                    db.collection('users').doc(user.uid).get().then(retryDoc => {
+                                        if(!retryDoc.exists) {
+                                            auth.signOut();
+                                            appAlert("Akses Ditolak", "Akun Anda tidak ditemukan di database.");
+                                        } else {
+                                            masukKeAplikasi(user, retryDoc.data());
+                                        }
+                                    });
+                                }, 1500);
+                                return;
                             }
-                        }
-                    }).catch(err => {
-                        console.error("Login Error:", err);
-                        appAlert("Koneksi Bermasalah", "Gagal memuat profil pengguna dari server. Pastikan Anda memiliki koneksi internet.");
-                        auth.signOut();
-                    });
+                            masukKeAplikasi(user, doc.data());
+                        }).catch(err => {
+                            console.error("Login Error:", err);
+                            appAlert("Koneksi Bermasalah", "Gagal memuat profil pengguna dari server. Pastikan Anda memiliki koneksi internet.");
+                            auth.signOut();
+                        });
+                    }, 500);
                 } else {
                     document.getElementById('appContainer').classList.remove('visible');
                     document.getElementById('authScreen').classList.add('hidden');
@@ -818,6 +805,31 @@
             });
         }
     };
+
+    function masukKeAplikasi(user, uData) {
+        let uName = (uData && uData.username) ? uData.username.toLowerCase() : '';
+        let isSuperAdmin = user.email === 'admin@happyhitters.app' || 
+                           user.email === 'superadmin@happyhitters.app' || 
+                           (uData && (uData.role === 'admin' || uName === 'superadmin' || uName === 'admin'));
+
+        if(isSuperAdmin) {
+            showAdminScreen();
+        } else {
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('adminScreen').classList.add('hidden');
+            document.getElementById('appContainer').classList.add('visible');
+            
+            initSocial(user.uid);
+            setupRealtimeListener(user.uid); 
+
+            if(window._pendingJoinUid) {
+                let pending = window._pendingJoinUid;
+                window._pendingJoinUid = null;
+                setTimeout(() => processJoin(pending), 800);
+            }
+        }
+    }
 
     let authMode = 'login';
 
@@ -836,7 +848,6 @@
 
     function enterAppFlow() {
         // Melindungi inisialisasi audio agar tidak crash di Safari iOS atau browser Android
-        // yang secara ketat memblokir pembuatan memori audio.
         try { 
             if(!audioCtx) {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -916,21 +927,44 @@
         const pass = document.getElementById('authPassword').value.trim();
         if(!userInp || !pass) return appAlert('Error', 'Username dan Password wajib diisi!');
         
+        // Tampilkan indikator proses agar tidak di-klik berulang kali
+        const btnSubmit = document.getElementById('authBtnSubmit');
+        const originalText = btnSubmit.innerText;
+        btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+        btnSubmit.disabled = true;
+
         let isSuperAdmin = (userInp.toLowerCase() === 'admin' || userInp.toLowerCase() === 'superadmin');
         let loginEmail = isSuperAdmin ? (userInp.toLowerCase() + '@happyhitters.app') : (userInp.replace(/\s+/g, '').toLowerCase() + '@happyhitters.app');
 
         if(authMode === 'register') {
             auth.createUserWithEmailAndPassword(loginEmail, pass)
                 .then((cred) => {
-                    db.collection('users').doc(cred.user.uid).set({
+                    return db.collection('users').doc(cred.user.uid).set({
                         username: userInp, email: loginEmail, role: isSuperAdmin ? 'admin' : 'user', friends: [], friendRequests: [],
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
+                })
+                .then(() => {
+                    btnSubmit.innerHTML = originalText;
+                    btnSubmit.disabled = false;
                     appSuccess('Berhasil', 'Akun berhasil didaftarkan. Anda akan segera masuk.');
                 })
-                .catch(err => appAlert("Registrasi Gagal", err.message));
+                .catch(err => {
+                    btnSubmit.innerHTML = originalText;
+                    btnSubmit.disabled = false;
+                    appAlert("Registrasi Gagal", err.message);
+                });
         } else {
-            auth.signInWithEmailAndPassword(loginEmail, pass).catch(err => appAlert("Login Gagal", err.message));
+            auth.signInWithEmailAndPassword(loginEmail, pass)
+                .then(() => {
+                    btnSubmit.innerHTML = originalText;
+                    btnSubmit.disabled = false;
+                })
+                .catch(err => {
+                    btnSubmit.innerHTML = originalText;
+                    btnSubmit.disabled = false;
+                    appAlert("Login Gagal", "Username atau Password salah, atau periksa koneksi internet Anda.");
+                });
         }
     }
 
@@ -1176,9 +1210,6 @@
     function viewFriendMatch(uid) { appSuccess("Berhasil", "Memasuki pertandingan teman..."); setupRealtimeListener(uid); nav('home'); }
     function returnToMyMatch() { setupRealtimeListener(auth.currentUser.uid); nav('home'); }
 
-    // ======================================================
-    // GABUNG PERTANDINGAN VIA QR CODE / LINK UNDANGAN
-    // ======================================================
     function getJoinedList() {
         try { return JSON.parse(localStorage.getItem('HH_JOINED_TOURNAMENTS') || '[]'); } catch(e) { return []; }
     }
@@ -1262,7 +1293,6 @@
         container.innerHTML = html || '<span style="font-size:12px; color:var(--text-muted);">Belum ada pertandingan yang diikuti.</span>';
     }
 
-    // --- MANAJER AKSES (UNTUK HOST) ---
     async function openAccessManager() {
         if(!data.viewRequests) data.viewRequests = [];
         if(!data.approvedViewers) data.approvedViewers = [];
@@ -1516,7 +1546,6 @@
         }
     }
 
-    // --- FITUR BARU: AVATAR AI (TEXT-TO-IMAGE) ---
     function openAIAvatarPrompt() {
         let promptText = prompt("Masukkan deskripsi avatar (Misal: Pemain tenis pria gaya 3D figurine detail, atau pemain tenis wanita bergaya anime polaroid):", "Pemain tenis profesional gaya kartun 3D");
         if(!promptText) return;
@@ -1526,7 +1555,6 @@
         camI.className = "fas fa-spinner fa-spin"; 
         camI.style.display = "block";
         
-        // Menggunakan API Image Generator dari Pollinations secara anonim
         let aiUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=300&height=300&nologo=true`;
         
         fetch(aiUrl)
@@ -1697,9 +1725,6 @@
         document.getElementById('fixedPartnerSetup').classList.toggle('hidden', mode !== 'tetap');
     }
 
-    // ======================================================
-    // MODE TURNAMEN: LIGA (Round Robin) vs KNOCKOUT (Gugur)
-    // ======================================================
     function setTournamentMode(mode, playSnd=true) {
         if(playSnd) {
             if(data.currentMatches && data.currentMatches.length > 0) {
