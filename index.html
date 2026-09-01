@@ -24,9 +24,9 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     
-    <!-- Library Barcode / QR Code (Diperbaiki, cukup 1 versi stabil) -->
+    <!-- Library Barcode / QR Code (Dipindah ke CDNjs agar lebih stabil dan tidak diblokir provider) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 
     <!-- FIREBASE COMPAT SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -73,7 +73,6 @@
 
         @keyframes proRally { 0% { transform: translate(-100px, 0) scaleY(0.8); } 5% { transform: translate(-90px, -20px) scaleY(1); } 50% { transform: translate(0, -110px) scaleY(1); } 95% { transform: translate(90px, -20px) scaleY(1); } 100% { transform: translate(100px, 0) scaleY(0.8); } }
         @keyframes shadowTrack { 0% { transform: translateX(-100px) scale(1); opacity: 0.7; } 50% { transform: translateX(0) scale(0.3); opacity: 0.1; } 100% { transform: translateX(100px) scale(1); opacity: 0.7; } }
-        @keyframes flashAlert { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
 
         .welcome-title { font-size: 26px; font-weight: 900; color: white; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .btn-enter { background: white; color: var(--primary); padding: 15px 35px; border: none; border-radius: 50px; font-size: 18px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-family: 'Outfit', sans-serif; transition: transform 0.2s; text-transform: uppercase; letter-spacing: 1px; }
@@ -470,6 +469,7 @@
             <h1>HAPPY HITTERS</h1>
         </div>
         <div style="display: flex; gap: 8px;">
+            <!-- Ikon QR dipisah dari Manajer Akses -->
             <button class="sound-toggle owner-only" title="Tampilkan QR Code" onclick="openQRModal()"><i class="fas fa-qrcode"></i></button>
             <button class="sound-toggle owner-only" title="Manajer Akses" onclick="openAccessManager()"><i class="fas fa-key"></i></button>
             <button class="sound-toggle" title="Ubah Tema" onclick="toggleTheme()" id="themeBtn"><i id="themeIcon" class="fas fa-moon"></i></button>
@@ -725,18 +725,13 @@
         auth = firebase.auth();
         db = firebase.firestore();
 
-        db.enablePersistence({ synchronizeTabs: true }).catch(err => {
-            if(err.code === 'failed-precondition') {
-                console.warn("Firestore offline persistence: browser tidak mendukung synchronizeTabs.");
-            } else if(err.code === 'unimplemented') {
-                console.warn("Firestore offline persistence: browser ini tidak mendukung penyimpanan offline.");
-            } else {
-                console.error("Firebase Offline Error:", err);
-            }
+        // Mencegah Crash: Kembali ke opsi persistensi standar yang lebih stabil di berbagai HP
+        db.enablePersistence().catch(err => {
+            console.error("Firebase Offline Error:", err);
         });
     }
 
-    let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let audioCtx = null;
     let isMuted = false;
     let currentTheme = localStorage.getItem('HH_THEME') || 'auto';
     
@@ -809,6 +804,10 @@
                                 setTimeout(() => processJoin(pending), 800);
                             }
                         }
+                    }).catch(err => {
+                        console.error("Login Error:", err);
+                        appAlert("Koneksi Bermasalah", "Gagal memuat profil pengguna dari server. Pastikan Anda memiliki koneksi internet.");
+                        auth.signOut();
                     });
                 } else {
                     document.getElementById('appContainer').classList.remove('visible');
@@ -828,7 +827,7 @@
         if(navigator.onLine) {
             if(!banner.classList.contains('hidden')) {
                 banner.classList.add('hidden');
-                showToast('Online Kembali', 'Koneksi internet tersambung, semua perubahan sedang disinkronkan ke server.', 'success');
+                showToast('Online Kembali', 'Koneksi internet tersambung, semua perubahan disinkronkan.', 'success');
             }
         } else {
             banner.classList.remove('hidden');
@@ -836,7 +835,12 @@
     }
 
     function enterAppFlow() {
-        if(audioCtx.state === 'suspended') audioCtx.resume();
+        // Melindungi inisialisasi audio agar tidak crash di Safari iOS yang sangat ketat
+        try { 
+            if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
+            if(audioCtx.state === 'suspended') audioCtx.resume(); 
+        } catch(e){}
+        
         playSfx('pop'); 
         if(!auth) return appAlert("Peringatan", "Firebase belum dikonfigurasi.");
         document.getElementById('welcomeScreen').classList.add('hidden');
@@ -1143,12 +1147,17 @@
     }
 
     function handleJoinParam() {
-        let params = new URLSearchParams(location.search);
-        let joinUid = params.get('join');
-        if(!joinUid) return;
-        history.replaceState({}, '', location.pathname); 
-        if(!auth.currentUser) { window._pendingJoinUid = joinUid; return; }
-        processJoin(joinUid);
+        try {
+            let params = new URLSearchParams(location.search);
+            let joinUid = params.get('join');
+            if(!joinUid) return;
+            // Melindungi history.replaceState yang kadang crash jika dibuka dari Local File / file:/// protocol
+            if(location.protocol !== 'file:') {
+                history.replaceState({}, '', location.pathname); 
+            }
+            if(!auth.currentUser) { window._pendingJoinUid = joinUid; return; }
+            processJoin(joinUid);
+        } catch(e) { console.error("URL Params error", e); }
     }
 
     async function processJoin(joinUid) {
@@ -1468,12 +1477,10 @@
             localStorage.setItem("HH_ACTIVE_TAB", id);
         }
     }
-    
+
     // --- FITUR BARU: AVATAR AI (TEXT-TO-IMAGE) ---
     function openAIAvatarPrompt() {
-        // Menggunakan context user preference (suka 3D figurine, gaya polaroid, karakter Aespa/ATEEZ dll) 
-        // sebagai contoh teks agar lebih relate secara personal tanpa harus memaksa
-        let promptText = prompt("Masukkan deskripsi (Misal: Pemain tenis pria gaya 3D figurine detail, atau pemain tenis wanita bergaya anime polaroid):", "Pemain tenis profesional gaya kartun 3D");
+        let promptText = prompt("Masukkan deskripsi avatar (Misal: Pemain tenis pria gaya 3D figurine detail, atau pemain tenis wanita bergaya anime polaroid):", "Pemain tenis profesional gaya kartun 3D");
         if(!promptText) return;
         
         document.getElementById('prevImg').style.display = 'none';
@@ -1481,7 +1488,7 @@
         camI.className = "fas fa-spinner fa-spin"; 
         camI.style.display = "block";
         
-        // Menggunakan API Image Generator dari Pollinations (Gratis, siap pakai dari frontend)
+        // Menggunakan API Image Generator dari Pollinations secara anonim
         let aiUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=300&height=300&nologo=true`;
         
         fetch(aiUrl)
@@ -2470,8 +2477,7 @@
             if(db && auth.currentUser) {
                 db.collection("tournaments").doc(auth.currentUser.uid).set(defaultData).then(() => location.reload());
             } else {
-                localStorage.setItem(DB_KEY, JSON.stringify(defaultData)); 
-                location.reload();
+                appAlert("Error", "Anda tidak sedang login, tidak ada data untuk direset.");
             }
         });
     }
