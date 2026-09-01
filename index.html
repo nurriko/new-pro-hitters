@@ -26,7 +26,7 @@
     
     <!-- Library Barcode / QR Code -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
 
     <!-- FIREBASE COMPAT SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -59,9 +59,9 @@
         body.not-owner .owner-only { display: none !important; pointer-events: none; }
         body.viewer-only .admin-only { display: none !important; pointer-events: none; }
 
-        #welcomeScreen, #authScreen, #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #adminScreen, #cropModal, #editMatchPlayersModal, #accessManagerModal, #bracketViewModal, #sessionSummaryModal, #qrModal, #scanModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-grad); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: opacity 0.5s ease, visibility 0.5s; }
-        #welcomeScreen.hidden, #authScreen.hidden, #fixedPairsDialog.hidden, #editScoreDialog.hidden, #archivesDialog.hidden, #playerCardModal.hidden, #shareMatchModal.hidden, #adminScreen.hidden, #cropModal.hidden, #editMatchPlayersModal.hidden, #accessManagerModal.hidden, #bracketViewModal.hidden, #sessionSummaryModal.hidden, #qrModal.hidden, #scanModal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-        #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #editMatchPlayersModal, #accessManagerModal, #bracketViewModal, #sessionSummaryModal, #qrModal, #scanModal { background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001; }
+        #welcomeScreen, #authScreen, #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #adminScreen, #cropModal, #editMatchPlayersModal, #accessManagerModal, #qrModal, #scanModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-grad); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: opacity 0.5s ease, visibility 0.5s; }
+        #welcomeScreen.hidden, #authScreen.hidden, #fixedPairsDialog.hidden, #editScoreDialog.hidden, #archivesDialog.hidden, #playerCardModal.hidden, #shareMatchModal.hidden, #adminScreen.hidden, #cropModal.hidden, #editMatchPlayersModal.hidden, #accessManagerModal.hidden, #qrModal.hidden, #scanModal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #editMatchPlayersModal, #accessManagerModal, #qrModal, #scanModal { background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001; }
         #cropModal { background: #000; z-index: 10005; }
         
         #adminScreen { align-items: center; justify-content: flex-start; padding: 20px; box-sizing: border-box; overflow-y: auto; }
@@ -73,6 +73,7 @@
 
         @keyframes proRally { 0% { transform: translate(-100px, 0) scaleY(0.8); } 5% { transform: translate(-90px, -20px) scaleY(1); } 50% { transform: translate(0, -110px) scaleY(1); } 95% { transform: translate(90px, -20px) scaleY(1); } 100% { transform: translate(100px, 0) scaleY(0.8); } }
         @keyframes shadowTrack { 0% { transform: translateX(-100px) scale(1); opacity: 0.7; } 50% { transform: translateX(0) scale(0.3); opacity: 0.1; } 100% { transform: translateX(100px) scale(1); opacity: 0.7; } }
+        @keyframes flashAlert { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
 
         .welcome-title { font-size: 26px; font-weight: 900; color: white; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .btn-enter { background: white; color: var(--primary); padding: 15px 35px; border: none; border-radius: 50px; font-size: 18px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-family: 'Outfit', sans-serif; transition: transform 0.2s; text-transform: uppercase; letter-spacing: 1px; }
@@ -180,22 +181,6 @@
         .ticket-header { font-size: 18px; font-weight: 900; letter-spacing: 2px; margin-bottom: 5px; color: var(--gold); text-transform: uppercase; text-shadow: 0 2px 5px rgba(0,0,0,0.3);}
 
         .hidden { display: none !important; }
-
-        /* BRACKET & SESI TERJADWAL CSS */
-        .bracket-round-title { font-size:13px; font-weight:900; color:var(--primary); text-transform:uppercase; letter-spacing:1px; margin:20px 0 10px 0; text-align:left; display:flex; align-items:center; gap:8px; }
-        .bracket-match { background:var(--input-bg); border:1px solid var(--border-color); border-radius:12px; padding:10px 14px; margin-bottom:8px; text-align:left; }
-        .bracket-side { display:flex; justify-content:space-between; align-items:center; padding:4px 0; font-size:13px; font-weight:700; color:var(--text-muted); }
-        .bracket-side.winner { color:var(--success); font-weight:900; }
-        .bracket-vs { font-size:10px; color:var(--text-muted); text-align:center; padding:2px 0; }
-        .bracket-bye { font-size:11px; color:var(--warning); font-style:italic; text-align:center; padding:6px 0; }
-        .next-up-chip { display:inline-flex; align-items:center; gap:6px; background:var(--input-bg); border:1px solid var(--border-color); border-radius:20px; padding:5px 12px 5px 5px; font-size:12px; font-weight:700; margin:3px 4px 3px 0; color:var(--text-main); }
-        .next-up-chip img { width:22px; height:22px; border-radius:50%; object-fit:cover; }
-        .summary-stat-box { background:var(--input-bg); border:1px solid var(--border-color); border-radius:14px; padding:14px; flex:1; }
-        .summary-stat-box .num { font-size:22px; font-weight:900; color:var(--primary); }
-        .summary-stat-box .lbl { font-size:10px; color:var(--text-muted); font-weight:700; text-transform:uppercase; }
-        .avatar-style-btn { flex:1; padding:10px 6px; border-radius:10px; border:1.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.05); color:#fff; font-size:12px; font-weight:700; cursor:pointer; transition:all 0.2s; }
-        .avatar-style-btn.active { background:var(--primary); border-color:var(--primary); }
-
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
@@ -277,15 +262,9 @@
 <!-- MODAL TAMPILKAN QR CODE -->
 <div id="qrModal" class="hidden">
     <div class="dialog-box" style="width: 90%; max-width: 350px; padding: 25px;">
-        <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-qrcode"></i> Undangan Pertandingan</h3>
-        <p style="font-size:12px; color:var(--text-muted);">Minta teman Anda scan QR atau bagikan link di bawah.</p>
-        <div id="qrCodeContainer" style="display:flex; justify-content:center; margin: 15px 0; background: white; padding: 15px; border-radius: 10px; line-height: 0;"></div>
-        
-        <div style="display:flex; gap:8px; margin-bottom: 20px;">
-            <input id="joinLinkInput" readonly style="flex:1; margin-bottom:0; font-size:11px; text-align:center; background:var(--input-bg);">
-            <button class="btn btn-ghost" style="width:auto; padding:0 14px;" onclick="copyJoinLink()"><i class="fas fa-copy"></i></button>
-        </div>
-
+        <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-qrcode"></i> QR Code Match</h3>
+        <p style="font-size:12px; color:var(--text-muted);">Minta teman Anda memindai kode ini untuk mengirimkan permintaan Join/Admin ke pertandingan Anda.</p>
+        <div id="qrCodeContainer" style="display:flex; justify-content:center; margin: 20px 0; background: white; padding: 15px; border-radius: 10px;"></div>
         <button class="btn btn-ghost" onclick="document.getElementById('qrModal').classList.add('hidden')">Tutup</button>
     </div>
 </div>
@@ -300,40 +279,11 @@
     </div>
 </div>
 
-<!-- MODAL BAGAN BRACKET KNOCKOUT -->
-<div id="bracketViewModal" class="hidden">
-    <div class="dialog-box" style="width: 92%; max-width: 480px; max-height: 85vh; overflow-y:auto; padding: 20px;">
-        <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-sitemap"></i> Bagan Bracket</h3>
-        <div id="bracketViewContainer" style="text-align:left;"></div>
-        <button class="btn btn-ghost" onclick="document.getElementById('bracketViewModal').classList.add('hidden')" style="margin-top:15px;">Tutup</button>
-    </div>
-</div>
-
-<!-- MODAL RINGKASAN SESI TERJADWAL -->
-<div id="sessionSummaryModal" class="hidden">
-    <div class="dialog-box" style="width: 92%; max-width: 420px; max-height: 85vh; overflow-y:auto; padding: 20px;">
-        <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-clipboard-list"></i> Ringkasan Sesi</h3>
-        <div id="sessionSummaryContainer" style="text-align:left;"></div>
-        <div style="display:flex; gap:10px; margin-top:15px;">
-            <button class="btn btn-ghost" onclick="document.getElementById('sessionSummaryModal').classList.add('hidden')">Tutup</button>
-            <button class="btn btn-success" onclick="shareSessionWhatsApp()"><i class="fab fa-whatsapp"></i> Bagikan</button>
-        </div>
-    </div>
-</div>
-
 <div id="cropModal" class="hidden">
     <div style="flex:1; width:100%; display:flex; justify-content:center; align-items:center; overflow:hidden; background:#111;">
         <img id="imageToCrop" style="max-width:100%; max-height:100%; display:block;">
     </div>
-    <div style="width:100%; padding:12px 20px 0 20px; background:var(--dark); box-sizing:border-box;">
-        <label style="font-size:11px; font-weight:bold; color:rgba(255,255,255,0.6); display:block; margin-bottom:8px;"><i class="fas fa-magic"></i> GAYA FOTO</label>
-        <div style="display:flex; gap:8px;">
-            <button type="button" id="styleBtn_normal" class="avatar-style-btn active" onclick="setAvatarStyle('normal')">Normal</button>
-            <button type="button" id="styleBtn_polaroid" class="avatar-style-btn" onclick="setAvatarStyle('polaroid')">📷 Polaroid</button>
-            <button type="button" id="styleBtn_vintage" class="avatar-style-btn" onclick="setAvatarStyle('vintage')">🎞️ Vintage B&amp;W</button>
-        </div>
-    </div>
-    <div style="width:100%; padding:15px 20px 20px 20px; background:var(--dark); display:flex; gap:15px; box-sizing:border-box;">
+    <div style="width:100%; padding:20px; background:var(--dark); display:flex; gap:15px; box-sizing:border-box;">
         <button class="btn btn-ghost" style="flex:1; color:white; border-color:white;" onclick="cancelCrop()">Batal</button>
         <button class="btn btn-success" style="flex:2;" onclick="doCrop()"><i class="fas fa-crop-alt"></i> Potong & Simpan</button>
     </div>
@@ -456,9 +406,6 @@
 </div>
 
 <div class="app-container" id="appContainer">
-    <div id="offlineBanner" class="hidden" style="background:#374151; color:#fff; text-align:center; padding:8px; font-size:11px; font-weight:bold;">
-        <i class="fas fa-wifi" style="opacity:0.6;"></i> MODE OFFLINE — Perubahan tetap tersimpan &amp; akan otomatis tersinkron saat internet kembali.
-    </div>
     <div id="viewingAlert" class="hidden" style="background:var(--warning); color:#fff; text-align:center; padding:10px; font-size:12px; font-weight:bold; cursor:pointer;" onclick="returnToMyMatch()">
         <i class="fas fa-arrow-left"></i> ANDA MELIHAT PERTANDINGAN TEMAN. KLIK UNTUK KEMBALI.
     </div>
@@ -549,12 +496,9 @@
     <div id="tab-play" class="content">
         <div id="setupArea" class="card owner-only" style="padding:20px;">
             <h3 style="margin:0 0 15px 0; text-align:center; color:var(--text-main);"><i class="fas fa-sliders-h"></i> Pengaturan Match</h3>
-
-            <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">MODE TURNAMEN</label>
-            <div class="segmented-control">
-                <button id="btnModeLeague" class="seg-btn active" onclick="setTournamentMode('league')"><i class="fas fa-list-ol"></i> LIGA</button>
-                <button id="btnModeKnockout" class="seg-btn" onclick="setTournamentMode('knockout')"><i class="fas fa-sitemap"></i> KNOCKOUT</button>
-            </div>
+            
+            <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">JUMLAH LAPANGAN AKTIF</label>
+            <input type="number" id="numCourts" value="1" min="1" max="10" style="text-align:center; font-weight:900; font-size:16px;">
 
             <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">JENIS OLAHRAGA</label>
             <div class="segmented-control">
@@ -568,43 +512,19 @@
                 <button id="btnFormatDoubles" class="seg-btn active" onclick="setFormat('doubles')"><i class="fas fa-user-friends"></i> 2 VS 2</button>
             </div>
 
-            <!-- FIELD KHUSUS MODE LIGA -->
-            <div id="leagueSetupFields">
-                <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">JUMLAH LAPANGAN AKTIF</label>
-                <input type="number" id="numCourts" value="1" min="1" max="10" style="text-align:center; font-weight:900; font-size:16px;" oninput="renderNextUpPreview()">
-
-                <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">RONDE DIRENCANAKAN (OPSIONAL)</label>
-                <input type="number" id="plannedRoundsInp" placeholder="Kosongkan jika tidak dibatasi" min="1" onchange="setPlannedRounds(this.value)">
-
-                <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">SISTEM PASANGAN (PARTNER)</label>
-                <div class="segmented-control">
-                    <button id="btnPasanganAcak" class="seg-btn active" onclick="setPartnerMode('acak')"><i class="fas fa-random"></i> ACAK</button>
-                    <button id="btnPasanganTetap" class="seg-btn" onclick="setPartnerMode('tetap')"><i class="fas fa-link"></i> TETAP (FIXED)</button>
-                </div>
-
-                <div id="fixedPartnerSetup" class="hidden" style="margin-bottom:15px; text-align:center;">
-                    <button class="btn btn-ghost owner-only" onclick="openFixedPairsDialog()"><i class="fas fa-users-cog"></i> Kelola Pasangan Tetap</button>
-                </div>
-
-                <div id="nextUpPreview" style="margin-bottom:15px;"></div>
-
-                <button class="btn btn-primary owner-only" style="font-size:16px; padding:16px; margin-top: 15px;" onclick="generateMatch()">
-                    <i class="fas fa-play"></i> MULAI PERTANDINGAN
-                </button>
+            <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">SISTEM PASANGAN (PARTNER)</label>
+            <div class="segmented-control">
+                <button id="btnPasanganAcak" class="seg-btn active" onclick="setPartnerMode('acak')"><i class="fas fa-random"></i> ACAK</button>
+                <button id="btnPasanganTetap" class="seg-btn" onclick="setPartnerMode('tetap')"><i class="fas fa-link"></i> TETAP (FIXED)</button>
             </div>
 
-            <!-- FIELD KHUSUS MODE KNOCKOUT -->
-            <div id="knockoutSetupFields" class="hidden">
-                <p style="font-size:12px; color:var(--text-muted); text-align:center; margin-bottom:15px;">Bracket gugur akan dibuat otomatis dari semua pemain berstatus HADIR, diacak secara acak. Jika jumlah peserta bukan kelipatan 2, sebagian akan mendapat BYE (otomatis lolos) di babak pertama.</p>
-                <button class="btn btn-primary owner-only" style="font-size:16px; padding:16px;" onclick="generateBracket()">
-                    <i class="fas fa-sitemap"></i> BUAT BRACKET OTOMATIS
-                </button>
+            <div id="fixedPartnerSetup" class="hidden" style="margin-bottom:15px; text-align:center;">
+                <button class="btn btn-ghost owner-only" onclick="openFixedPairsDialog()"><i class="fas fa-users-cog"></i> Kelola Pasangan Tetap</button>
             </div>
-        </div>
 
-        <div id="roundInfoBar" class="hidden card" style="padding:14px 18px; text-align:center; border:2px dashed var(--primary);">
-            <div id="roundInfoText" style="font-weight:900; color:var(--primary); font-size:15px;"></div>
-            <button id="btnViewBracketInline" class="btn btn-ghost hidden" style="margin-top:10px; padding:8px;" onclick="openBracketView()"><i class="fas fa-sitemap"></i> Lihat Bagan Bracket</button>
+            <button class="btn btn-primary owner-only" style="font-size:16px; padding:16px; margin-top: 15px;" onclick="generateMatch()">
+                <i class="fas fa-play"></i> MULAI PERTANDINGAN
+            </button>
         </div>
 
         <div id="matchArea" class="hidden animate__animated animate__fadeInUp">
@@ -621,14 +541,6 @@
 
         <button class="btn btn-primary" style="margin-bottom:15px; width:100%; box-shadow:0 4px 15px rgba(67, 97, 238, 0.4);" onclick="openShareLeaderboard()">
             <i class="fas fa-share-alt"></i> BAGIKAN KLASEMEN
-        </button>
-
-        <button id="btnViewBracketRank" class="btn btn-warning hidden" style="margin-bottom:15px; width:100%;" onclick="openBracketView()">
-            <i class="fas fa-sitemap"></i> LIHAT BAGAN BRACKET
-        </button>
-
-        <button id="btnSessionSummary" class="btn btn-ghost hidden" style="margin-bottom:15px; width:100%; border-color:var(--primary); color:var(--primary);" onclick="openSessionSummary()">
-            <i class="fas fa-clipboard-list"></i> RINGKASAN SESI HARI INI
         </button>
 
         <button id="btnNewTournament" class="btn btn-success owner-only hidden" style="margin-bottom:15px; padding:16px; width:100%; box-shadow:0 4px 15px rgba(16, 185, 129, 0.4);" onclick="createNewTournament()">
@@ -667,6 +579,7 @@
             <i class="fas fa-camera"></i> SCAN QR MATCH TEMAN
         </button>
 
+        <!-- FITUR BARU: DAFTAR MATCH YANG DITONTON NON-TEMAN -->
         <div class="card">
             <h4 style="margin:0 0 10px 0; font-size:14px; color:var(--primary);">Pertandingan Ditonton</h4>
             <div id="activeViewingList" style="text-align:left;">Memuat...</div>
@@ -691,11 +604,6 @@
         <div class="card">
             <h4 style="margin:0 0 10px 0; font-size:14px; color:var(--success);">Daftar Teman</h4>
             <div id="friendsList" style="text-align:left;">Belum ada teman.</div>
-        </div>
-
-        <div class="card">
-            <h4 style="margin:0 0 10px 0; font-size:14px; color:var(--primary);"><i class="fas fa-qrcode"></i> Pertandingan Diikuti (via QR/Link)</h4>
-            <div id="joinedTournamentsList" style="text-align:left;">Belum ada pertandingan yang diikuti.</div>
         </div>
     </div>
 
@@ -724,24 +632,23 @@
         auth = firebase.auth();
         db = firebase.firestore();
 
-        // Mencegah Crash: Kembali ke opsi persistensi standar yang lebih stabil di berbagai HP
-        // Persistence dihilangkan agar menghindari stuck "fetching dari cache" di beberapa Android
+        db.enablePersistence().catch(err => {
+            console.error("Firebase Offline Error:", err);
+        });
     }
 
-    // AUDIO CONTEXT DIPERBAIKI: Dibiarkan null sampai dipanggil oleh interaksi user yang sah
-    let audioCtx = null;
+    let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     let isMuted = false;
     let currentTheme = localStorage.getItem('HH_THEME') || 'auto';
     
+    // VARIABEL DATA & AKSES
     let currentViewingId = null;
     let myUserData = { friends: [], friendRequests: [] };
 
     let data = { 
         title: "", players: [], matches: [], fixedPairs: [],
         isFinished: false, currentMatches: [], activeTab: 'home',
-        viewRequests: [], approvedViewers: [], matchAdmins: [],
-        tournamentMode: 'league', bracket: null,
-        plannedRounds: null, roundNumber: 0
+        viewRequests: [], approvedViewers: [], matchAdmins: []
     };
     
     let tempImg = '', tempGender = 'M';
@@ -751,51 +658,56 @@
     let dbUnsubscribe = null;
     let cropper = null;
     
+    // VARIABEL UNTUK TRIGGER NOTIFIKASI
     let prevFriendReqs = null;
     let prevViewReqs = null;
     
-    function escapeHtml(str) {
-        if (str === null || str === undefined) return '';
-        return String(str).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
-    }
-
     const DEF_M = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23dbeafe'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%233b82f6'/%3E%3C/svg%3E";
     const DEF_F = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23fce7f3'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%23ec4899'/%3E%3C/svg%3E";
 
     window.onload = () => { 
         initTheme(); 
-        handleJoinParam(); 
-        updateOnlineStatus();
-        window.addEventListener('online', updateOnlineStatus);
-        window.addEventListener('offline', updateOnlineStatus);
         
+        // Pengecekan Jika diakses dari Kamera bawaan HP (Link ?join=UID)
+        const urlParams = new URLSearchParams(window.location.search);
+        const joinUid = urlParams.get('join');
+        if(joinUid) {
+            // Bersihkan parameter agar tidak terjadi loop saat refresh
+            window.history.replaceState(null, null, window.location.pathname);
+        }
+
         if (auth) {
             auth.onAuthStateChanged(user => {
                 if (user) {
-                    // Delay sejenak untuk menghindari race condition saat registrasi baru
-                    setTimeout(() => {
-                        db.collection('users').doc(user.uid).get().then(doc => {
-                            if(!doc.exists) {
-                                // Jika db hang sesaat, beri kesempatan kedua
-                                setTimeout(() => {
-                                    db.collection('users').doc(user.uid).get().then(retryDoc => {
-                                        if(!retryDoc.exists) {
-                                            auth.signOut();
-                                            appAlert("Akses Ditolak", "Akun Anda tidak ditemukan di database.");
-                                        } else {
-                                            masukKeAplikasi(user, retryDoc.data());
-                                        }
-                                    });
-                                }, 1500);
-                                return;
-                            }
-                            masukKeAplikasi(user, doc.data());
-                        }).catch(err => {
-                            console.error("Login Error:", err);
-                            appAlert("Koneksi Bermasalah", "Gagal memuat profil pengguna dari server. Pastikan Anda memiliki koneksi internet.");
+                    db.collection('users').doc(user.uid).get().then(doc => {
+                        let uData = doc.exists ? doc.data() : null;
+                        let isSuperAdmin = user.email === 'admin@happyhitters.app' || 
+                                           user.email === 'superadmin@happyhitters.app' || 
+                                           (uData && (uData.role === 'admin' || uData.username.toLowerCase() === 'superadmin' || uData.username.toLowerCase() === 'admin'));
+
+                        if(!doc.exists && !isSuperAdmin) {
                             auth.signOut();
-                        });
-                    }, 500);
+                            appAlert("Akses Ditolak", "Akun Anda tidak ditemukan atau telah dihapus oleh Admin.");
+                            return;
+                        }
+
+                        if(isSuperAdmin) {
+                            showAdminScreen();
+                        } else {
+                            document.getElementById('welcomeScreen').classList.add('hidden');
+                            document.getElementById('authScreen').classList.add('hidden');
+                            document.getElementById('adminScreen').classList.add('hidden');
+                            document.getElementById('appContainer').classList.add('visible');
+                            
+                            initSocial(user.uid);
+                            setupRealtimeListener(user.uid); 
+                            
+                            // Eksekusi auto-join dari link URL
+                            if(joinUid && joinUid !== user.uid) {
+                                setTimeout(() => { reqJoinMatch(joinUid); }, 1500); 
+                            }
+                        }
+                    });
                 } else {
                     document.getElementById('appContainer').classList.remove('visible');
                     document.getElementById('authScreen').classList.add('hidden');
@@ -806,99 +718,14 @@
         }
     };
 
-    function masukKeAplikasi(user, uData) {
-        let uName = (uData && uData.username) ? uData.username.toLowerCase() : '';
-        let isSuperAdmin = user.email === 'admin@happyhitters.app' || 
-                           user.email === 'superadmin@happyhitters.app' || 
-                           (uData && (uData.role === 'admin' || uName === 'superadmin' || uName === 'admin'));
-
-        if(isSuperAdmin) {
-            showAdminScreen();
-        } else {
-            document.getElementById('welcomeScreen').classList.add('hidden');
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('adminScreen').classList.add('hidden');
-            document.getElementById('appContainer').classList.add('visible');
-            
-            initSocial(user.uid);
-            setupRealtimeListener(user.uid); 
-
-            if(window._pendingJoinUid) {
-                let pending = window._pendingJoinUid;
-                window._pendingJoinUid = null;
-                setTimeout(() => processJoin(pending), 800);
-            }
-        }
-    }
-
     let authMode = 'login';
 
-    function updateOnlineStatus() {
-        let banner = document.getElementById('offlineBanner');
-        if(!banner) return;
-        if(navigator.onLine) {
-            if(!banner.classList.contains('hidden')) {
-                banner.classList.add('hidden');
-                showToast('Online Kembali', 'Koneksi internet tersambung, semua perubahan disinkronkan.', 'success');
-            }
-        } else {
-            banner.classList.remove('hidden');
-        }
-    }
-
     function enterAppFlow() {
-        // Melindungi inisialisasi audio agar tidak crash di Safari iOS atau browser Android
-        try { 
-            if(!audioCtx) {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                if(AudioContext) audioCtx = new AudioContext();
-            }
-            if(audioCtx && audioCtx.state === 'suspended') {
-                audioCtx.resume(); 
-            }
-        } catch(e) {
-            console.warn("AudioContext gagal diinisialisasi:", e);
-            audioCtx = null;
-        }
-        
+        if(audioCtx.state === 'suspended') audioCtx.resume();
         playSfx('pop'); 
-        
-        // Pengecekan aman jika `auth` tidak terinisialisasi
-        if(!auth) {
-            appAlert("Peringatan", "Aplikasi gagal terhubung ke Firebase. Periksa koneksi internet Anda.");
-            return;
-        }
-
+        if(!auth) return appAlert("Peringatan", "Firebase belum dikonfigurasi.");
         document.getElementById('welcomeScreen').classList.add('hidden');
         document.getElementById('authScreen').classList.remove('hidden');
-    }
-
-    // PEMBARUAN PENTING: Pengamanan agar playSfx tidak merusak skrip
-    function playSfx(type) {
-        if(isMuted || !audioCtx) return; 
-        try {
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator(); 
-            const gain = audioCtx.createGain();
-            osc.connect(gain); 
-            gain.connect(audioCtx.destination);
-            
-            if(type === 'pop') {
-                osc.frequency.setValueAtTime(600, audioCtx.currentTime); 
-                osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime); 
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                osc.start(); 
-                osc.stop(audioCtx.currentTime + 0.1);
-            } else if (type === 'whistle') {
-                osc.frequency.setValueAtTime(2000, audioCtx.currentTime); 
-                gain.gain.value = 0.05;
-                osc.start(); 
-                osc.stop(audioCtx.currentTime + 0.3);
-            }
-        } catch(e) {
-            console.warn("Gagal memainkan efek suara:", e);
-        }
     }
 
     function toggleAuthMode() {
@@ -927,44 +754,21 @@
         const pass = document.getElementById('authPassword').value.trim();
         if(!userInp || !pass) return appAlert('Error', 'Username dan Password wajib diisi!');
         
-        // Tampilkan indikator proses agar tidak di-klik berulang kali
-        const btnSubmit = document.getElementById('authBtnSubmit');
-        const originalText = btnSubmit.innerText;
-        btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
-        btnSubmit.disabled = true;
-
         let isSuperAdmin = (userInp.toLowerCase() === 'admin' || userInp.toLowerCase() === 'superadmin');
         let loginEmail = isSuperAdmin ? (userInp.toLowerCase() + '@happyhitters.app') : (userInp.replace(/\s+/g, '').toLowerCase() + '@happyhitters.app');
 
         if(authMode === 'register') {
             auth.createUserWithEmailAndPassword(loginEmail, pass)
                 .then((cred) => {
-                    return db.collection('users').doc(cred.user.uid).set({
+                    db.collection('users').doc(cred.user.uid).set({
                         username: userInp, email: loginEmail, role: isSuperAdmin ? 'admin' : 'user', friends: [], friendRequests: [],
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                })
-                .then(() => {
-                    btnSubmit.innerHTML = originalText;
-                    btnSubmit.disabled = false;
                     appSuccess('Berhasil', 'Akun berhasil didaftarkan. Anda akan segera masuk.');
                 })
-                .catch(err => {
-                    btnSubmit.innerHTML = originalText;
-                    btnSubmit.disabled = false;
-                    appAlert("Registrasi Gagal", err.message);
-                });
+                .catch(err => appAlert("Registrasi Gagal", err.message));
         } else {
-            auth.signInWithEmailAndPassword(loginEmail, pass)
-                .then(() => {
-                    btnSubmit.innerHTML = originalText;
-                    btnSubmit.disabled = false;
-                })
-                .catch(err => {
-                    btnSubmit.innerHTML = originalText;
-                    btnSubmit.disabled = false;
-                    appAlert("Login Gagal", "Username atau Password salah, atau periksa koneksi internet Anda.");
-                });
+            auth.signInWithEmailAndPassword(loginEmail, pass).catch(err => appAlert("Login Gagal", err.message));
         }
     }
 
@@ -985,11 +789,10 @@
             let html = '';
             snap.forEach(doc => {
                 let u = doc.data();
-                let uname = u.username || '';
-                if(u.role !== 'admin' && uname.toLowerCase() !== 'superadmin' && uname.toLowerCase() !== 'admin') {
+                if(u.role !== 'admin' && u.username.toLowerCase() !== 'superadmin' && u.username.toLowerCase() !== 'admin') {
                     html += `
                     <div class="card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:15px; text-align:left;">
-                        <div><b style="font-size:16px; color:var(--primary);">${escapeHtml(uname)}</b><br><small style="color:var(--text-muted);">${escapeHtml(u.email||'')}</small></div>
+                        <div><b style="font-size:16px; color:var(--primary);">${u.username}</b><br><small style="color:var(--text-muted);">${u.email}</small></div>
                         <button class="btn btn-danger" style="width:auto; padding:8px 12px; font-size:12px;" onclick="deleteUserByAdmin('${doc.id}')"><i class="fas fa-trash"></i> Hapus</button>
                     </div>`;
                 }
@@ -1002,6 +805,7 @@
         appConfirm("Hapus User", "Yakin ingin menghapus user ini?", () => { db.collection('users').doc(uid).delete().then(() => loadAdminUsers()); });
     }
 
+    // --- FITUR TOAST NOTIFICATION ---
     function showToast(title, msg, type='primary') {
         let tc = document.getElementById('toastContainer');
         let color = type==='success'?'var(--success)':(type==='warning'?'var(--warning)':'var(--primary)');
@@ -1023,6 +827,7 @@
         }, 5000);
     }
 
+    // --- FITUR SOSIAL & PERTEMANAN ---
     function initSocial(uid) {
         db.collection('users').doc(uid).onSnapshot(doc => {
             if(doc.exists) {
@@ -1035,7 +840,7 @@
                     newReqs.forEach(async reqUid => {
                         let d = await db.collection('users').doc(reqUid).get();
                         let un = d.exists ? d.data().username : 'Seseorang';
-                        showToast('Request Pertemanan', `<b>${escapeHtml(un)}</b> ingin menambahkan Anda sebagai teman. Cek tab Sosial!`, 'primary');
+                        showToast('Request Pertemanan', `<b>${un}</b> ingin menambahkan Anda sebagai teman. Cek tab Sosial!`, 'primary');
                     });
                 }
                 prevFriendReqs = [...myUserData.friendRequests];
@@ -1064,7 +869,7 @@
                              `<button class="btn btn-primary" style="padding:6px 12px; width:auto; font-size:12px;" onclick="addFriend('${doc.id}')">Add Friend</button>`);
                     
                     html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; padding:10px; background:var(--input-bg); border-radius:8px; border:1px solid var(--border-color);">
-                        <b>${escapeHtml(u.username)}</b> ${btn}
+                        <b>${u.username}</b> ${btn}
                     </div>`;
                 }
             });
@@ -1092,12 +897,13 @@
     async function renderSocialTab() {
         if(!myUserData) return;
 
+        // 1. Tampilkan Request Teman
         let reqHtml = '';
         for(let id of myUserData.friendRequests) {
             let d = await db.collection('users').doc(id).get();
             if(d.exists) {
                 reqHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
-                    <b>${escapeHtml(d.data().username)}</b>
+                    <b>${d.data().username}</b>
                     <div>
                         <button class="btn btn-success" style="padding:5px 10px; width:auto; display:inline-block;" onclick="acceptFriend('${id}')"><i class="fas fa-check"></i></button>
                         <button class="btn btn-danger" style="padding:5px 10px; width:auto; display:inline-block;" onclick="rejectFriend('${id}')"><i class="fas fa-times"></i></button>
@@ -1107,8 +913,10 @@
         }
         document.getElementById('friendRequestsList').innerHTML = reqHtml || '<span style="font-size:12px; color:var(--text-muted);">Belum ada permintaan.</span>';
         
+        // 2. Tampilkan Daftar Pertandingan yang Ditonton (Akses Non-Teman / Semua)
         let activeViewHtml = '';
         try {
+            // Cari turnamen di mana user ini masuk dalam daftar approvedViewers
             let snap = await db.collection('tournaments').where('approvedViewers', 'array-contains', auth.currentUser.uid).get();
             if(snap.empty) {
                 activeViewHtml = '<span style="font-size:12px; color:var(--text-muted);">Tidak ada pertandingan yang sedang ditonton.</span>';
@@ -1125,7 +933,7 @@
                     let badge = isAdm ? '<i class="fas fa-shield-alt" style="color:var(--primary);" title="Admin"></i>' : '<i class="fas fa-eye" style="color:var(--success);" title="Penonton"></i>';
 
                     activeViewHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
-                        <div><b>${escapeHtml(hostName)}</b> ${badge}<br><small style="color:var(--text-muted);">${escapeHtml(tData.title)}</small></div>
+                        <div><b>${hostName}</b> ${badge}<br><small style="color:var(--text-muted);">${tData.title}</small></div>
                         <button class="btn btn-success" style="padding:6px 10px; width:auto; font-size:12px;" onclick="viewFriendMatch('${doc.id}')">Masuk</button>
                     </div>`;
                 }
@@ -1136,6 +944,7 @@
         }
         document.getElementById('activeViewingList').innerHTML = activeViewHtml;
 
+        // 3. Tampilkan Daftar Teman
         let frHtml = '';
         for(let id of myUserData.friends) {
             let d = await db.collection('users').doc(id).get();
@@ -1167,12 +976,11 @@
                              </div>`;
                 
                 frHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
-                    <b>${escapeHtml(uName)}</b> ${actionBtn}
+                    <b>${uName}</b> ${actionBtn}
                 </div>`;
             }
         }
         document.getElementById('friendsList').innerHTML = frHtml || '<span style="font-size:12px; color:var(--text-muted);">Belum ada teman.</span>';
-        renderJoinedTournaments();
     }
 
     function acceptFriend(uid) {
@@ -1184,6 +992,7 @@
         db.collection('users').doc(auth.currentUser.uid).update({ friendRequests: firebase.firestore.FieldValue.arrayRemove(uid) });
     }
 
+    // DIMODIFIKASI: Langsung masuk ke match jika scan QR dan sudah di-approve
     function reqJoinMatch(uid) {
         db.collection('tournaments').doc(uid).get().then(doc => {
             if(doc.exists) {
@@ -1191,6 +1000,7 @@
                 let myUid = auth.currentUser.uid;
                 
                 if(t.approvedViewers && t.approvedViewers.includes(myUid)) {
+                    // Jika sudah disetujui sebelumnya, bypass request dan langsung masuk
                     appSuccess("Akses Tersedia", "Anda sudah memiliki akses. Memasuki pertandingan...");
                     viewFriendMatch(uid);
                 } else if (t.viewRequests && t.viewRequests.includes(myUid)) {
@@ -1210,89 +1020,7 @@
     function viewFriendMatch(uid) { appSuccess("Berhasil", "Memasuki pertandingan teman..."); setupRealtimeListener(uid); nav('home'); }
     function returnToMyMatch() { setupRealtimeListener(auth.currentUser.uid); nav('home'); }
 
-    function getJoinedList() {
-        try { return JSON.parse(localStorage.getItem('HH_JOINED_TOURNAMENTS') || '[]'); } catch(e) { return []; }
-    }
-    function addJoinedList(uid) {
-        let list = getJoinedList();
-        if(!list.includes(uid)) { list.push(uid); localStorage.setItem('HH_JOINED_TOURNAMENTS', JSON.stringify(list)); }
-    }
-
-    function handleJoinParam() {
-        try {
-            let params = new URLSearchParams(location.search);
-            let joinUid = params.get('join');
-            if(!joinUid) return;
-            if(location.protocol !== 'file:') {
-                history.replaceState({}, '', location.pathname); 
-            }
-            if(!auth || !auth.currentUser) { window._pendingJoinUid = joinUid; return; }
-            processJoin(joinUid);
-        } catch(e) { console.error("URL Params error", e); }
-    }
-
-    async function processJoin(joinUid) {
-        if(!auth.currentUser || joinUid === auth.currentUser.uid) return;
-        let tDoc;
-        try { tDoc = await db.collection('tournaments').doc(joinUid).get(); }
-        catch(e) { return appAlert("Gagal", "Tidak bisa memuat pertandingan. Periksa koneksi internet Anda."); }
-
-        if(!tDoc.exists) return appAlert("Tidak Ditemukan", "Tautan/QR pertandingan ini tidak valid atau turnamennya sudah tidak ada.");
-        let tData = tDoc.data();
-        addJoinedList(joinUid);
-
-        let isAppr = tData.approvedViewers && tData.approvedViewers.includes(auth.currentUser.uid);
-        let isAdm = tData.matchAdmins && tData.matchAdmins.includes(auth.currentUser.uid);
-        if(isAppr || isAdm) {
-            appSuccess("Bergabung", `Anda sudah memiliki akses ke turnamen "${escapeHtml(tData.title) || 'ini'}". Memuat pertandingan...`);
-            viewFriendMatch(joinUid);
-            return;
-        }
-
-        let isPending = tData.viewRequests && tData.viewRequests.includes(auth.currentUser.uid);
-        if(isPending) {
-            return appAlert("Menunggu Persetujuan", "Permintaan menonton Anda untuk turnamen ini masih menunggu persetujuan dari pembuat pertandingan.");
-        }
-
-        appConfirm("Gabung Pertandingan", `Kirim permintaan untuk menonton turnamen "${escapeHtml(tData.title) || 'ini'}"? Anda tidak perlu berteman untuk menonton, cukup disetujui oleh pembuatnya.`, () => {
-            db.collection('tournaments').doc(joinUid).set({ viewRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) }, {merge: true}).then(() => {
-                appSuccess("Terkirim", "Permintaan menonton telah dikirim. Cek tab Sosial > 'Pertandingan Diikuti' untuk memantau status persetujuan.");
-                renderJoinedTournaments();
-            }).catch(() => appAlert("Gagal", "Tidak bisa mengirim permintaan. Periksa koneksi internet Anda."));
-        });
-    }
-
-    async function renderJoinedTournaments() {
-        let container = document.getElementById('joinedTournamentsList');
-        if(!container || !auth.currentUser) return;
-        let list = getJoinedList().filter(id => id !== auth.currentUser.uid);
-        if(list.length === 0) { container.innerHTML = '<span style="font-size:12px; color:var(--text-muted);">Belum ada pertandingan yang diikuti lewat QR/Link.</span>'; return; }
-
-        let html = '';
-        for(let uid of list) {
-            let d;
-            try { d = await db.collection('tournaments').doc(uid).get(); } catch(e) { continue; }
-            if(!d.exists) continue;
-            let t = d.data();
-            let ownerDoc = await db.collection('users').doc(uid).get();
-            let ownerName = ownerDoc.exists ? ownerDoc.data().username : 'Unknown';
-            let isAppr = t.approvedViewers && t.approvedViewers.includes(auth.currentUser.uid);
-            let isAdm = t.matchAdmins && t.matchAdmins.includes(auth.currentUser.uid);
-            let isPending = t.viewRequests && t.viewRequests.includes(auth.currentUser.uid);
-
-            let statusBtn = '';
-            if(isAppr || isAdm) statusBtn = `<button class="btn btn-success" style="padding:6px 10px; width:auto; font-size:12px;" onclick="viewFriendMatch('${uid}')"><i class="fas fa-eye"></i> Tonton</button>`;
-            else if(isPending) statusBtn = `<span style="font-size:11px; color:var(--warning); font-weight:bold;">Menunggu...</span>`;
-            else statusBtn = `<span style="font-size:11px; color:var(--text-muted);">Tidak ada akses</span>`;
-
-            html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
-                <div><b style="font-size:13px;">${escapeHtml(t.title || 'Tanpa Judul')}</b><br><small style="color:var(--text-muted);">oleh ${escapeHtml(ownerName)}</small></div>
-                ${statusBtn}
-            </div>`;
-        }
-        container.innerHTML = html || '<span style="font-size:12px; color:var(--text-muted);">Belum ada pertandingan yang diikuti.</span>';
-    }
-
+    // --- MANAJER AKSES (UNTUK HOST) ---
     async function openAccessManager() {
         if(!data.viewRequests) data.viewRequests = [];
         if(!data.approvedViewers) data.approvedViewers = [];
@@ -1300,7 +1028,7 @@
         
         document.getElementById('countViewReq').innerText = data.viewRequests.length;
         
-        const getUser = async (id) => { let d = await db.collection('users').doc(id).get(); return escapeHtml(d.exists ? d.data().username : 'Unknown'); };
+        const getUser = async (id) => { let d = await db.collection('users').doc(id).get(); return d.exists ? d.data().username : 'Unknown'; };
         
         let vHtml = '';
         for(let id of data.viewRequests) {
@@ -1319,14 +1047,18 @@
         for(let id of data.approvedViewers) {
             if(data.matchAdmins.includes(id)) continue;
             let un = await getUser(id);
+            
+            // CEK APAKAH VIEWER INI TEMAN ATAU BUKAN
             let isFriend = myUserData.friends && myUserData.friends.includes(id);
-            let adminAction = isFriend
+
+            let adminBtn = isFriend 
                 ? `<button class="btn btn-primary" style="padding:4px 8px; width:auto; display:inline-block; font-size:12px;" onclick="setAdmin('${id}', true)">Jadikan Admin</button>`
-                : `<span style="font-size:10px; color:var(--text-muted); font-style:italic;" title="Harus berteman dulu untuk jadi Admin">Belum berteman</span>`;
+                : `<span style="font-size:10px; color:var(--warning); font-weight:bold; margin-right:5px;">Bukan Teman</span>`;
+
             aHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
                 <b>${un}</b>
-                <div style="display:flex; align-items:center; gap:6px;">
-                    ${adminAction}
+                <div style="display:flex; align-items:center; gap:5px;">
+                    ${adminBtn}
                     <button class="btn btn-ghost" style="padding:4px 8px; width:auto; display:inline-block; font-size:12px;" onclick="kickViewer('${id}')">Hapus</button>
                 </div>
             </div>`;
@@ -1377,38 +1109,23 @@
         if(!isOwner) alertEl.classList.remove('hidden'); else alertEl.classList.add('hidden');
     }
 
+    // --- FITUR QR CODE ---
     function openQRModal() {
         playSfx('pop');
         document.getElementById('qrModal').classList.remove('hidden');
-        document.getElementById('qrCodeContainer').innerHTML = ""; 
+        document.getElementById('qrCodeContainer').innerHTML = ""; // Bersihkan QR yang lama
         
+        // Buat link URL bergabung, menggunakan parameter "?join=UID"
         let joinUrl = window.location.origin + window.location.pathname + "?join=" + auth.currentUser.uid;
-        document.getElementById('joinLinkInput').value = joinUrl;
         
-        if (typeof QRCode !== 'undefined') {
-            new QRCode(document.getElementById("qrCodeContainer"), {
-                text: joinUrl,
-                width: 180,
-                height: 180,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
-        } else {
-            document.getElementById('qrCodeContainer').innerHTML = "<p style='font-size:12px; color:var(--text-muted);'>QR Code tidak tersedia saat offline</p>";
-        }
-    }
-
-    function copyJoinLink() {
-        let inp = document.getElementById('joinLinkInput');
-        if(!inp || !inp.value) return;
-        inp.select(); inp.setSelectionRange(0, 99999);
-        try {
-            navigator.clipboard.writeText(inp.value);
-        } catch(e) {
-            document.execCommand('copy');
-        }
-        showToast('Disalin', 'Tautan undangan pertandingan disalin ke clipboard.', 'success');
+        new QRCode(document.getElementById("qrCodeContainer"), {
+            text: joinUrl,
+            width: 200,
+            height: 200,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
     }
 
     let html5QrcodeScanner = null;
@@ -1448,8 +1165,11 @@
         }
     }
 
-    function onScanFailure(error) {}
+    function onScanFailure(error) {
+        // Abaikan peringatan gagal agar pemindai terus berjalan mencari barcode yang pas.
+    }
 
+    // --- SISTEM UTAMA TURNAMEN ---
     function setupRealtimeListener(uid) {
         if (dbUnsubscribe) dbUnsubscribe();
         currentViewingId = uid;
@@ -1470,10 +1190,6 @@
                     data.viewRequests = loadedData.viewRequests || [];
                     data.approvedViewers = loadedData.approvedViewers || [];
                     data.matchAdmins = loadedData.matchAdmins || [];
-                    data.tournamentMode = loadedData.tournamentMode || 'league';
-                    data.bracket = loadedData.bracket || null;
-                    data.plannedRounds = loadedData.plannedRounds || null;
-                    data.roundNumber = loadedData.roundNumber || 0;
 
                     if (auth.currentUser && uid === auth.currentUser.uid) {
                         if (prevViewReqs !== null) {
@@ -1481,7 +1197,7 @@
                             newReqs.forEach(async reqUid => {
                                 let d = await db.collection('users').doc(reqUid).get();
                                 let un = d.exists ? d.data().username : 'Seseorang';
-                                showToast('Permintaan Menonton', `<b>${escapeHtml(un)}</b> meminta akses dari QR Scanner. Cek ikon Kunci!`, 'warning');
+                                showToast('Permintaan Menonton', `<b>${un}</b> meminta akses dari QR Scanner. Cek ikon Kunci!`, 'warning');
                             });
                         }
                         prevViewReqs = [...data.viewRequests];
@@ -1497,7 +1213,6 @@
                 nav(t, false);
 
                 setPartnerMode(currentPartnerMode, false);
-                setTournamentMode(data.tournamentMode || 'league', false);
                 
                 if(data.currentMatches && data.currentMatches.length > 0) {
                     let sample = data.currentMatches[0];
@@ -1507,7 +1222,6 @@
                 }
                 renderTitleSetup();
                 renderAll();
-                renderRoundInfo();
             }, err => {
                 console.error("Gagal menarik data:", err);
             });
@@ -1524,15 +1238,8 @@
         if (isOwner || isAdmin) {
             db.collection("tournaments").doc(currentViewingId).set(data, {merge: true}).catch(err => {
                 console.error("Gagal menyimpan ke server:", err);
-                showToast('Gagal Menyimpan', 'Periksa koneksi internet Anda, perubahan belum tersimpan ke server.', 'warning');
             });
         }
-    }
-
-    let _saveDebounceTimer = null;
-    function saveDebounced(delay = 500) {
-        if(_saveDebounceTimer) clearTimeout(_saveDebounceTimer);
-        _saveDebounceTimer = setTimeout(() => { save(); }, delay);
     }
     
     function nav(id, playSound=true) {
@@ -1545,43 +1252,181 @@
             localStorage.setItem("HH_ACTIVE_TAB", id);
         }
     }
+    
+    function showAppDialog(type, title, msg, onConfirm, onCancel) {
+        const dialog = document.getElementById('customDialog');
+        document.getElementById('dialogTitle').innerText = title;
+        document.getElementById('dialogMsg').innerText = msg;
+        const icon = document.getElementById('dialogIcon');
+        icon.className = 'fas dialog-icon ';
+        if(type === 'alert') icon.className += 'fa-exclamation-circle error';
+        else if(type === 'success') icon.className += 'fa-check-circle success';
+        else if(type === 'confirm') icon.className += 'fa-question-circle warning';
+        else icon.className += 'fa-info-circle info';
+        
+        const acts = document.getElementById('dialogActions'); acts.innerHTML = '';
+        acts.style.flexDirection = 'row';
+        
+        if(type === 'confirm') {
+            const btnC = document.createElement('button'); btnC.className = 'btn btn-ghost'; btnC.innerText = 'Batal';
+            btnC.onclick = () => { playSfx('pop'); dialog.style.display = 'none'; if(onCancel) onCancel(); };
+            const btnO = document.createElement('button'); btnO.className = 'btn btn-primary'; btnO.innerText = 'Ya, Lanjutkan';
+            btnO.onclick = () => { playSfx('pop'); dialog.style.display = 'none'; if(onConfirm) onConfirm(); };
+            acts.appendChild(btnC); acts.appendChild(btnO);
+        } else {
+            const btnO = document.createElement('button'); btnO.className = 'btn btn-primary'; btnO.innerText = 'Tutup';
+            btnO.onclick = () => { playSfx('pop'); dialog.style.display = 'none'; if(onConfirm) onConfirm(); };
+            acts.appendChild(btnO);
+        }
+        dialog.style.display = 'flex';
+    }
+    function appAlert(title, msg) { showAppDialog('alert', title, msg); }
+    function appSuccess(title, msg) { showAppDialog('success', title, msg); }
+    function appConfirm(title, msg, onConfirm) { showAppDialog('confirm', title, msg, onConfirm); }
 
-    function openAIAvatarPrompt() {
-        let promptText = prompt("Masukkan deskripsi avatar (Misal: Pemain tenis pria gaya 3D figurine detail, atau pemain tenis wanita bergaya anime polaroid):", "Pemain tenis profesional gaya kartun 3D");
-        if(!promptText) return;
+    function initTheme() {
+        if (currentTheme === 'auto') document.documentElement.setAttribute('data-theme', window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        else document.documentElement.setAttribute('data-theme', currentTheme);
+    }
+    
+    function getAvatar(p) { return (p.img && p.img.length > 100) ? p.img : (p.gender === 'M' ? DEF_M : DEF_F); }
+
+    function playSfx(type) {
+        if(isMuted) return;
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        if(type === 'pop') {
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        } else if (type === 'whistle') {
+            osc.frequency.setValueAtTime(2000, audioCtx.currentTime); gain.gain.value = 0.05;
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        }
+    }
+    
+    function toggleMute() { isMuted = !isMuted; document.getElementById('soundIcon').className = isMuted ? 'fas fa-volume-mute' : 'fas fa-volume-up'; }
+    function toggleTheme() { currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', currentTheme); localStorage.setItem('HH_THEME', currentTheme); }
+
+    function saveTitle() {
+        let t = document.getElementById('tourTitleInp').value.trim();
+        if(!t) return appAlert("Peringatan", "Silakan masukkan judul game/turnamen terlebih dahulu.");
+        data.title = t; 
+        save(); 
+        renderTitleSetup();
+    }
+    function editTitle() {
+        let t = prompt("Ubah Judul Game/Turnamen:", data.title);
+        if(t !== null && t.trim() !== '') { data.title = t.trim(); save(); renderTitleSetup(); }
+    }
+    function renderTitleSetup() {
+        if(data.title) {
+            document.getElementById('titleArea').classList.add('hidden');
+            document.getElementById('playerArea').classList.remove('hidden');
+            document.getElementById('tourTitleDisplay').innerText = data.title;
+        } else {
+            document.getElementById('titleArea').classList.remove('hidden');
+            document.getElementById('playerArea').classList.add('hidden');
+            renderQuickArchives();
+        }
+    }
+
+    function renderQuickArchives() {
+        let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
+        let section = document.getElementById('quickArchiveSection');
+        let listContainer = document.getElementById('quickArchiveList');
         
-        document.getElementById('prevImg').style.display = 'none';
-        let camI = document.getElementById('camIcon');
-        camI.className = "fas fa-spinner fa-spin"; 
-        camI.style.display = "block";
-        
-        let aiUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=300&height=300&nologo=true`;
-        
-        fetch(aiUrl)
-            .then(res => res.blob())
-            .then(blob => {
-                let reader = new FileReader();
-                reader.onload = function() {
-                    tempImg = reader.result;
-                    document.getElementById('prevImg').src = tempImg;
-                    document.getElementById('prevImg').style.display = 'block';
-                    camI.className = "fas fa-camera";
-                    camI.style.display = "none";
-                    appSuccess("Berhasil", "Avatar AI berhasil dibuat!");
-                };
-                reader.readAsDataURL(blob);
-            })
-            .catch(err => {
-                camI.className = "fas fa-camera";
-                appAlert("Error", "Gagal memuat AI Avatar. Periksa koneksi internet Anda.");
-            });
+        if(archives.length === 0) {
+            section.classList.add('hidden');
+        } else {
+            section.classList.remove('hidden');
+            let html = archives.map((arc, i) => `
+                <div style="background:var(--input-bg); padding:12px; border-radius:12px; border:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                    <div style="flex:1;">
+                        <div style="font-weight:bold; color:var(--primary); font-size:15px;">${arc.title || 'Tanpa Judul'}</div>
+                        <div style="font-size:11px; color:var(--text-muted);">${arc.players.length} Pemain | ${arc.matches.length} Match</div>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-success" style="padding:6px 12px; font-size:12px; width:auto;" onclick="viewArchive(${i})"><i class="fas fa-folder-open"></i> Buka</button>
+                        <button class="btn btn-danger" style="padding:6px 12px; font-size:12px; width:auto;" onclick="deleteArchive(${i})"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+            listContainer.innerHTML = html;
+        }
+    }
+    
+    function createNewTournament() {
+        appConfirm("Buat Turnamen Baru", "Turnamen saat ini akan diarsipkan secara lokal. Lanjutkan?", () => {
+            let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
+            data.dateArchived = new Date().toLocaleString('id-ID');
+            archives.push(data);
+            localStorage.setItem('HH_ARCHIVES', JSON.stringify(archives));
+            
+            data = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [] };
+            save();
+            appSuccess("Berhasil", "Turnamen baru siap dimulai!");
+            nav('home');
+            renderTitleSetup();
+        });
+    }
+
+    function openArchives() {
+        let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
+        let html = '';
+        if(archives.length === 0) {
+            html = '<p style="color:var(--text-muted); font-size:13px;">Belum ada turnamen yang diarsipkan.</p>';
+        } else {
+            html = archives.map((arc, i) => `
+                <div class="card" style="padding:15px; margin-bottom:10px; text-align:left; background:var(--input-bg);">
+                    <div style="font-weight:900; color:var(--primary); font-size:16px;">${arc.title || 'Turnamen Tanpa Judul'}</div>
+                    <div style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Diarsipkan: ${arc.dateArchived || '-'}</div>
+                    <div style="font-size:13px; margin-bottom:10px;">Total Pemain: ${arc.players.length} | Match Dimainkan: ${arc.matches.length}</div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn btn-primary" style="padding:8px; font-size:12px; flex:1;" onclick="viewArchive(${i})"><i class="fas fa-folder-open"></i> Buka Arsip</button>
+                        <button class="btn btn-danger" style="padding:8px; font-size:12px;" onclick="deleteArchive(${i})"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        document.getElementById('archiveListContent').innerHTML = html;
+        document.getElementById('archivesDialog').classList.remove('hidden');
+    }
+
+    function deleteArchive(idx) {
+        appConfirm("Hapus Arsip", "Yakin ingin menghapus arsip turnamen ini secara permanen?", () => {
+            let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
+            archives.splice(idx, 1);
+            localStorage.setItem('HH_ARCHIVES', JSON.stringify(archives));
+            openArchives(); 
+            renderQuickArchives();
+        });
+    }
+
+    function viewArchive(idx) {
+        let loadData = () => {
+            let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
+            data = archives[idx];
+            save();
+            document.getElementById('archivesDialog').classList.add('hidden');
+            appSuccess("Berhasil", "Data turnamen berhasil dimuat.");
+            nav('home');
+            renderTitleSetup();
+        };
+
+        if (data.title || data.players.length > 0) {
+            appConfirm("Buka Turnamen", "Ini akan mengganti turnamen yang sedang berjalan dengan data dari arsip. Lanjutkan?", loadData);
+        } else {
+            loadData();
+        }
     }
 
     function chooseImageSource() {
         playSfx('pop');
         const dialog = document.getElementById('customDialog');
-        document.getElementById('dialogTitle').innerText = "Pilih Foto / Avatar";
-        document.getElementById('dialogMsg').innerText = "Gunakan foto asli dari kamera/galeri, atau generate avatar AI dari teks.";
+        document.getElementById('dialogTitle').innerText = "Pilih Foto Profil";
+        document.getElementById('dialogMsg').innerText = "Ambil foto langsung dari kamera atau pilih dari galeri HP Anda.";
         
         const icon = document.getElementById('dialogIcon');
         icon.className = 'fas fa-camera dialog-icon info';
@@ -1590,9 +1435,6 @@
         acts.innerHTML = '';
         acts.style.flexDirection = 'column'; 
         
-        const btnAI = document.createElement('button'); btnAI.className = 'btn btn-warning'; btnAI.innerHTML = '<i class="fas fa-robot"></i> Buat Avatar AI Generatif';
-        btnAI.onclick = () => { dialog.style.display = 'none'; openAIAvatarPrompt(); };
-
         const btnCam = document.createElement('button'); btnCam.className = 'btn btn-primary'; btnCam.innerHTML = '<i class="fas fa-camera"></i> Buka Kamera';
         btnCam.onclick = () => { dialog.style.display = 'none'; document.getElementById('fileInCam').click(); };
         
@@ -1602,46 +1444,8 @@
         const btnCancel = document.createElement('button'); btnCancel.className = 'btn btn-ghost'; btnCancel.innerText = 'Batal';
         btnCancel.onclick = () => { dialog.style.display = 'none'; };
 
-        acts.appendChild(btnAI);
-        acts.appendChild(btnCam); 
-        acts.appendChild(btnGal); 
-        acts.appendChild(btnCancel);
+        acts.appendChild(btnCam); acts.appendChild(btnGal); acts.appendChild(btnCancel);
         dialog.style.display = 'flex';
-    }
-
-    let selectedAvatarStyle = 'normal';
-
-    function setAvatarStyle(style) {
-        playSfx('pop');
-        selectedAvatarStyle = style;
-        ['normal','polaroid','vintage'].forEach(s => {
-            document.getElementById('styleBtn_'+s).classList.toggle('active', s === style);
-        });
-    }
-
-    function applyAvatarStyle(sourceCanvas, style) {
-        if(style === 'normal') return sourceCanvas;
-        let out = document.createElement('canvas');
-        out.width = sourceCanvas.width; out.height = sourceCanvas.height;
-        let ctx = out.getContext('2d');
-
-        if(style === 'vintage') {
-            ctx.filter = 'grayscale(1) contrast(1.15) brightness(0.95)';
-            ctx.drawImage(sourceCanvas, 0, 0);
-            ctx.filter = 'none';
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 10;
-            ctx.strokeRect(0, 0, out.width, out.height);
-        } else if(style === 'polaroid') {
-            ctx.filter = 'saturate(1.25) contrast(1.05) brightness(1.05) sepia(0.15)';
-            ctx.drawImage(sourceCanvas, 0, 0);
-            ctx.filter = 'none';
-            let grad = ctx.createRadialGradient(out.width/2, out.height/2, out.width*0.32, out.width/2, out.height/2, out.width*0.72);
-            grad.addColorStop(0, 'rgba(0,0,0,0)');
-            grad.addColorStop(1, 'rgba(60,40,20,0.22)');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, out.width, out.height);
-        }
-        return out;
     }
 
     function handleImg(input) {
@@ -1650,7 +1454,6 @@
             r.onload = e => {
                 document.getElementById('imageToCrop').src = e.target.result;
                 document.getElementById('cropModal').classList.remove('hidden');
-                setAvatarStyle('normal');
                 
                 if(cropper) cropper.destroy();
                 cropper = new Cropper(document.getElementById('imageToCrop'), {
@@ -1673,9 +1476,8 @@
 
     function doCrop() {
         if(!cropper) return;
-        const rawCanvas = cropper.getCroppedCanvas({ width: 300, height: 300 });
-        const finalCanvas = applyAvatarStyle(rawCanvas, selectedAvatarStyle);
-        tempImg = finalCanvas.toDataURL('image/jpeg', 0.85);
+        const canvas = cropper.getCroppedCanvas({ width: 300, height: 300 });
+        tempImg = canvas.toDataURL('image/jpeg', 0.8);
         document.getElementById('prevImg').src = tempImg;
         document.getElementById('prevImg').style.display = 'block';
         document.getElementById('camIcon').style.display = 'none';
@@ -1714,7 +1516,6 @@
         selectedFormat = f;
         document.getElementById('btnFormatSingles').className = f==='singles' ? 'seg-btn active' : 'seg-btn';
         document.getElementById('btnFormatDoubles').className = f==='doubles' ? 'seg-btn active' : 'seg-btn';
-        renderNextUpPreview();
     }
     function setPartnerMode(mode, playSnd=true) {
         if(playSnd) playSfx('pop');
@@ -1723,260 +1524,6 @@
         document.getElementById('btnPasanganTetap').className = mode === 'tetap' ? 'seg-btn active' : 'seg-btn';
         
         document.getElementById('fixedPartnerSetup').classList.toggle('hidden', mode !== 'tetap');
-    }
-
-    function setTournamentMode(mode, playSnd=true) {
-        if(playSnd) {
-            if(data.currentMatches && data.currentMatches.length > 0) {
-                return appAlert("Tidak Bisa Ganti Mode", "Selesaikan atau batalkan pertandingan yang sedang berjalan terlebih dahulu sebelum mengganti mode turnamen.");
-            }
-            playSfx('pop');
-        }
-        data.tournamentMode = mode;
-        document.getElementById('btnModeLeague').className = mode === 'league' ? 'seg-btn active' : 'seg-btn';
-        document.getElementById('btnModeKnockout').className = mode === 'knockout' ? 'seg-btn active' : 'seg-btn';
-        document.getElementById('leagueSetupFields').classList.toggle('hidden', mode !== 'league');
-        document.getElementById('knockoutSetupFields').classList.toggle('hidden', mode !== 'knockout');
-        if(playSnd) { save(); renderRoundInfo(); }
-    }
-
-    function setPlannedRounds(val) {
-        let n = parseInt(val);
-        data.plannedRounds = (!isNaN(n) && n > 0) ? n : null;
-        save(); renderRoundInfo();
-    }
-
-    function renderNextUpPreview() {
-        let container = document.getElementById('nextUpPreview');
-        if(!container) return;
-        if(data.tournamentMode !== 'league' || currentPartnerMode === 'tetap') { container.innerHTML = ''; return; }
-        if(data.currentMatches && data.currentMatches.length > 0) { container.innerHTML = ''; return; }
-
-        let numCourtsEl = document.getElementById('numCourts');
-        let numCourts = numCourtsEl ? (parseInt(numCourtsEl.value) || 1) : 1;
-        let reqP = selectedFormat === 'doubles' ? 4 : 2;
-        let activePlayers = data.players.filter(p => p.isPresent !== false);
-        if(activePlayers.length === 0) { container.innerHTML = ''; return; }
-
-        let pool = [...activePlayers].sort((a,b) => a.stats.p - b.stats.p).slice(0, reqP * numCourts);
-        let chips = pool.map(p => `<span class="next-up-chip"><img src="${getAvatar(p)}">${escapeHtml(p.name)}</span>`).join('');
-        container.innerHTML = `<label style="font-size:11px; font-weight:bold; color:var(--text-muted); margin-bottom:6px; display:block;">BERIKUTNYA BERMAIN (PRIORITAS)</label><div>${chips}</div>`;
-    }
-
-    function renderRoundInfo() {
-        let bar = document.getElementById('roundInfoBar');
-        let txt = document.getElementById('roundInfoText');
-        let btnInline = document.getElementById('btnViewBracketInline');
-        let btnRank = document.getElementById('btnViewBracketRank');
-        let btnSummary = document.getElementById('btnSessionSummary');
-        if(!bar || !txt) return;
-
-        if(data.tournamentMode === 'knockout' && data.bracket) {
-            bar.classList.remove('hidden');
-            if(btnInline) btnInline.classList.remove('hidden');
-            if(btnRank) btnRank.classList.remove('hidden');
-            if(data.bracket.championId) {
-                let champ = data.bracket.championId.map(id => { let p = data.players.find(x=>x.id===id); return p ? p.name : '?'; }).join(' & ');
-                txt.innerHTML = `🏆 JUARA: ${escapeHtml(champ)}`;
-            } else {
-                let curRoundIdx = data.bracket.rounds.length - 1;
-                let label = roundLabel(curRoundIdx, data.bracket.totalRounds);
-                txt.innerText = `BABAK: ${label} (Ronde ${curRoundIdx+1}/${data.bracket.totalRounds})`;
-            }
-        } else {
-            if(btnInline) btnInline.classList.add('hidden');
-            if(btnRank) btnRank.classList.add('hidden');
-            if(data.tournamentMode === 'league' && data.plannedRounds) {
-                bar.classList.remove('hidden');
-                txt.innerText = `RONDE ${data.roundNumber || 0} DARI ${data.plannedRounds}`;
-            } else {
-                bar.classList.add('hidden');
-            }
-        }
-
-        if(btnSummary) btnSummary.classList.toggle('hidden', !(data.matches && data.matches.length > 0));
-        let prInp = document.getElementById('plannedRoundsInp');
-        if(prInp && document.activeElement !== prInp) prInp.value = data.plannedRounds || '';
-        renderNextUpPreview();
-
-        if(data.tournamentMode === 'league' && data.plannedRounds && data.roundNumber >= data.plannedRounds &&
-           (!data.currentMatches || data.currentMatches.length === 0) && !window._sessionOfferShown) {
-            window._sessionOfferShown = true;
-            setTimeout(() => {
-                appConfirm("Sesi Selesai!", `Target ${data.plannedRounds} ronde hari ini sudah tercapai. Lihat ringkasan sesi sekarang?`, () => openSessionSummary());
-            }, 500);
-        }
-    }
-
-    function roundLabel(idx, total) {
-        let fromEnd = total - idx;
-        if(fromEnd === 1) return 'FINAL';
-        if(fromEnd === 2) return 'SEMIFINAL';
-        if(fromEnd === 3) return 'PEREMPAT FINAL';
-        return `BABAK ${idx+1}`;
-    }
-
-    function generateBracket() {
-        if(data.isFinished) return appAlert("Perhatian", "Turnamen sudah selesai! Buka kembali turnamen di menu Ranking jika ingin membuat bracket baru.");
-        if(data.currentMatches && data.currentMatches.length > 0) return appAlert("Perhatian", "Selesaikan pertandingan yang sedang berjalan terlebih dahulu.");
-        
-        if(data.bracket && !data.bracket.championId) {
-            return appConfirm("Bracket Sedang Berjalan", "Ada bracket yang belum selesai. Membuat bracket baru akan menghapus progres bracket saat ini. Lanjutkan?", () => {
-                data.bracket = null; buildFreshBracket();
-            });
-        }
-        buildFreshBracket();
-    }
-
-    function buildFreshBracket() {
-        let activePlayers = data.players.filter(p => p.isPresent !== false);
-        let entrants = [];
-
-        if(selectedFormat === 'doubles') {
-            if(activePlayers.length < 4) return appAlert("Error", "Minimal 4 pemain HADIR dibutuhkan untuk bracket ganda (2 VS 2).");
-            let pool = [...activePlayers].sort(() => Math.random() - 0.5);
-            for(let i=0; i+1<pool.length; i+=2) entrants.push([pool[i], pool[i+1]]);
-            if(pool.length % 2 !== 0) appAlert("Info", `Pemain ${pool[pool.length-1].name} tidak ikut bracket karena jumlah pemain hadir ganjil.`);
-        } else {
-            if(activePlayers.length < 2) return appAlert("Error", "Minimal 2 pemain HADIR dibutuhkan untuk bracket tunggal (1 VS 1).");
-            entrants = activePlayers.map(p => [p]);
-        }
-        entrants.sort(() => Math.random() - 0.5);
-
-        let bracketSize = 1;
-        while(bracketSize < entrants.length) bracketSize *= 2;
-
-        let slots = [...entrants];
-        while(slots.length < bracketSize) slots.push(null);
-        slots.sort(() => Math.random() - 0.5);
-
-        let round0 = [];
-        for(let i=0; i<bracketSize; i+=2) {
-            let a = slots[i], b = slots[i+1];
-            let match = { id: 'BM_'+Date.now()+'_'+i, p1: a, p2: b, s1: null, s2: null, winner: null, bye: false };
-            if(a && b) { match.s1 = 0; match.s2 = 0; }
-            else if(a && !b) { match.winner = 'p1'; match.bye = true; }
-            else if(b && !a) { match.winner = 'p2'; match.bye = true; }
-            round0.push(match);
-        }
-
-        data.bracket = { format: selectedFormat, sport: selectedSport, totalRounds: Math.log2(bracketSize), rounds: [round0], championId: null };
-        data.isFinished = false;
-
-        playSfx('whistle');
-        syncBracketCurrentMatches();
-        save();
-        renderMatches();
-        renderRoundInfo();
-    }
-
-    function syncBracketCurrentMatches() {
-        let roundIdx = data.bracket.rounds.length - 1;
-        let round = data.bracket.rounds[roundIdx];
-        let cm = [];
-        round.forEach((bm, i) => {
-            if(!bm.bye) {
-                cm.push({
-                    id: bm.id, court: i+1,
-                    t1: bm.p1, t2: bm.p2,
-                    sport: data.bracket.sport, format: data.bracket.format,
-                    partnerMode: 'acak', g1: 0, g2: 0,
-                    bracketRound: roundIdx, bracketMatchIndex: i
-                });
-            }
-        });
-        data.currentMatches = cm;
-        if(cm.length === 0) tryAdvanceBracketRound();
-    }
-
-    function tryAdvanceBracketRound() {
-        let roundIdx = data.bracket.rounds.length - 1;
-        let round = data.bracket.rounds[roundIdx];
-        let allResolved = round.every(m => m.winner !== null);
-        if(!allResolved) return;
-
-        let winners = round.map(m => m.winner === 'p1' ? m.p1 : m.p2);
-
-        if(winners.length === 1) {
-            data.bracket.championId = winners[0].map(p => p.id);
-            data.isFinished = true;
-            data.currentMatches = [];
-            confetti({ particleCount: 250, spread: 120, origin: { y: 0.5 }, colors: ['#FFD700', '#4361ee', '#f72585'] });
-            let champName = winners[0].map(p => p.name).join(' & ');
-            setTimeout(() => appSuccess("🏆 JUARA TURNAMEN!", `Selamat kepada ${champName} sebagai JUARA turnamen Knockout!`), 300);
-            return;
-        }
-
-        let nextRound = [];
-        for(let i=0; i<winners.length; i+=2) {
-            nextRound.push({ id: 'BM_'+Date.now()+'_'+i, p1: winners[i], p2: winners[i+1], s1: 0, s2: 0, winner: null, bye: false });
-        }
-        data.bracket.rounds.push(nextRound);
-        syncBracketCurrentMatches();
-    }
-
-    function openBracketView() {
-        playSfx('pop');
-        if(!data.bracket) return appAlert("Info", "Belum ada bracket yang dibuat untuk turnamen ini.");
-        let html = '';
-        data.bracket.rounds.forEach((round, rIdx) => {
-            html += `<div class="bracket-round-title"><i class="fas fa-layer-group"></i> ${roundLabel(rIdx, data.bracket.totalRounds)}</div>`;
-            round.forEach(m => {
-                let n1 = m.p1 ? escapeHtml(m.p1.map(p=>p.name).join(' & ')) : '???';
-                let n2 = m.p2 ? escapeHtml(m.p2.map(p=>p.name).join(' & ')) : '???';
-                if(m.bye) {
-                    let winnerName = m.winner === 'p1' ? n1 : n2;
-                    html += `<div class="bracket-match"><div class="bracket-bye"><i class="fas fa-forward"></i> ${winnerName} lolos otomatis (BYE)</div></div>`;
-                } else {
-                    let w1 = m.winner === 'p1' ? 'winner' : ''; let w2 = m.winner === 'p2' ? 'winner' : '';
-                    let s = (m.winner) ? `${m.s1} - ${m.s2}` : 'vs';
-                    html += `<div class="bracket-match">
-                        <div class="bracket-side ${w1}">${m.winner==='p1'?'<i class="fas fa-trophy" style="color:var(--gold);"></i> ':''}${n1}</div>
-                        <div class="bracket-vs">${s}</div>
-                        <div class="bracket-side ${w2}">${m.winner==='p2'?'<i class="fas fa-trophy" style="color:var(--gold);"></i> ':''}${n2}</div>
-                    </div>`;
-                }
-            });
-        });
-        if(data.bracket.championId) {
-            let champ = data.bracket.championId.map(id => { let p = data.players.find(x=>x.id===id); return p ? escapeHtml(p.name) : '?'; }).join(' & ');
-            html += `<div class="card" style="text-align:center; padding:20px; border:2px solid var(--gold); margin-top:10px;"><div style="font-size:36px;">🏆</div><b style="color:var(--gold); font-size:18px;">${champ}</b></div>`;
-        }
-        document.getElementById('bracketViewContainer').innerHTML = html || '<p style="color:var(--text-muted);">Bracket kosong.</p>';
-        document.getElementById('bracketViewModal').classList.remove('hidden');
-    }
-
-    function openSessionSummary() {
-        playSfx('pop');
-        let totalMatches = data.matches.length;
-        let sorted = [...data.players].sort((a,b) => b.stats.pts - a.stats.pts || b.stats.gd - a.stats.gd);
-        let mvp = sorted[0];
-        let mostWins = [...data.players].sort((a,b) => b.stats.w - a.stats.w)[0];
-
-        let html = `
-            <div style="display:flex; gap:10px; margin-bottom:15px;">
-                <div class="summary-stat-box"><div class="num">${totalMatches}</div><div class="lbl">Total Match</div></div>
-                <div class="summary-stat-box"><div class="num">${data.players.length}</div><div class="lbl">Pemain</div></div>
-                <div class="summary-stat-box"><div class="num">${data.roundNumber || 0}</div><div class="lbl">Ronde</div></div>
-            </div>
-            ${mvp ? `<div class="card" style="padding:14px; text-align:center; margin-bottom:10px;"><div style="font-size:11px; color:var(--text-muted); font-weight:bold;">⭐ MVP SESI INI</div><div style="font-size:18px; font-weight:900; color:var(--primary);">${escapeHtml(mvp.name)}</div><div style="font-size:12px; color:var(--text-muted);">${mvp.stats.pts} poin</div></div>` : ''}
-            ${mostWins && mostWins.stats.w > 0 ? `<div class="card" style="padding:14px; text-align:center;"><div style="font-size:11px; color:var(--text-muted); font-weight:bold;">🔥 KEMENANGAN TERBANYAK</div><div style="font-size:16px; font-weight:900; color:var(--success);">${escapeHtml(mostWins.name)} (${mostWins.stats.w}x menang)</div></div>` : ''}
-        `;
-        document.getElementById('sessionSummaryContainer').innerHTML = html;
-        document.getElementById('sessionSummaryModal').classList.remove('hidden');
-    }
-
-    function shareSessionWhatsApp() {
-        let sorted = [...data.players].sort((a,b) => b.stats.pts - a.stats.pts || b.stats.gd - a.stats.gd);
-        let mvp = sorted[0];
-        let lines = [
-            `🏆 *${data.title || 'Turnamen Happy Hitters'}*`,
-            `Total ${data.matches.length} match dimainkan${data.roundNumber ? ' dalam ' + data.roundNumber + ' ronde' : ''}.`,
-        ];
-        if(mvp) lines.push(`⭐ MVP: ${mvp.name} (${mvp.stats.pts} poin)`);
-        lines.push('', 'Dibuat dengan Happy Hitters Tournament App 🎾');
-        let text = encodeURIComponent(lines.join('\n'));
-        window.open(`https://wa.me/?text=${text}`, '_blank');
     }
 
     function openFixedPairsDialog() {
@@ -2037,8 +1584,6 @@
 
     function generateMatch() {
         if(data.isFinished) return appAlert("Perhatian", "Turnamen sudah selesai! Buka kembali turnamen di menu Ranking jika ingin melanjutkan.");
-        if(data.tournamentMode === 'knockout') return appAlert("Perhatian", "Mode turnamen saat ini adalah KNOCKOUT. Gunakan tombol 'Buat Bracket Otomatis' untuk memulai.");
-        window._sessionOfferShown = false;
         
         let numCourts = parseInt(document.getElementById('numCourts').value) || 1;
         let reqP = selectedFormat === 'doubles' ? 4 : 2;
@@ -2125,9 +1670,8 @@
             data.currentMatches = newMatches;
         }
 
-        data.roundNumber = (data.roundNumber || 0) + 1;
         playSfx('whistle');
-        save(); renderMatches(); renderRoundInfo();
+        save(); renderMatches();
     }
 
     function createMatchObj(courtNum, t1, t2) {
@@ -2140,19 +1684,6 @@
     }
 
     function renderMatches() {
-        if(data.tournamentMode === 'knockout' && data.bracket && data.bracket.championId) {
-            document.getElementById('setupArea').style.display = 'none';
-            document.getElementById('matchArea').classList.remove('hidden');
-            let champNames = data.bracket.championId.map(id => { let p = data.players.find(x=>x.id===id); return p ? escapeHtml(p.name) : '?'; }).join(' & ');
-            document.getElementById('multiCourtContainer').innerHTML = `
-                <div class="card" style="text-align:center; padding:30px 20px; border:2px solid var(--gold);">
-                    <div style="font-size:50px; margin-bottom:10px;">🏆</div>
-                    <h3 style="margin:0; color:var(--primary);">TURNAMEN KNOCKOUT SELESAI</h3>
-                    <div style="font-size:22px; font-weight:900; margin:15px 0; color:var(--gold); text-shadow:0 2px 6px rgba(0,0,0,0.2);">${champNames}</div>
-                    <button class="btn btn-primary" style="margin-top:10px;" onclick="openBracketView()"><i class="fas fa-sitemap"></i> Lihat Bagan Bracket</button>
-                </div>`;
-            return;
-        }
         if(!data.currentMatches || data.currentMatches.length === 0) {
             document.getElementById('setupArea').style.display = 'block';
             document.getElementById('matchArea').classList.add('hidden');
@@ -2185,7 +1716,7 @@
                 <div class="live-scoreboard">
                     <div class="score-row">
                         <div class="score-team-info">
-                            <span class="score-team-name" style="color:var(--accent); font-size:14px;">${escapeHtml(t1Names)}</span>
+                            <span class="score-team-name" style="color:var(--accent); font-size:14px;">${t1Names}</span>
                             <span style="font-size:11px; color:var(--text-muted); font-weight:bold;">Skor Akhir:</span>
                         </div>
                         <div class="score-controls">
@@ -2197,7 +1728,7 @@
 
                     <div class="score-row">
                         <div class="score-team-info">
-                            <span class="score-team-name" style="color:var(--primary); font-size:14px;">${escapeHtml(t2Names)}</span>
+                            <span class="score-team-name" style="color:var(--primary); font-size:14px;">${t2Names}</span>
                             <span style="font-size:11px; color:var(--text-muted); font-weight:bold;">Skor Akhir:</span>
                         </div>
                         <div class="score-controls">
@@ -2314,20 +1845,13 @@
         m[t] += change;
         if(m[t] < 0) m[t] = 0;
         
-        saveDebounced(); updateCourtScoreUI(matchId);
+        save(); updateCourtScoreUI(matchId);
     }
 
     function cancelCourtConfirm(matchId) {
         let idx = data.currentMatches.findIndex(x => x.id === matchId);
         if(idx === -1) return;
         let crt = data.currentMatches[idx].court;
-        if(data.tournamentMode === 'knockout') {
-            appConfirm("Reset Skor", `Reset skor pertandingan Lapangan ${crt} ke 0-0?`, () => {
-                data.currentMatches[idx].g1 = 0; data.currentMatches[idx].g2 = 0;
-                save(); renderMatches();
-            });
-            return;
-        }
         appConfirm("Batal Match", `Yakin ingin membatalkan pertandingan di Lapangan ${crt}?`, () => {
             data.currentMatches.splice(idx, 1); save(); renderMatches();
         });
@@ -2339,13 +1863,6 @@
         let m = data.currentMatches[idx];
         if(m.g1 === 0 && m.g2 === 0) {
             return appAlert("Peringatan", "Skor masih 0-0! Silakan catat skor pemenang terlebih dahulu.");
-        }
-        if(data.tournamentMode === 'knockout') {
-            if(m.g1 === m.g2) return appAlert("Peringatan", "Skor imbang tidak diperbolehkan di mode KNOCKOUT. Harus ada pemenang untuk melanjutkan ke babak berikutnya.");
-            appConfirm("Simpan Hasil", `Simpan hasil akhir Lapangan ${m.court} dan lanjutkan bracket?`, () => {
-                submitKnockoutMatch(m, idx);
-            });
-            return;
         }
         appConfirm("Simpan Hasil", `Simpan hasil akhir Lapangan ${m.court} ke klasemen?`, () => {
             let s1 = m.g1; let s2 = m.g2;
@@ -2384,44 +1901,6 @@
             save(); 
             renderMatches();
         });
-    }
-
-    function submitKnockoutMatch(m, idx) {
-        let s1 = m.g1, s2 = m.g2;
-        let bracketMatch = data.bracket.rounds[m.bracketRound][m.bracketMatchIndex];
-        bracketMatch.p1 = m.t1; bracketMatch.p2 = m.t2;
-        bracketMatch.s1 = s1; bracketMatch.s2 = s2;
-        bracketMatch.winner = s1 > s2 ? 'p1' : 'p2';
-
-        const upd = (arr, ms, os) => {
-            arr.forEach(pid => {
-                let p = data.players.find(x=>x.id===pid.id);
-                if(p) {
-                    p.stats.p++; p.stats.gd += (ms-os);
-                    if(ms>os) { p.stats.w++; p.stats.pts+=3; } else p.stats.l++;
-                }
-            });
-        };
-        upd(m.t1, s1, s2); upd(m.t2, s2, s1);
-
-        let label = roundLabel(m.bracketRound, data.bracket.totalRounds);
-        data.matches.unshift({
-            id: 'HIST_' + Date.now() + '_' + Math.floor(Math.random()*1000),
-            sport: m.sport, format: m.format, logic: 'knockout',
-            roundLabel: label,
-            t1: m.t1.map(x=>x.name).join(' & '), t2: m.t2.map(x=>x.name).join(' & '),
-            ids1: m.t1.map(x=>x.id), ids2: m.t2.map(x=>x.id), court: m.court,
-            s1, s2, time: new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}),
-            dateStr: new Date().toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'})
-        });
-
-        confetti({ particleCount: 100, origin: { y: 0.6 }, spread: 70, colors: ['#4361ee', '#f72585', '#10b981'] });
-
-        data.currentMatches.splice(idx, 1);
-        tryAdvanceBracketRound();
-        save();
-        renderMatches();
-        renderRoundInfo();
     }
 
     function openEditScore(id) {
@@ -2534,11 +2013,12 @@
 
     function resetConfirm() {
         appConfirm("RESET DATA", "PERINGATAN: Semua data pemain, judul, dan riwayat pertandingan aktif akan dihapus. Yakin?", () => {
-            let defaultData = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [], tournamentMode: 'league', bracket: null, plannedRounds: null, roundNumber: 0 };
+            let defaultData = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [] };
             if(db && auth.currentUser) {
                 db.collection("tournaments").doc(auth.currentUser.uid).set(defaultData).then(() => location.reload());
             } else {
-                appAlert("Error", "Anda tidak sedang login, tidak ada data untuk direset.");
+                localStorage.setItem(DB_KEY, JSON.stringify(defaultData)); 
+                location.reload();
             }
         });
     }
@@ -2579,9 +2059,9 @@
                         <b>${resultStr}</b>
                     </div>
                     <div style="display:flex; justify-content:space-between; font-weight:bold; align-items:center;">
-                        <span style="flex:1; text-align:right; ${isT1 ? 'color:var(--gold)' : ''}">${escapeHtml(m.t1)}</span>
+                        <span style="flex:1; text-align:right; ${isT1 ? 'color:var(--gold)' : ''}">${m.t1}</span>
                         <span style="padding:0 8px; font-size:14px;">${m.s1} - ${m.s2}</span>
-                        <span style="flex:1; text-align:left; ${!isT1 ? 'color:var(--gold)' : ''}">${escapeHtml(m.t2)}</span>
+                        <span style="flex:1; text-align:left; ${!isT1 ? 'color:var(--gold)' : ''}">${m.t2}</span>
                     </div>
                 </div>`;
             }).join('');
@@ -2604,7 +2084,7 @@
         let listHtml = allPlayers.map((p, i) => {
             let medal = i===0 ? '🥇' : (i===1 ? '🥈' : (i===2 ? '🥉' : `<b>${i+1}.</b>`));
             return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:5px;">
-                <div>${medal} ${escapeHtml(p.name)}</div>
+                <div>${medal} ${p.name}</div>
                 <div style="font-weight:900; color:var(--gold);">${p.stats.pts} pts</div>
             </div>`;
         }).join('');
@@ -2638,7 +2118,7 @@
             <div class="card p-item" style="padding:12px 15px; justify-content:space-between; margin-bottom:0; opacity: ${pStatus ? '1' : '0.6'};">
                 <div class="p-item" style="flex:1;">
                     <img src="${getAvatar(p)}" class="p-img">
-                    <div><b style="font-size:15px;">${escapeHtml(p.name)}</b><br><small style="color:var(--text-muted); font-weight:bold;">${p.gender==='M'?'Pria':'Wanita'}</small></div>
+                    <div><b style="font-size:15px;">${p.name}</b><br><small style="color:var(--text-muted); font-weight:bold;">${p.gender==='M'?'Pria':'Wanita'}</small></div>
                 </div>
                 <div class="owner-only" style="display:flex; gap:8px;">
                     <button onclick="togglePresent('${p.id}')" class="btn ${stClass}" style="padding:6px 10px; font-size:11px; width:auto; border-radius:8px;">${stText}</button>
@@ -2655,7 +2135,7 @@
         document.getElementById('btnNewTournament').classList.toggle('hidden', !isFin);
         
         document.getElementById('rankBody').innerHTML = sorted.map((p,i) => {
-            return `<tr class="rank-row" onclick="openPlayerCard('${p.id}')"><td style="padding-left:12px; font-weight:900; color:var(--text-muted);">${i+1}</td><td><div class="p-item"><b style="font-size:14px;">${escapeHtml(p.name)}</b></div></td><td style="text-align:center; font-weight:bold;">${p.stats.p}</td><td style="text-align:right; font-weight:900; padding-right:12px; color:var(--primary); font-size:16px;">${p.stats.pts}</td></tr>`
+            return `<tr class="rank-row" onclick="openPlayerCard('${p.id}')"><td style="padding-left:12px; font-weight:900; color:var(--text-muted);">${i+1}</td><td><div class="p-item"><b style="font-size:14px;">${p.name}</b></div></td><td style="text-align:center; font-weight:bold;">${p.stats.p}</td><td style="text-align:right; font-weight:900; padding-right:12px; color:var(--primary); font-size:16px;">${p.stats.pts}</td></tr>`
         }).join('');
         
         document.getElementById('histList').innerHTML = data.matches.map(m => {
@@ -2668,19 +2148,17 @@
                     <span>${icon} ${m.sport ? m.sport.toUpperCase() : 'TENNIS'} ${typeStr}${logicStr} (Lap ${m.court || 1})</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold;">
-                    <span style="flex:1; text-align:right;">${escapeHtml(m.t1)}</span>
+                    <span style="flex:1; text-align:right;">${m.t1}</span>
                     <div style="display:flex; align-items:center;">
                         <b style="font-size:16px; color:var(--primary); padding:0 10px;">${m.s1} - ${m.s2}</b>
                         <div class="admin-only" style="display:flex; flex-direction:column; gap:5px;">
                             <button onclick="openEditScore('${m.id}')" style="background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-muted); border-radius:5px; padding:4px 8px; cursor:pointer;"><i class="fas fa-edit"></i></button>
                         </div>
                     </div>
-                    <span style="flex:1; text-align:left; margin-left:10px;">${escapeHtml(m.t2)}</span>
+                    <span style="flex:1; text-align:left; margin-left:10px;">${m.t2}</span>
                 </div>
             </div>`
         }).join('');
-
-        renderRoundInfo();
     }
 
     function toggleTools() { document.getElementById('toolsPanel').classList.toggle('hidden'); }
