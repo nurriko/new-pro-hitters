@@ -20,9 +20,13 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
+    <!-- Library Tambahan -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    
+    <!-- Library Barcode / QR Code (Diperbaiki, cukup 1 versi stabil) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
 
     <!-- FIREBASE COMPAT SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -55,9 +59,9 @@
         body.not-owner .owner-only { display: none !important; pointer-events: none; }
         body.viewer-only .admin-only { display: none !important; pointer-events: none; }
 
-        #welcomeScreen, #authScreen, #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #adminScreen, #cropModal, #editMatchPlayersModal, #accessManagerModal, #bracketViewModal, #sessionSummaryModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-grad); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: opacity 0.5s ease, visibility 0.5s; }
-        #welcomeScreen.hidden, #authScreen.hidden, #fixedPairsDialog.hidden, #editScoreDialog.hidden, #archivesDialog.hidden, #playerCardModal.hidden, #shareMatchModal.hidden, #adminScreen.hidden, #cropModal.hidden, #editMatchPlayersModal.hidden, #accessManagerModal.hidden, #bracketViewModal.hidden, #sessionSummaryModal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-        #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #editMatchPlayersModal, #accessManagerModal, #bracketViewModal, #sessionSummaryModal { background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001; }
+        #welcomeScreen, #authScreen, #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #adminScreen, #cropModal, #editMatchPlayersModal, #accessManagerModal, #bracketViewModal, #sessionSummaryModal, #qrModal, #scanModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-grad); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: opacity 0.5s ease, visibility 0.5s; }
+        #welcomeScreen.hidden, #authScreen.hidden, #fixedPairsDialog.hidden, #editScoreDialog.hidden, #archivesDialog.hidden, #playerCardModal.hidden, #shareMatchModal.hidden, #adminScreen.hidden, #cropModal.hidden, #editMatchPlayersModal.hidden, #accessManagerModal.hidden, #bracketViewModal.hidden, #sessionSummaryModal.hidden, #qrModal.hidden, #scanModal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #editMatchPlayersModal, #accessManagerModal, #bracketViewModal, #sessionSummaryModal, #qrModal, #scanModal { background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001; }
         #cropModal { background: #000; z-index: 10005; }
         
         #adminScreen { align-items: center; justify-content: flex-start; padding: 20px; box-sizing: border-box; overflow-y: auto; }
@@ -256,17 +260,7 @@
 <div id="accessManagerModal" class="hidden">
     <div class="dialog-box" style="width: 90%; max-width: 450px; max-height: 85vh; overflow-y:auto; padding: 20px;">
         <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-key"></i> Manajer Akses</h3>
-        <p style="font-size:12px; color:var(--text-muted);">Kelola teman yang dapat melihat dan mengelola skor pertandingan Anda.</p>
-
-        <h4 style="margin:15px 0 5px 0; text-align:left; color:var(--success); font-size:14px;"><i class="fas fa-qrcode"></i> Undangan QR / Link</h4>
-        <div style="text-align:center; margin-bottom:15px; padding:14px; background:var(--input-bg); border-radius:12px; border:1px solid var(--border-color);">
-            <div id="qrCodeContainer" style="display:inline-block; background:#fff; padding:8px; border-radius:10px; line-height:0;"></div>
-            <div style="margin-top:10px; display:flex; gap:8px;">
-                <input id="joinLinkInput" readonly style="flex:1; margin-bottom:0; font-size:11px; text-align:center;">
-                <button class="btn btn-ghost" style="width:auto; padding:0 14px;" onclick="copyJoinLink()"><i class="fas fa-copy"></i></button>
-            </div>
-            <p style="font-size:10px; color:var(--text-muted); margin:8px 0 0 0;">Siapa saja yang scan QR ini akan otomatis mengirim permintaan menonton kepada Anda — tidak perlu berteman dulu. Untuk jadi Admin (bisa isi skor), harus berteman.</p>
-        </div>
+        <p style="font-size:12px; color:var(--text-muted);">Kelola akses penonton dan admin pertandingan Anda.</p>
         
         <h4 style="margin:15px 0 5px 0; text-align:left; color:var(--warning); font-size:14px;">Permintaan Menonton (<span id="countViewReq">0</span>)</h4>
         <div id="viewReqList" style="text-align:left; font-size:13px; margin-bottom:15px; max-height:150px; overflow-y:auto;"></div>
@@ -278,6 +272,32 @@
         <div id="matchAdminsList" style="text-align:left; font-size:13px; margin-bottom:15px; max-height:150px; overflow-y:auto;"></div>
         
         <button class="btn btn-ghost" onclick="document.getElementById('accessManagerModal').classList.add('hidden')" style="margin-top:15px;">Tutup</button>
+    </div>
+</div>
+
+<!-- MODAL TAMPILKAN QR CODE -->
+<div id="qrModal" class="hidden">
+    <div class="dialog-box" style="width: 90%; max-width: 350px; padding: 25px;">
+        <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-qrcode"></i> Undangan Pertandingan</h3>
+        <p style="font-size:12px; color:var(--text-muted);">Minta teman Anda scan QR atau bagikan link di bawah.</p>
+        <div id="qrCodeContainer" style="display:flex; justify-content:center; margin: 15px 0; background: white; padding: 15px; border-radius: 10px; line-height: 0;"></div>
+        
+        <div style="display:flex; gap:8px; margin-bottom: 20px;">
+            <input id="joinLinkInput" readonly style="flex:1; margin-bottom:0; font-size:11px; text-align:center; background:var(--input-bg);">
+            <button class="btn btn-ghost" style="width:auto; padding:0 14px;" onclick="copyJoinLink()"><i class="fas fa-copy"></i></button>
+        </div>
+
+        <button class="btn btn-ghost" onclick="document.getElementById('qrModal').classList.add('hidden')">Tutup</button>
+    </div>
+</div>
+
+<!-- MODAL SCANNER QR CODE -->
+<div id="scanModal" class="hidden">
+    <div class="dialog-box" style="width: 90%; max-width: 400px; padding: 20px;">
+        <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-camera"></i> Scan Kode Teman</h3>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px;">Arahkan kamera ke QR Code pertandingan yang dibuat teman Anda.</p>
+        <div id="reader" style="width: 100%; margin-bottom: 15px; background: white; border-radius: 10px; overflow: hidden;"></div>
+        <button class="btn btn-ghost" onclick="closeScanModal()">Batal</button>
     </div>
 </div>
 
@@ -450,6 +470,7 @@
             <h1>HAPPY HITTERS</h1>
         </div>
         <div style="display: flex; gap: 8px;">
+            <button class="sound-toggle owner-only" title="Tampilkan QR Code" onclick="openQRModal()"><i class="fas fa-qrcode"></i></button>
             <button class="sound-toggle owner-only" title="Manajer Akses" onclick="openAccessManager()"><i class="fas fa-key"></i></button>
             <button class="sound-toggle" title="Ubah Tema" onclick="toggleTheme()" id="themeBtn"><i id="themeIcon" class="fas fa-moon"></i></button>
             <button class="sound-toggle" title="Suara" onclick="toggleMute()"><i id="soundIcon" class="fas fa-volume-up"></i></button>
@@ -643,7 +664,16 @@
 
     <!-- TAB SOCIAL / FRIENDS -->
     <div id="tab-social" class="content">
-        <h3 style="margin:0 0 15px 0; font-weight:900; color:var(--primary);"><i class="fas fa-user-friends"></i> SOSIAL & TEMAN</h3>
+        <button class="btn btn-success" style="width:100%; margin-bottom:20px; padding:16px; box-shadow:0 4px 15px rgba(16, 185, 129, 0.4);" onclick="openScanModal()">
+            <i class="fas fa-camera"></i> SCAN QR MATCH TEMAN
+        </button>
+
+        <div class="card">
+            <h4 style="margin:0 0 10px 0; font-size:14px; color:var(--primary);">Pertandingan Ditonton</h4>
+            <div id="activeViewingList" style="text-align:left;">Memuat...</div>
+        </div>
+
+        <h3 style="margin:25px 0 15px 0; font-weight:900; color:var(--primary);"><i class="fas fa-user-friends"></i> SOSIAL & TEMAN</h3>
         
         <div class="card">
             <h4 style="margin:0 0 10px 0; font-size:14px; color:var(--primary);">Cari Teman</h4>
@@ -695,14 +725,11 @@
         auth = firebase.auth();
         db = firebase.firestore();
 
-        // Mode offline penuh: skor, pemain, & pasangan tetap bisa diubah tanpa koneksi.
-        // Firestore SDK otomatis menyimpan perubahan ke antrean lokal (IndexedDB) dan
-        // mengirimkannya ke server begitu koneksi internet kembali stabil.
         db.enablePersistence({ synchronizeTabs: true }).catch(err => {
             if(err.code === 'failed-precondition') {
-                console.warn("Firestore offline persistence: browser tidak mendukung synchronizeTabs, tetap berjalan tanpa cache offline penuh di tab ini.");
+                console.warn("Firestore offline persistence: browser tidak mendukung synchronizeTabs.");
             } else if(err.code === 'unimplemented') {
-                console.warn("Firestore offline persistence: browser ini tidak mendukung penyimpanan offline (misal mode privat/incognito).");
+                console.warn("Firestore offline persistence: browser ini tidak mendukung penyimpanan offline.");
             } else {
                 console.error("Firebase Offline Error:", err);
             }
@@ -713,7 +740,6 @@
     let isMuted = false;
     let currentTheme = localStorage.getItem('HH_THEME') || 'auto';
     
-    // VARIABEL DATA & AKSES
     let currentViewingId = null;
     let myUserData = { friends: [], friendRequests: [] };
 
@@ -732,11 +758,9 @@
     let dbUnsubscribe = null;
     let cropper = null;
     
-    // VARIABEL UNTUK TRIGGER NOTIFIKASI
     let prevFriendReqs = null;
     let prevViewReqs = null;
     
-    // Mencegah XSS: escape karakter HTML dari semua input yang berasal dari user (nama, judul, username, dll)
     function escapeHtml(str) {
         if (str === null || str === undefined) return '';
         return String(str).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
@@ -747,7 +771,7 @@
 
     window.onload = () => { 
         initTheme(); 
-        handleJoinParam(); // deteksi ?join=UID dari hasil scan QR undangan pertandingan
+        handleJoinParam(); 
         updateOnlineStatus();
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);
@@ -779,7 +803,6 @@
                             initSocial(user.uid);
                             setupRealtimeListener(user.uid); 
 
-                            // Kalau sebelumnya ada permintaan join tertunda (user scan QR sebelum login), proses sekarang
                             if(window._pendingJoinUid) {
                                 let pending = window._pendingJoinUid;
                                 window._pendingJoinUid = null;
@@ -799,9 +822,6 @@
 
     let authMode = 'login';
 
-    // Menampilkan/menyembunyikan banner "MODE OFFLINE" berdasarkan status koneksi browser.
-    // Skor & data tetap bisa diubah saat offline berkat Firestore offline persistence;
-    // banner ini hanya pemberitahuan visual agar admin tenang datanya aman.
     function updateOnlineStatus() {
         let banner = document.getElementById('offlineBanner');
         if(!banner) return;
@@ -992,7 +1012,7 @@
 
     async function renderSocialTab() {
         if(!myUserData) return;
-        
+
         let reqHtml = '';
         for(let id of myUserData.friendRequests) {
             let d = await db.collection('users').doc(id).get();
@@ -1008,6 +1028,35 @@
         }
         document.getElementById('friendRequestsList').innerHTML = reqHtml || '<span style="font-size:12px; color:var(--text-muted);">Belum ada permintaan.</span>';
         
+        let activeViewHtml = '';
+        try {
+            let snap = await db.collection('tournaments').where('approvedViewers', 'array-contains', auth.currentUser.uid).get();
+            if(snap.empty) {
+                activeViewHtml = '<span style="font-size:12px; color:var(--text-muted);">Tidak ada pertandingan yang sedang ditonton.</span>';
+            } else {
+                for(let doc of snap.docs) {
+                    if(doc.id === auth.currentUser.uid) continue;
+                    let tData = doc.data();
+                    if(tData.isFinished || !tData.title) continue;
+
+                    let hostDoc = await db.collection('users').doc(doc.id).get();
+                    let hostName = hostDoc.exists ? hostDoc.data().username : 'Unknown Host';
+                    
+                    let isAdm = tData.matchAdmins && tData.matchAdmins.includes(auth.currentUser.uid);
+                    let badge = isAdm ? '<i class="fas fa-shield-alt" style="color:var(--primary);" title="Admin"></i>' : '<i class="fas fa-eye" style="color:var(--success);" title="Penonton"></i>';
+
+                    activeViewHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
+                        <div><b>${escapeHtml(hostName)}</b> ${badge}<br><small style="color:var(--text-muted);">${escapeHtml(tData.title)}</small></div>
+                        <button class="btn btn-success" style="padding:6px 10px; width:auto; font-size:12px;" onclick="viewFriendMatch('${doc.id}')">Masuk</button>
+                    </div>`;
+                }
+                if(!activeViewHtml) activeViewHtml = '<span style="font-size:12px; color:var(--text-muted);">Tidak ada pertandingan aktif yang ditonton.</span>';
+            }
+        } catch(e) {
+            activeViewHtml = '<span style="font-size:12px; color:#ef4444;">Gagal memuat data tontonan.</span>';
+        }
+        document.getElementById('activeViewingList').innerHTML = activeViewHtml;
+
         let frHtml = '';
         for(let id of myUserData.friends) {
             let d = await db.collection('users').doc(id).get();
@@ -1057,9 +1106,25 @@
     }
 
     function reqJoinMatch(uid) {
-        db.collection('tournaments').doc(uid).set({ viewRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) }, {merge: true}).then(() => {
-            appSuccess("Terkirim", "Request untuk menonton pertandingan telah dikirim ke pembuat match.");
-            renderSocialTab();
+        db.collection('tournaments').doc(uid).get().then(doc => {
+            if(doc.exists) {
+                let t = doc.data();
+                let myUid = auth.currentUser.uid;
+                
+                if(t.approvedViewers && t.approvedViewers.includes(myUid)) {
+                    appSuccess("Akses Tersedia", "Anda sudah memiliki akses. Memasuki pertandingan...");
+                    viewFriendMatch(uid);
+                } else if (t.viewRequests && t.viewRequests.includes(myUid)) {
+                    appAlert("Menunggu", "Request Anda masih menunggu persetujuan dari host pertandingan.");
+                } else {
+                    db.collection('tournaments').doc(uid).set({ viewRequests: firebase.firestore.FieldValue.arrayUnion(myUid) }, {merge: true}).then(() => {
+                        appSuccess("Terkirim", "Request bergabung dikirim. Tunggu host menerima, lalu cek tab Sosial atau scan ulang QR Code.");
+                        renderSocialTab();
+                    });
+                }
+            } else {
+                appAlert("Error", "Pertandingan tidak ditemukan atau belum dimulai.");
+            }
         });
     }
 
@@ -1077,13 +1142,11 @@
         if(!list.includes(uid)) { list.push(uid); localStorage.setItem('HH_JOINED_TOURNAMENTS', JSON.stringify(list)); }
     }
 
-    // Dipanggil sekali di awal (window.onload) untuk mendeteksi parameter ?join=UID di URL hasil scan QR.
-    // Kalau user belum login, permintaan disimpan dulu (window._pendingJoinUid) dan diproses setelah login berhasil.
     function handleJoinParam() {
         let params = new URLSearchParams(location.search);
         let joinUid = params.get('join');
         if(!joinUid) return;
-        history.replaceState({}, '', location.pathname); // bersihkan URL agar refresh tidak memicu ulang
+        history.replaceState({}, '', location.pathname); 
         if(!auth.currentUser) { window._pendingJoinUid = joinUid; return; }
         processJoin(joinUid);
     }
@@ -1101,7 +1164,7 @@
         let isAppr = tData.approvedViewers && tData.approvedViewers.includes(auth.currentUser.uid);
         let isAdm = tData.matchAdmins && tData.matchAdmins.includes(auth.currentUser.uid);
         if(isAppr || isAdm) {
-            appSuccess("Bergabung", `Anda sudah memiliki akses ke turnamen "${tData.title || 'ini'}". Memuat pertandingan...`);
+            appSuccess("Bergabung", `Anda sudah memiliki akses ke turnamen "${escapeHtml(tData.title) || 'ini'}". Memuat pertandingan...`);
             viewFriendMatch(joinUid);
             return;
         }
@@ -1111,7 +1174,7 @@
             return appAlert("Menunggu Persetujuan", "Permintaan menonton Anda untuk turnamen ini masih menunggu persetujuan dari pembuat pertandingan.");
         }
 
-        appConfirm("Gabung Pertandingan", `Kirim permintaan untuk menonton turnamen "${tData.title || 'ini'}"? Anda tidak perlu berteman untuk menonton, cukup disetujui oleh pembuatnya.`, () => {
+        appConfirm("Gabung Pertandingan", `Kirim permintaan untuk menonton turnamen "${escapeHtml(tData.title) || 'ini'}"? Anda tidak perlu berteman untuk menonton, cukup disetujui oleh pembuatnya.`, () => {
             db.collection('tournaments').doc(joinUid).set({ viewRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) }, {merge: true}).then(() => {
                 appSuccess("Terkirim", "Permintaan menonton telah dikirim. Cek tab Sosial > 'Pertandingan Diikuti' untuk memantau status persetujuan.");
                 renderJoinedTournaments();
@@ -1119,8 +1182,6 @@
         });
     }
 
-    // Menampilkan daftar turnamen yang pernah di-join lewat QR/link (termasuk yang bukan teman),
-    // beserta status: menunggu persetujuan, atau sudah bisa ditonton.
     async function renderJoinedTournaments() {
         let container = document.getElementById('joinedTournamentsList');
         if(!container || !auth.currentUser) return;
@@ -1159,7 +1220,6 @@
         if(!data.matchAdmins) data.matchAdmins = [];
         
         document.getElementById('countViewReq').innerText = data.viewRequests.length;
-        renderJoinQR();
         
         const getUser = async (id) => { let d = await db.collection('users').doc(id).get(); return escapeHtml(d.exists ? d.data().username : 'Unknown'); };
         
@@ -1180,7 +1240,6 @@
         for(let id of data.approvedViewers) {
             if(data.matchAdmins.includes(id)) continue;
             let un = await getUser(id);
-            // Promosi jadi Admin hanya boleh untuk yang sudah berteman (mencegah orang tak dikenal dari QR langsung bisa isi skor)
             let isFriend = myUserData.friends && myUserData.friends.includes(id);
             let adminAction = isFriend
                 ? `<button class="btn btn-primary" style="padding:4px 8px; width:auto; display:inline-block; font-size:12px;" onclick="setAdmin('${id}', true)">Jadikan Admin</button>`
@@ -1206,34 +1265,6 @@
         document.getElementById('matchAdminsList').innerHTML = mHtml || '<span style="color:var(--text-muted);">Belum ada admin tambahan.</span>';
         
         document.getElementById('accessManagerModal').classList.remove('hidden');
-    }
-
-    // Membuat QR code + link undangan untuk turnamen yang sedang dimiliki user saat ini
-    function renderJoinQR() {
-        if(!auth.currentUser) return;
-        let url = location.origin + location.pathname + '?join=' + auth.currentUser.uid;
-        let inp = document.getElementById('joinLinkInput');
-        if(inp) inp.value = url;
-        let container = document.getElementById('qrCodeContainer');
-        if(!container) return;
-        container.innerHTML = '';
-        if(typeof QRCode === 'undefined') { container.innerHTML = '<small style="color:var(--text-muted); padding:20px; display:block;">QR tidak tersedia offline</small>'; return; }
-        let canvas = document.createElement('canvas');
-        QRCode.toCanvas(canvas, url, { width: 170, margin: 1, color: { dark: '#111827', light: '#ffffff' } }, (err) => {
-            if(!err) container.appendChild(canvas);
-        });
-    }
-
-    function copyJoinLink() {
-        let inp = document.getElementById('joinLinkInput');
-        if(!inp || !inp.value) return;
-        inp.select(); inp.setSelectionRange(0, 99999);
-        try {
-            navigator.clipboard.writeText(inp.value);
-        } catch(e) {
-            document.execCommand('copy');
-        }
-        showToast('Disalin', 'Tautan undangan pertandingan disalin ke clipboard.', 'success');
     }
     
     function actViewReq(id, accept) {
@@ -1267,6 +1298,80 @@
         if(!isOwner) alertEl.classList.remove('hidden'); else alertEl.classList.add('hidden');
     }
 
+    // --- FITUR QR CODE (DIPERBAIKI) ---
+    function openQRModal() {
+        playSfx('pop');
+        document.getElementById('qrModal').classList.remove('hidden');
+        document.getElementById('qrCodeContainer').innerHTML = ""; 
+        
+        let joinUrl = window.location.origin + window.location.pathname + "?join=" + auth.currentUser.uid;
+        document.getElementById('joinLinkInput').value = joinUrl;
+        
+        if (typeof QRCode !== 'undefined') {
+            new QRCode(document.getElementById("qrCodeContainer"), {
+                text: joinUrl,
+                width: 180,
+                height: 180,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        } else {
+            document.getElementById('qrCodeContainer').innerHTML = "<p style='font-size:12px; color:var(--text-muted);'>QR Code tidak tersedia saat offline</p>";
+        }
+    }
+
+    function copyJoinLink() {
+        let inp = document.getElementById('joinLinkInput');
+        if(!inp || !inp.value) return;
+        inp.select(); inp.setSelectionRange(0, 99999);
+        try {
+            navigator.clipboard.writeText(inp.value);
+        } catch(e) {
+            document.execCommand('copy');
+        }
+        showToast('Disalin', 'Tautan undangan pertandingan disalin ke clipboard.', 'success');
+    }
+
+    let html5QrcodeScanner = null;
+    function openScanModal() {
+        playSfx('pop');
+        document.getElementById('scanModal').classList.remove('hidden');
+        if(!html5QrcodeScanner) {
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        }
+    }
+
+    function closeScanModal() {
+        document.getElementById('scanModal').classList.add('hidden');
+        if(html5QrcodeScanner) {
+            html5QrcodeScanner.clear();
+            html5QrcodeScanner = null;
+        }
+    }
+
+    function onScanSuccess(decodedText, decodedResult) {
+        closeScanModal();
+        try {
+            let url = new URL(decodedText);
+            let uid = url.searchParams.get('join');
+            if(uid) {
+                if(uid === auth.currentUser.uid) {
+                    appAlert("Peringatan", "Anda tidak bisa mengirim permintaan ke pertandingan Anda sendiri.");
+                } else {
+                    reqJoinMatch(uid);
+                }
+            } else {
+                appAlert("Error", "QR Code tidak valid untuk aplikasi Happy Hitters.");
+            }
+        } catch(e) {
+            appAlert("Error", "Format pembacaan QR Code gagal atau tidak dikenali.");
+        }
+    }
+
+    function onScanFailure(error) {}
+
     // --- SISTEM UTAMA TURNAMEN ---
     function setupRealtimeListener(uid) {
         if (dbUnsubscribe) dbUnsubscribe();
@@ -1299,7 +1404,7 @@
                             newReqs.forEach(async reqUid => {
                                 let d = await db.collection('users').doc(reqUid).get();
                                 let un = d.exists ? d.data().username : 'Seseorang';
-                                showToast('Permintaan Menonton', `<b>${escapeHtml(un)}</b> meminta akses untuk menonton pertandingan Anda. Cek ikon Kunci!`, 'warning');
+                                showToast('Permintaan Menonton', `<b>${escapeHtml(un)}</b> meminta akses dari QR Scanner. Cek ikon Kunci!`, 'warning');
                             });
                         }
                         prevViewReqs = [...data.viewRequests];
@@ -1347,16 +1452,12 @@
         }
     }
 
-    // Versi save() yang di-debounce, dipakai untuk aksi cepat berulang (misal tap tombol +/- skor)
-    // agar tidak membanjiri Firestore dengan write & render ulang di setiap tap.
-    // Cukup 1 write + 1 render setelah tap berhenti sejenak (~500ms).
     let _saveDebounceTimer = null;
     function saveDebounced(delay = 500) {
         if(_saveDebounceTimer) clearTimeout(_saveDebounceTimer);
         _saveDebounceTimer = setTimeout(() => { save(); }, delay);
     }
     
-    // PERBAIKAN: BUG SAVE DI NAV DIHAPUS UNTUK MENCEGAH RACE CONDITION!
     function nav(id, playSound=true) {
         if(playSound) playSfx('pop');
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
@@ -1365,205 +1466,49 @@
         if (data.activeTab !== id) {
             data.activeTab = id; 
             localStorage.setItem("HH_ACTIVE_TAB", id);
-            // Fungsi save() sengaja ditiadakan dari sini agar local storage teman yang kosong tidak menimpa DB saat ia pindah tab
         }
     }
     
-    function showAppDialog(type, title, msg, onConfirm, onCancel) {
-        const dialog = document.getElementById('customDialog');
-        document.getElementById('dialogTitle').innerText = title;
-        document.getElementById('dialogMsg').innerText = msg;
-        const icon = document.getElementById('dialogIcon');
-        icon.className = 'fas dialog-icon ';
-        if(type === 'alert') icon.className += 'fa-exclamation-circle error';
-        else if(type === 'success') icon.className += 'fa-check-circle success';
-        else if(type === 'confirm') icon.className += 'fa-question-circle warning';
-        else icon.className += 'fa-info-circle info';
+    // --- FITUR BARU: AVATAR AI (TEXT-TO-IMAGE) ---
+    function openAIAvatarPrompt() {
+        // Menggunakan context user preference (suka 3D figurine, gaya polaroid, karakter Aespa/ATEEZ dll) 
+        // sebagai contoh teks agar lebih relate secara personal tanpa harus memaksa
+        let promptText = prompt("Masukkan deskripsi (Misal: Pemain tenis pria gaya 3D figurine detail, atau pemain tenis wanita bergaya anime polaroid):", "Pemain tenis profesional gaya kartun 3D");
+        if(!promptText) return;
         
-        const acts = document.getElementById('dialogActions'); acts.innerHTML = '';
-        acts.style.flexDirection = 'row';
+        document.getElementById('prevImg').style.display = 'none';
+        let camI = document.getElementById('camIcon');
+        camI.className = "fas fa-spinner fa-spin"; 
+        camI.style.display = "block";
         
-        if(type === 'confirm') {
-            const btnC = document.createElement('button'); btnC.className = 'btn btn-ghost'; btnC.innerText = 'Batal';
-            btnC.onclick = () => { playSfx('pop'); dialog.style.display = 'none'; if(onCancel) onCancel(); };
-            const btnO = document.createElement('button'); btnO.className = 'btn btn-primary'; btnO.innerText = 'Ya, Lanjutkan';
-            btnO.onclick = () => { playSfx('pop'); dialog.style.display = 'none'; if(onConfirm) onConfirm(); };
-            acts.appendChild(btnC); acts.appendChild(btnO);
-        } else {
-            const btnO = document.createElement('button'); btnO.className = 'btn btn-primary'; btnO.innerText = 'Tutup';
-            btnO.onclick = () => { playSfx('pop'); dialog.style.display = 'none'; if(onConfirm) onConfirm(); };
-            acts.appendChild(btnO);
-        }
-        dialog.style.display = 'flex';
-    }
-    function appAlert(title, msg) { showAppDialog('alert', title, msg); }
-    function appSuccess(title, msg) { showAppDialog('success', title, msg); }
-    function appConfirm(title, msg, onConfirm) { showAppDialog('confirm', title, msg, onConfirm); }
-
-    function initTheme() {
-        if (currentTheme === 'auto') document.documentElement.setAttribute('data-theme', window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        else document.documentElement.setAttribute('data-theme', currentTheme);
-    }
-    
-    function getAvatar(p) { return (p.img && p.img.length > 100) ? p.img : (p.gender === 'M' ? DEF_M : DEF_F); }
-
-    function playSfx(type) {
-        if(isMuted) return;
-        if(audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        if(type === 'pop') {
-            osc.frequency.setValueAtTime(600, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-        } else if (type === 'whistle') {
-            osc.frequency.setValueAtTime(2000, audioCtx.currentTime); gain.gain.value = 0.05;
-            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-        }
-    }
-    
-    function toggleMute() { isMuted = !isMuted; document.getElementById('soundIcon').className = isMuted ? 'fas fa-volume-mute' : 'fas fa-volume-up'; }
-    function toggleTheme() { currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', currentTheme); localStorage.setItem('HH_THEME', currentTheme); }
-
-    function saveTitle() {
-        let t = document.getElementById('tourTitleInp').value.trim();
-        if(!t) return appAlert("Peringatan", "Silakan masukkan judul game/turnamen terlebih dahulu.");
-        data.title = t; 
-        save(); 
-        renderTitleSetup();
-    }
-    function editTitle() {
-        // Catatan: window.prompt() TIDAK berfungsi saat aplikasi berjalan sebagai PWA
-        // "Add to Home Screen" di iOS (standalone mode), jadi kita pakai dialog kustom sendiri.
-        playSfx('pop');
-        const dialog = document.getElementById('customDialog');
-        document.getElementById('dialogTitle').innerText = "Ubah Judul Turnamen";
-        const msgEl = document.getElementById('dialogMsg');
-        msgEl.innerHTML = `<input type="text" id="editTitleInp" value="${escapeHtml(data.title)}" style="margin-bottom:0; text-align:center; font-weight:bold;">`;
-
-        const icon = document.getElementById('dialogIcon');
-        icon.className = 'fas fa-edit dialog-icon info';
-
-        const acts = document.getElementById('dialogActions'); acts.innerHTML = ''; acts.style.flexDirection = 'row';
-        const btnC = document.createElement('button'); btnC.className = 'btn btn-ghost'; btnC.innerText = 'Batal';
-        btnC.onclick = () => { playSfx('pop'); dialog.style.display = 'none'; msgEl.innerHTML = ''; };
-        const btnO = document.createElement('button'); btnO.className = 'btn btn-primary'; btnO.innerText = 'Simpan';
-        btnO.onclick = () => {
-            playSfx('pop');
-            let t = document.getElementById('editTitleInp').value.trim();
-            dialog.style.display = 'none'; msgEl.innerHTML = '';
-            if(t !== '') { data.title = t; save(); renderTitleSetup(); }
-        };
-        acts.appendChild(btnC); acts.appendChild(btnO);
-        dialog.style.display = 'flex';
-    }
-    function renderTitleSetup() {
-        if(data.title) {
-            document.getElementById('titleArea').classList.add('hidden');
-            document.getElementById('playerArea').classList.remove('hidden');
-            document.getElementById('tourTitleDisplay').innerText = data.title; // innerText sudah aman dari XSS
-        } else {
-            document.getElementById('titleArea').classList.remove('hidden');
-            document.getElementById('playerArea').classList.add('hidden');
-            renderQuickArchives();
-        }
-    }
-
-    function renderQuickArchives() {
-        let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
-        let section = document.getElementById('quickArchiveSection');
-        let listContainer = document.getElementById('quickArchiveList');
+        // Menggunakan API Image Generator dari Pollinations (Gratis, siap pakai dari frontend)
+        let aiUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=300&height=300&nologo=true`;
         
-        if(archives.length === 0) {
-            section.classList.add('hidden');
-        } else {
-            section.classList.remove('hidden');
-            let html = archives.map((arc, i) => `
-                <div style="background:var(--input-bg); padding:12px; border-radius:12px; border:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
-                    <div style="flex:1;">
-                        <div style="font-weight:bold; color:var(--primary); font-size:15px;">${escapeHtml(arc.title || 'Tanpa Judul')}</div>
-                        <div style="font-size:11px; color:var(--text-muted);">${arc.players.length} Pemain | ${arc.matches.length} Match</div>
-                    </div>
-                    <div style="display:flex; gap:8px;">
-                        <button class="btn btn-success" style="padding:6px 12px; font-size:12px; width:auto;" onclick="viewArchive(${i})"><i class="fas fa-folder-open"></i> Buka</button>
-                        <button class="btn btn-danger" style="padding:6px 12px; font-size:12px; width:auto;" onclick="deleteArchive(${i})"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>
-            `).join('');
-            listContainer.innerHTML = html;
-        }
-    }
-    
-    function createNewTournament() {
-        appConfirm("Buat Turnamen Baru", "Turnamen saat ini akan diarsipkan secara lokal. Lanjutkan?", () => {
-            let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
-            data.dateArchived = new Date().toLocaleString('id-ID');
-            archives.push(data);
-            localStorage.setItem('HH_ARCHIVES', JSON.stringify(archives));
-            
-            data = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [], tournamentMode: 'league', bracket: null, plannedRounds: null, roundNumber: 0 };
-            save();
-            appSuccess("Berhasil", "Turnamen baru siap dimulai!");
-            nav('home');
-            renderTitleSetup();
-        });
-    }
-
-    function openArchives() {
-        let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
-        let html = '';
-        if(archives.length === 0) {
-            html = '<p style="color:var(--text-muted); font-size:13px;">Belum ada turnamen yang diarsipkan.</p>';
-        } else {
-            html = archives.map((arc, i) => `
-                <div class="card" style="padding:15px; margin-bottom:10px; text-align:left; background:var(--input-bg);">
-                    <div style="font-weight:900; color:var(--primary); font-size:16px;">${escapeHtml(arc.title || 'Turnamen Tanpa Judul')}</div>
-                    <div style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Diarsipkan: ${arc.dateArchived || '-'}</div>
-                    <div style="font-size:13px; margin-bottom:10px;">Total Pemain: ${arc.players.length} | Match Dimainkan: ${arc.matches.length}</div>
-                    <div style="display:flex; gap:10px;">
-                        <button class="btn btn-primary" style="padding:8px; font-size:12px; flex:1;" onclick="viewArchive(${i})"><i class="fas fa-folder-open"></i> Buka Arsip</button>
-                        <button class="btn btn-danger" style="padding:8px; font-size:12px;" onclick="deleteArchive(${i})"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>
-            `).join('');
-        }
-        document.getElementById('archiveListContent').innerHTML = html;
-        document.getElementById('archivesDialog').classList.remove('hidden');
-    }
-
-    function deleteArchive(idx) {
-        appConfirm("Hapus Arsip", "Yakin ingin menghapus arsip turnamen ini secara permanen?", () => {
-            let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
-            archives.splice(idx, 1);
-            localStorage.setItem('HH_ARCHIVES', JSON.stringify(archives));
-            openArchives(); 
-            renderQuickArchives();
-        });
-    }
-
-    function viewArchive(idx) {
-        let loadData = () => {
-            let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
-            data = archives[idx];
-            save();
-            document.getElementById('archivesDialog').classList.add('hidden');
-            appSuccess("Berhasil", "Data turnamen berhasil dimuat.");
-            nav('home');
-            renderTitleSetup();
-        };
-
-        if (data.title || data.players.length > 0) {
-            appConfirm("Buka Turnamen", "Ini akan mengganti turnamen yang sedang berjalan dengan data dari arsip. Lanjutkan?", loadData);
-        } else {
-            loadData();
-        }
+        fetch(aiUrl)
+            .then(res => res.blob())
+            .then(blob => {
+                let reader = new FileReader();
+                reader.onload = function() {
+                    tempImg = reader.result;
+                    document.getElementById('prevImg').src = tempImg;
+                    document.getElementById('prevImg').style.display = 'block';
+                    camI.className = "fas fa-camera";
+                    camI.style.display = "none";
+                    appSuccess("Berhasil", "Avatar AI berhasil dibuat!");
+                };
+                reader.readAsDataURL(blob);
+            })
+            .catch(err => {
+                camI.className = "fas fa-camera";
+                appAlert("Error", "Gagal memuat AI Avatar. Periksa koneksi internet Anda.");
+            });
     }
 
     function chooseImageSource() {
         playSfx('pop');
         const dialog = document.getElementById('customDialog');
-        document.getElementById('dialogTitle').innerText = "Pilih Foto Profil";
-        document.getElementById('dialogMsg').innerText = "Ambil foto langsung dari kamera atau pilih dari galeri HP Anda.";
+        document.getElementById('dialogTitle').innerText = "Pilih Foto / Avatar";
+        document.getElementById('dialogMsg').innerText = "Gunakan foto asli dari kamera/galeri, atau generate avatar AI dari teks.";
         
         const icon = document.getElementById('dialogIcon');
         icon.className = 'fas fa-camera dialog-icon info';
@@ -1572,6 +1517,9 @@
         acts.innerHTML = '';
         acts.style.flexDirection = 'column'; 
         
+        const btnAI = document.createElement('button'); btnAI.className = 'btn btn-warning'; btnAI.innerHTML = '<i class="fas fa-robot"></i> Buat Avatar AI Generatif';
+        btnAI.onclick = () => { dialog.style.display = 'none'; openAIAvatarPrompt(); };
+
         const btnCam = document.createElement('button'); btnCam.className = 'btn btn-primary'; btnCam.innerHTML = '<i class="fas fa-camera"></i> Buka Kamera';
         btnCam.onclick = () => { dialog.style.display = 'none'; document.getElementById('fileInCam').click(); };
         
@@ -1581,7 +1529,10 @@
         const btnCancel = document.createElement('button'); btnCancel.className = 'btn btn-ghost'; btnCancel.innerText = 'Batal';
         btnCancel.onclick = () => { dialog.style.display = 'none'; };
 
-        acts.appendChild(btnCam); acts.appendChild(btnGal); acts.appendChild(btnCancel);
+        acts.appendChild(btnAI);
+        acts.appendChild(btnCam); 
+        acts.appendChild(btnGal); 
+        acts.appendChild(btnCancel);
         dialog.style.display = 'flex';
     }
 
@@ -1595,11 +1546,6 @@
         });
     }
 
-    // Menerapkan filter gaya foto secara nyata memakai Canvas 2D (bukan AI generatif — melainkan
-    // pemrosesan gambar di perangkat: warna, kontras, dan efek vignette ala polaroid/vintage).
-    // Catatan: untuk avatar hasil AI generatif sungguhan (foto digambar ulang gaya ilustrasi/kartun),
-    // dibutuhkan API image-generation eksternal (mis. Stability AI/OpenAI/Anthropic) dengan API key milik Anda
-    // sendiri, karena aplikasi client-side ini tidak menyimpan kredensial API pihak ketiga.
     function applyAvatarStyle(sourceCanvas, style) {
         if(style === 'normal') return sourceCanvas;
         let out = document.createElement('canvas');
@@ -1711,7 +1657,6 @@
     // ======================================================
     function setTournamentMode(mode, playSnd=true) {
         if(playSnd) {
-            // Cegah pindah mode kalau ada pertandingan yang sedang berjalan, supaya data tidak kacau
             if(data.currentMatches && data.currentMatches.length > 0) {
                 return appAlert("Tidak Bisa Ganti Mode", "Selesaikan atau batalkan pertandingan yang sedang berjalan terlebih dahulu sebelum mengganti mode turnamen.");
             }
@@ -1731,8 +1676,6 @@
         save(); renderRoundInfo();
     }
 
-    // Preview siapa yang akan bermain berikutnya (berdasarkan siapa yang paling sedikit bermain),
-    // membantu host melihat rotasi pemain sebelum menekan MULAI PERTANDINGAN.
     function renderNextUpPreview() {
         let container = document.getElementById('nextUpPreview');
         if(!container) return;
@@ -1750,7 +1693,6 @@
         container.innerHTML = `<label style="font-size:11px; font-weight:bold; color:var(--text-muted); margin-bottom:6px; display:block;">BERIKUTNYA BERMAIN (PRIORITAS)</label><div>${chips}</div>`;
     }
 
-    // Menampilkan badge babak/ronde saat ini di tab Play, serta tombol lihat bracket & ringkasan sesi
     function renderRoundInfo() {
         let bar = document.getElementById('roundInfoBar');
         let txt = document.getElementById('roundInfoText');
@@ -1787,7 +1729,6 @@
         if(prInp && document.activeElement !== prInp) prInp.value = data.plannedRounds || '';
         renderNextUpPreview();
 
-        // Jika target ronde terjadwal sudah tercapai & tidak ada match berjalan, tawarkan ringkasan sesi otomatis
         if(data.tournamentMode === 'league' && data.plannedRounds && data.roundNumber >= data.plannedRounds &&
            (!data.currentMatches || data.currentMatches.length === 0) && !window._sessionOfferShown) {
             window._sessionOfferShown = true;
@@ -1860,7 +1801,6 @@
         renderRoundInfo();
     }
 
-    // Mengisi data.currentMatches dari babak (round) bracket yang sedang aktif (babak terakhir yang dibuat)
     function syncBracketCurrentMatches() {
         let roundIdx = data.bracket.rounds.length - 1;
         let round = data.bracket.rounds[roundIdx];
@@ -1877,13 +1817,9 @@
             }
         });
         data.currentMatches = cm;
-        // Kasus jarang: seluruh match di babak ini ternyata BYE semua -> langsung coba maju ke babak berikutnya
         if(cm.length === 0) tryAdvanceBracketRound();
     }
 
-    // Dipanggil setelah sebuah match knockout selesai disubmit; mengecek apakah seluruh
-    // pertandingan di babak saat ini sudah tuntas, lalu otomatis membuat babak berikutnya
-    // atau menobatkan juara jika ini adalah babak final.
     function tryAdvanceBracketRound() {
         let roundIdx = data.bracket.rounds.length - 1;
         let round = data.bracket.rounds[roundIdx];
@@ -1910,7 +1846,6 @@
         syncBracketCurrentMatches();
     }
 
-    // Menampilkan seluruh bagan bracket (semua babak) dalam modal
     function openBracketView() {
         playSfx('pop');
         if(!data.bracket) return appAlert("Info", "Belum ada bracket yang dibuat untuk turnamen ini.");
@@ -2319,7 +2254,6 @@
         if(idx === -1) return;
         let crt = data.currentMatches[idx].court;
         if(data.tournamentMode === 'knockout') {
-            // Di mode knockout, match tidak boleh dihapus (harus tetap dimainkan), cukup reset skor ke 0-0
             appConfirm("Reset Skor", `Reset skor pertandingan Lapangan ${crt} ke 0-0?`, () => {
                 data.currentMatches[idx].g1 = 0; data.currentMatches[idx].g2 = 0;
                 save(); renderMatches();
@@ -2384,12 +2318,9 @@
         });
     }
 
-    // Memproses hasil pertandingan pada mode KNOCKOUT: update statistik, catat riwayat,
-    // lalu cek apakah babak saat ini sudah selesai untuk otomatis membuat babak berikutnya.
     function submitKnockoutMatch(m, idx) {
         let s1 = m.g1, s2 = m.g2;
         let bracketMatch = data.bracket.rounds[m.bracketRound][m.bracketMatchIndex];
-        // Sinkronkan kalau ada perubahan pemain manual (Edit Pemain) sebelum menentukan pemenang
         bracketMatch.p1 = m.t1; bracketMatch.p2 = m.t2;
         bracketMatch.s1 = s1; bracketMatch.s2 = s2;
         bracketMatch.winner = s1 > s2 ? 'p1' : 'p2';
@@ -2425,7 +2356,6 @@
         renderRoundInfo();
     }
 
-    // FITUR BARU: MENGEDIT SKOR DAN PEMAIN DI RIWAYAT MATCH
     function openEditScore(id) {
         let m = data.matches.find(x => x.id === id);
         if(!m) return;
@@ -2459,7 +2389,6 @@
         }
         document.getElementById('editHistoryPlayersContainer').innerHTML = html;
 
-        // Set value dropdown yang sebelumnya terpilih
         if(document.getElementById('hist_t1_0') && m.ids1[0]) document.getElementById('hist_t1_0').value = m.ids1[0];
         if(document.getElementById('hist_t1_1') && m.ids1[1]) document.getElementById('hist_t1_1').value = m.ids1[1];
         if(document.getElementById('hist_t2_0') && m.ids2[0]) document.getElementById('hist_t2_0').value = m.ids2[0];
@@ -2478,7 +2407,6 @@
         let ns2 = parseInt(document.getElementById('editInpS2').value);
         if(isNaN(ns1) || isNaN(ns2)) return appAlert("Error", "Skor yang Anda masukkan tidak valid!");
 
-        // Ambil ID pemain-pemain yang baru dipilih
         let nt1_ids = [];
         let nt2_ids = [];
 
@@ -2503,52 +2431,32 @@
             if(t1_0 === t2_0) return appAlert("Error", "Pemain tidak boleh sama!");
         }
 
-        // Fungsi kembalikan/hapus stats pemain lama
         const rev = (arr, ms, os) => {
             arr.forEach(pid => {
                 let p = data.players.find(x=>x.id===pid);
-                if(p) { 
-                    p.stats.p--; // Kurangi jumlah bermain (karena diganti)
-                    p.stats.gd -= (ms-os); 
-                    if(ms>os){p.stats.w--; p.stats.pts-=3;} 
-                    else if(ms==os){p.stats.d--; p.stats.pts-=1;} 
-                    else p.stats.l--; 
-                }
+                if(p) { p.stats.p--; p.stats.gd -= (ms-os); if(ms>os){p.stats.w--; p.stats.pts-=3;} else if(ms==os){p.stats.d--; p.stats.pts-=1;} else p.stats.l--; }
             });
         };
-        rev(m.ids1, m.s1, m.s2); 
-        rev(m.ids2, m.s2, m.s1);
+        rev(m.ids1, m.s1, m.s2); rev(m.ids2, m.s2, m.s1);
 
-        // Update struktur data riwayat dengan nilai baru
-        m.s1 = ns1; 
-        m.s2 = ns2;
-        m.ids1 = nt1_ids; 
-        m.ids2 = nt2_ids;
+        m.s1 = ns1; m.s2 = ns2;
+        m.ids1 = nt1_ids; m.ids2 = nt2_ids;
         
         let p1Arr = nt1_ids.map(id => data.players.find(x => x.id === id));
         let p2Arr = nt2_ids.map(id => data.players.find(x => x.id === id));
         m.t1 = p1Arr.map(x => x ? x.name : 'Unknown').join(' & ');
         m.t2 = p2Arr.map(x => x ? x.name : 'Unknown').join(' & ');
 
-        // Fungsi aplikasikan stats pemain yang baru
         const apply = (arr, ms, os) => {
             arr.forEach(pid => {
                 let p = data.players.find(x=>x.id===pid);
-                if(p) { 
-                    p.stats.p++; // Tambah jumlah bermain
-                    p.stats.gd += (ms-os); 
-                    if(ms>os){p.stats.w++; p.stats.pts+=3;} 
-                    else if(ms==os){p.stats.d++; p.stats.pts+=1;} 
-                    else p.stats.l++; 
-                }
+                if(p) { p.stats.p++; p.stats.gd += (ms-os); if(ms>os){p.stats.w++; p.stats.pts+=3;} else if(ms==os){p.stats.d++; p.stats.pts+=1;} else p.stats.l++; }
             });
         };
-        apply(m.ids1, m.s1, m.s2); 
-        apply(m.ids2, m.s2, m.s1);
+        apply(m.ids1, m.s1, m.s2); apply(m.ids2, m.s2, m.s1);
         
         document.getElementById('editScoreDialog').classList.add('hidden');
-        save(); 
-        appSuccess("Berhasil", "Riwayat pemain dan skor pertandingan berhasil diperbarui.");
+        save(); appSuccess("Berhasil", "Riwayat pemain dan skor pertandingan berhasil diperbarui.");
     }
 
     function finishConfirm() { 
@@ -2562,7 +2470,8 @@
             if(db && auth.currentUser) {
                 db.collection("tournaments").doc(auth.currentUser.uid).set(defaultData).then(() => location.reload());
             } else {
-                appAlert("Error", "Anda tidak sedang login, tidak ada data untuk direset.");
+                localStorage.setItem(DB_KEY, JSON.stringify(defaultData)); 
+                location.reload();
             }
         });
     }
