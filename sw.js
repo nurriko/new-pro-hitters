@@ -1,5 +1,5 @@
 // UBAH BARIS INI: Naikkan versi dari v4 ke v5
-const CACHE_NAME = 'happy-hitters-v5'; 
+const CACHE_NAME = 'happy-hitters-v6'; 
 
 const ASSETS_TO_CACHE = [
   './',
