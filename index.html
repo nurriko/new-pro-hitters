@@ -627,14 +627,22 @@
                 <h4 style="margin:0; color:var(--primary); font-weight:900; letter-spacing:1px; font-size: 18px;">LEADERBOARD</h4>
                 <div id="finishBadge" class="hidden" style="background:var(--gold); color:#000; display:inline-block; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:900; margin-top:8px;">🏆 TURNAMEN SELESAI</div>
             </div>
-            <div id="rankTableContainer">
-                <table>
-                    <thead>
-                        <tr><th style="width:30px">#</th><th>Pemain</th><th style="text-align:center">Main</th><th style="text-align:right">Poin</th></tr>
-                    </thead>
-                    <tbody id="rankBody"></tbody>
-                </table>
-            </div>
+            <div id="rankTableContainer" style="overflow-x: auto;">
+    <table style="min-width: 100%;">
+        <thead>
+            <tr>
+                <th style="width:30px">#</th>
+                <th>Pemain</th>
+                <th style="text-align:center" title="Main">M</th>
+                <th style="text-align:center; color:var(--success);" title="Menang">W</th>
+                <th style="text-align:center; color:var(--warning);" title="Seri">D</th>
+                <th style="text-align:center; color:#ef4444;" title="Kalah">L</th>
+                <th style="text-align:right">Poin</th>
+            </tr>
+        </thead>
+        <tbody id="rankBody"></tbody>
+    </table>
+</div>
         </div>
 
         <div id="finishArea" class="owner-only" style="margin-top:20px;">
@@ -2708,8 +2716,16 @@
         document.getElementById('btnResume').classList.toggle('hidden', !isFin);
         document.getElementById('btnNewTournament').classList.toggle('hidden', !isFin);
         
-        document.getElementById('rankBody').innerHTML = sorted.map((p,i) => {
-            return `<tr class="rank-row" onclick="openPlayerCard('${p.id}')"><td style="padding-left:12px; font-weight:900; color:var(--text-muted);">${i+1}</td><td><div class="p-item"><b style="font-size:14px;">${escapeHtml(p.name)}</b></div></td><td style="text-align:center; font-weight:bold;">${p.stats.p}</td><td style="text-align:right; font-weight:900; padding-right:12px; color:var(--primary); font-size:16px;">${p.stats.pts}</td></tr>`
+       document.getElementById('rankBody').innerHTML = sorted.map((p,i) => {
+            return `<tr class="rank-row" onclick="openPlayerCard('${p.id}')">
+                <td style="padding-left:12px; font-weight:900; color:var(--text-muted);">${i+1}</td>
+                <td><div class="p-item"><b style="font-size:14px;">${escapeHtml(p.name)}</b></div></td>
+                <td style="text-align:center; font-weight:bold;">${p.stats.p}</td>
+                <td style="text-align:center; font-weight:bold; color:var(--success);">${p.stats.w}</td>
+                <td style="text-align:center; font-weight:bold; color:var(--warning);">${p.stats.d}</td>
+                <td style="text-align:center; font-weight:bold; color:#ef4444;">${p.stats.l}</td>
+                <td style="text-align:right; font-weight:900; padding-right:12px; color:var(--primary); font-size:16px;">${p.stats.pts}</td>
+            </tr>`
         }).join('');
         
         document.getElementById('histList').innerHTML = data.matches.map(m => {
