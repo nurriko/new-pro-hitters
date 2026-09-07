@@ -221,7 +221,6 @@
     <button class="btn-enter animate__animated animate__pulse animate__infinite" onclick="enterAppFlow()">MULAI APLIKASI</button>
 </div>
 
-<!-- HALAMAN LOGIN & REGISTER -->
 <div id="authScreen" class="hidden">
     <div class="auth-card animate__animated animate__zoomIn">
         <h2 id="authTitle" style="color:var(--primary); font-weight:900; margin-top:0;">LOGIN APLIKASI</h2>
@@ -242,7 +241,6 @@
     </div>
 </div>
 
-<!-- DASHBOARD ADMIN KHUSUS -->
 <div id="adminScreen" class="hidden">
     <div class="card animate__animated animate__fadeInUp" style="width: 100%; max-width: 500px; margin-top: 20px; text-align:center;">
         <h2 style="color: var(--primary);"><i class="fas fa-user-shield"></i> SUPERADMIN</h2>
@@ -253,7 +251,6 @@
     </div>
 </div>
 
-<!-- MODAL MANAJER AKSES PERTANDINGAN (HOST ONLY) -->
 <div id="accessManagerModal" class="hidden">
     <div class="dialog-box" style="width: 90%; max-width: 450px; max-height: 85vh; overflow-y:auto; padding: 20px;">
         <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-key"></i> Manajer Akses</h3>
@@ -282,7 +279,6 @@
     </div>
 </div>
 
-<!-- MODAL BAGAN BRACKET KNOCKOUT -->
 <div id="bracketViewModal" class="hidden">
     <div class="dialog-box" style="width: 92%; max-width: 480px; max-height: 85vh; overflow-y:auto; padding: 20px;">
         <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-sitemap"></i> Bagan Bracket</h3>
@@ -291,7 +287,6 @@
     </div>
 </div>
 
-<!-- MODAL RINGKASAN SESI TERJADWAL -->
 <div id="sessionSummaryModal" class="hidden">
     <div class="dialog-box" style="width: 92%; max-width: 420px; max-height: 85vh; overflow-y:auto; padding: 20px;">
         <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-clipboard-list"></i> Ringkasan Sesi</h3>
@@ -400,7 +395,6 @@
     </div>
 </div>
 
-<!-- MODAL EDIT RIWAYAT MATCH (SKOR & PEMAIN) -->
 <div id="editScoreDialog" class="hidden">
     <div class="dialog-box admin-only" style="width: 90%; max-width: 400px; padding: 25px; max-height:85vh; overflow-y:auto;">
         <h3 style="color:var(--primary); margin-top:0;">Edit Riwayat Match</h3>
@@ -442,7 +436,6 @@
         <i class="fas fa-wifi" style="opacity:0.6;"></i> MODE OFFLINE — Perubahan tetap tersimpan &amp; akan otomatis tersinkron saat internet kembali.
     </div>
     
-    <!-- Banner khusus akan diatur via Javascript -->
     <div id="viewingAlert" class="hidden" style="color:#fff; text-align:center; padding:10px; font-size:12px; font-weight:bold; cursor:pointer;" onclick="returnToMyMatch()">
     </div>
 
@@ -459,9 +452,7 @@
         </div>
     </header>
 
-    <!-- TAB HOME -->
     <div id="tab-home" class="content active">
-        <!-- SETUP JUDUL TURNAMEN -->
         <div id="titleArea" class="card owner-only" style="text-align:center; margin-top:20px;">
             <h3 style="color:var(--primary); font-weight:900; margin-top:0;">NAMA TURNAMEN BARU</h3>
             <p style="font-size:13px; color:var(--text-muted);">Masukkan judul permainan untuk memulai turnamen baru.</p>
@@ -474,7 +465,6 @@
             </div>
         </div>
 
-        <!-- SETUP PEMAIN -->
         <div id="playerArea" class="hidden">
             <div class="card" style="display:flex; justify-content:space-between; align-items:center; border: 2px dashed var(--primary);">
                 <div style="display:flex; flex-direction:column;">
@@ -527,7 +517,6 @@
         </div>
     </div>
 
-    <!-- TAB PLAY -->
     <div id="tab-play" class="content">
         <div id="setupArea" class="card owner-only" style="padding:20px;">
             <h3 style="margin:0 0 15px 0; text-align:center; color:var(--text-main);"><i class="fas fa-sliders-h"></i> Pengaturan Match</h3>
@@ -550,7 +539,6 @@
                 <button id="btnFormatDoubles" class="seg-btn active" onclick="setFormat('doubles')"><i class="fas fa-user-friends"></i> 2 VS 2</button>
             </div>
 
-            <!-- FIELD KHUSUS MODE LIGA -->
             <div id="leagueSetupFields">
                 <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">JUMLAH LAPANGAN AKTIF</label>
                 <input type="number" id="numCourts" value="1" min="1" max="10" style="text-align:center; font-weight:900; font-size:16px;" oninput="renderNextUpPreview()">
@@ -565,22 +553,25 @@
                 </div>
 
                 <div id="fixedPartnerSetup" class="hidden" style="margin-bottom:15px; text-align:center;">
-                    <button class="btn btn-ghost owner-only" onclick="openFixedPairsDialog()"><i class="fas fa-users-cog"></i> Kelola Pasangan Tetap</button>
+                    <button id="btnKelolaPasangan" class="btn btn-ghost owner-only" onclick="openFixedPairsDialog()"><i class="fas fa-users-cog"></i> Kelola Pasangan Tetap</button>
                 </div>
 
                 <div id="nextUpPreview" style="margin-bottom:15px;"></div>
 
-                <button class="btn btn-primary owner-only" style="font-size:16px; padding:16px; margin-top: 15px;" onclick="generateMatch()">
+                <button id="btnMulaiMatch" class="btn btn-primary owner-only" style="font-size:16px; padding:16px; margin-top: 15px;" onclick="generateMatch()">
                     <i class="fas fa-play"></i> MULAI PERTANDINGAN
                 </button>
             </div>
 
-            <!-- FIELD KHUSUS MODE KNOCKOUT -->
             <div id="knockoutSetupFields" class="hidden">
                 <p style="font-size:12px; color:var(--text-muted); text-align:center; margin-bottom:15px;">Bracket gugur akan dibuat otomatis dari semua pemain berstatus HADIR, diacak secara acak. Jika jumlah peserta bukan kelipatan 2, sebagian akan mendapat BYE (otomatis lolos) di babak pertama.</p>
-                <button class="btn btn-primary owner-only" style="font-size:16px; padding:16px;" onclick="generateBracket()">
+                <button id="btnBuatBracket" class="btn btn-primary owner-only" style="font-size:16px; padding:16px;" onclick="generateBracket()">
                     <i class="fas fa-sitemap"></i> BUAT BRACKET OTOMATIS
                 </button>
+            </div>
+            
+            <div id="finishedSetupAlert" class="hidden" style="text-align:center; padding: 15px; background: rgba(239, 68, 68, 0.1); border: 1px dashed #ef4444; border-radius: 12px; margin-top: 15px; color: #ef4444; font-weight: bold; font-size: 13px;">
+                <i class="fas fa-lock"></i> Turnamen Telah Selesai.<br>Buka kembali turnamen di menu <b>Klasemen</b> untuk mengacak permainan lagi.
             </div>
         </div>
 
@@ -599,7 +590,6 @@
         </div>
     </div>
 
-    <!-- TAB RANK -->
     <div id="tab-rank" class="content">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3 style="margin:0; font-weight:900;">KLASEMEN LIVE</h3>
@@ -628,21 +618,21 @@
                 <div id="finishBadge" class="hidden" style="background:var(--gold); color:#000; display:inline-block; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:900; margin-top:8px;">🏆 TURNAMEN SELESAI</div>
             </div>
             <div id="rankTableContainer" style="overflow-x: auto;">
-    <table style="min-width: 100%;">
-        <thead>
-            <tr>
-                <th style="width:30px">#</th>
-                <th>Pemain</th>
-                <th style="text-align:center" title="Main">M</th>
-                <th style="text-align:center; color:var(--success);" title="Menang">W</th>
-                <th style="text-align:center; color:var(--warning);" title="Seri">D</th>
-                <th style="text-align:center; color:#ef4444;" title="Kalah">L</th>
-                <th style="text-align:right">Poin</th>
-            </tr>
-        </thead>
-        <tbody id="rankBody"></tbody>
-    </table>
-</div>
+                <table style="min-width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="width:30px">#</th>
+                            <th>Pemain</th>
+                            <th style="text-align:center" title="Main">M</th>
+                            <th style="text-align:center; color:var(--success);" title="Menang">W</th>
+                            <th style="text-align:center; color:var(--warning);" title="Seri">D</th>
+                            <th style="text-align:center; color:#ef4444;" title="Kalah">L</th>
+                            <th style="text-align:right">Poin</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rankBody"></tbody>
+                </table>
+            </div>
         </div>
 
         <div id="finishArea" class="owner-only" style="margin-top:20px;">
@@ -656,7 +646,6 @@
         <div id="histList" style="padding-bottom:30px; display:flex; flex-direction:column; gap:10px; max-height:450px; overflow-y:auto; overflow-x:hidden;"></div>
     </div>
 
-    <!-- TAB SOCIAL / FRIENDS -->
     <div id="tab-social" class="content">
         <h3 style="margin:0 0 15px 0; font-weight:900; color:var(--primary);"><i class="fas fa-user-friends"></i> SOSIAL & TEMAN</h3>
         
@@ -694,7 +683,6 @@
 </div>
 
 <script>
-    // --- FIREBASE CONFIGURATION ---
     const firebaseConfig = {
         apiKey: "AIzaSyB71_NTi3ijqt2Qxm7SgJLLjmoCjYXOt0I",
         authDomain: "happy-hitters-app.firebaseapp.com",
@@ -725,7 +713,6 @@
     let isMuted = false;
     let currentTheme = localStorage.getItem('HH_THEME') || 'auto';
     
-    // VARIABEL DATA & AKSES
     let currentViewingId = null;
     let myUserData = { friends: [], friendRequests: [] };
 
@@ -1297,7 +1284,6 @@
         save(); openAccessManager();
     }
 
-    // LOGIKA CO-HOST: Admin sekarang membypass status not-owner agar bisa menekan tombol Host
     function checkPermissions() {
         if(!auth.currentUser) return;
         let isOwner = currentViewingId === auth.currentUser.uid;
@@ -1305,13 +1291,11 @@
         
         document.body.classList.remove('not-owner', 'viewer-only', 'not-true-owner');
         
-        // BUKAN OWNER DAN BUKAN ADMIN (Hanya Penonton)
         if(!isOwner && !isAdmin) { 
             document.body.classList.add('not-owner');
             document.body.classList.add('viewer-only');
         }
         
-        // BATASAN KHUSUS UNTUK CO-HOST (Sembunyikan tombol hapus turnamen & manajer akses)
         if(!isOwner) {
             document.body.classList.add('not-true-owner');
         }
@@ -1403,7 +1387,6 @@
         let isAdmin = data.matchAdmins && data.matchAdmins.includes(auth.currentUser.uid);
         
         if (isOwner || isAdmin) {
-            // Kita tidak pakai merge: true agar semua perubahan array tertimpa utuh
             db.collection("tournaments").doc(currentViewingId).set(data).catch(err => {
                 console.error("Gagal menyimpan ke server:", err);
                 showToast('Gagal Menyimpan', 'Periksa koneksi internet Anda, perubahan belum tersimpan ke server.', 'warning');
@@ -2715,8 +2698,21 @@
         document.getElementById('btnFinish').classList.toggle('hidden', isFin);
         document.getElementById('btnResume').classList.toggle('hidden', !isFin);
         document.getElementById('btnNewTournament').classList.toggle('hidden', !isFin);
+
+        // MODIFIKASI FITUR ACAK DIMATIKAN
+        let btnMulai = document.getElementById('btnMulaiMatch');
+        if(btnMulai) btnMulai.style.display = isFin ? 'none' : 'flex';
         
-       document.getElementById('rankBody').innerHTML = sorted.map((p,i) => {
+        let btnBracket = document.getElementById('btnBuatBracket');
+        if(btnBracket) btnBracket.style.display = isFin ? 'none' : 'flex';
+        
+        let btnKelola = document.getElementById('btnKelolaPasangan');
+        if(btnKelola) btnKelola.style.display = isFin ? 'none' : 'inline-flex';
+        
+        let finAlert = document.getElementById('finishedSetupAlert');
+        if(finAlert) finAlert.classList.toggle('hidden', !isFin);
+        
+        document.getElementById('rankBody').innerHTML = sorted.map((p,i) => {
             return `<tr class="rank-row" onclick="openPlayerCard('${p.id}')">
                 <td style="padding-left:12px; font-weight:900; color:var(--text-muted);">${i+1}</td>
                 <td><div class="p-item"><b style="font-size:14px;">${escapeHtml(p.name)}</b></div></td>
