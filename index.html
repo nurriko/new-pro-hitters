@@ -51,9 +51,10 @@
 
         body { font-family: 'Outfit', sans-serif; background: var(--bg-grad); margin: 0; padding: 0; min-height: 100vh; color: var(--text-main); overflow-x: hidden; user-select: none; transition: background 0.3s, color 0.3s; }
 
-        /* MODE AKSES CSS */
+        /* PERBAIKAN RULES AKSES */
         body.not-owner .owner-only { display: none !important; pointer-events: none; }
         body.viewer-only .admin-only { display: none !important; pointer-events: none; }
+        body.not-true-owner .true-owner-only { display: none !important; pointer-events: none; }
 
         #welcomeScreen, #authScreen, #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #adminScreen, #cropModal, #editMatchPlayersModal, #accessManagerModal, #bracketViewModal, #sessionSummaryModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-grad); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: opacity 0.5s ease, visibility 0.5s; }
         #welcomeScreen.hidden, #authScreen.hidden, #fixedPairsDialog.hidden, #editScoreDialog.hidden, #archivesDialog.hidden, #playerCardModal.hidden, #shareMatchModal.hidden, #adminScreen.hidden, #cropModal.hidden, #editMatchPlayersModal.hidden, #accessManagerModal.hidden, #bracketViewModal.hidden, #sessionSummaryModal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
@@ -427,7 +428,7 @@
 </div>
 
 <div id="archivesDialog" class="hidden">
-    <div class="dialog-box owner-only" style="width: 90%; max-width: 400px; max-height: 80vh; overflow-y:auto; padding: 20px;">
+    <div class="dialog-box true-owner-only" style="width: 90%; max-width: 400px; max-height: 80vh; overflow-y:auto; padding: 20px;">
         <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-archive"></i> Arsip Turnamen</h3>
         <p style="font-size:12px; color:var(--text-muted);">Daftar turnamen yang telah selesai atau diarsipkan.</p>
         <hr style="border:0; border-top:1px dashed var(--border-color); margin:15px 0;">
@@ -440,8 +441,9 @@
     <div id="offlineBanner" class="hidden" style="background:#374151; color:#fff; text-align:center; padding:8px; font-size:11px; font-weight:bold;">
         <i class="fas fa-wifi" style="opacity:0.6;"></i> MODE OFFLINE — Perubahan tetap tersimpan &amp; akan otomatis tersinkron saat internet kembali.
     </div>
-    <div id="viewingAlert" class="hidden" style="background:var(--warning); color:#fff; text-align:center; padding:10px; font-size:12px; font-weight:bold; cursor:pointer;" onclick="returnToMyMatch()">
-        <i class="fas fa-arrow-left"></i> ANDA MELIHAT PERTANDINGAN TEMAN. KLIK UNTUK KEMBALI.
+    
+    <!-- Banner khusus akan diatur via Javascript -->
+    <div id="viewingAlert" class="hidden" style="color:#fff; text-align:center; padding:10px; font-size:12px; font-weight:bold; cursor:pointer;" onclick="returnToMyMatch()">
     </div>
 
     <header>
@@ -450,7 +452,7 @@
             <h1>HAPPY HITTERS</h1>
         </div>
         <div style="display: flex; gap: 8px;">
-            <button class="sound-toggle owner-only" title="Manajer Akses" onclick="openAccessManager()"><i class="fas fa-key"></i></button>
+            <button class="sound-toggle true-owner-only" title="Manajer Akses" onclick="openAccessManager()"><i class="fas fa-key"></i></button>
             <button class="sound-toggle" title="Ubah Tema" onclick="toggleTheme()" id="themeBtn"><i id="themeIcon" class="fas fa-moon"></i></button>
             <button class="sound-toggle" title="Suara" onclick="toggleMute()"><i id="soundIcon" class="fas fa-volume-up"></i></button>
             <button class="sound-toggle" title="Logout" onclick="doLogout()" style="color:#ef4444; border-color:rgba(239, 68, 68, 0.3);"><i class="fas fa-sign-out-alt"></i></button>
@@ -506,10 +508,10 @@
 
             <div style="display:flex; justify-content:space-between; margin:25px 5px 15px 5px; color:var(--text-muted); font-size:13px; font-weight:800;">
                 <span>DAFTAR PEMAIN (<span id="pCount">0</span>)</span>
-                <span onclick="toggleTools()" class="owner-only" style="cursor:pointer; color:var(--primary); background:var(--input-bg); padding:4px 10px; border-radius:12px;"><i class="fas fa-cog"></i> Pengaturan</span>
+                <span onclick="toggleTools()" class="true-owner-only" style="cursor:pointer; color:var(--primary); background:var(--input-bg); padding:4px 10px; border-radius:12px;"><i class="fas fa-cog"></i> Pengaturan</span>
             </div>
 
-            <div id="toolsPanel" class="card owner-only hidden animate__animated animate__fadeIn">
+            <div id="toolsPanel" class="card true-owner-only hidden animate__animated animate__fadeIn">
                 <div style="display:flex; flex-direction:column; gap:10px;">
                     <div style="display:flex; gap:10px;">
                         <button class="btn btn-ghost" style="padding:10px; font-size:12px; flex:1;" onclick="exportData()"><i class="fas fa-save"></i> Simpan Game (.json)</button>
@@ -587,7 +589,6 @@
             <button id="btnViewBracketInline" class="btn btn-ghost hidden" style="margin-top:10px; padding:8px;" onclick="openBracketView()"><i class="fas fa-sitemap"></i> Lihat Bagan Bracket</button>
         </div>
 
-        <!-- TAMBAHAN: Area Penonton Saat Match Belum Dimulai -->
         <div id="waitingHostArea" class="card hidden" style="text-align:center; margin-top:20px;">
             <h3 style="color:var(--text-muted);"><i class="fas fa-hourglass-half"></i> Menunggu Host...</h3>
             <p style="font-size:13px; color:var(--text-muted);">Host sedang mengatur dan menyiapkan pertandingan.</p>
@@ -617,7 +618,7 @@
             <i class="fas fa-clipboard-list"></i> RINGKASAN SESI HARI INI
         </button>
 
-        <button id="btnNewTournament" class="btn btn-success owner-only hidden" style="margin-bottom:15px; padding:16px; width:100%; box-shadow:0 4px 15px rgba(16, 185, 129, 0.4);" onclick="createNewTournament()">
+        <button id="btnNewTournament" class="btn btn-success true-owner-only hidden" style="margin-bottom:15px; padding:16px; width:100%; box-shadow:0 4px 15px rgba(16, 185, 129, 0.4);" onclick="createNewTournament()">
             <i class="fas fa-plus-circle"></i> BUAT TURNAMEN BARU
         </button>
 
@@ -735,17 +736,14 @@
     let dbUnsubscribe = null;
     let cropper = null;
     
-    // VARIABEL UNTUK TRIGGER NOTIFIKASI
     let prevFriendReqs = null;
     let prevViewReqs = null;
     
-    // Helper fungsi untuk parse JSON dengan aman
     function getSafeArchives() {
         try { return JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]'); } 
         catch(e) { return []; }
     }
 
-    // Mencegah XSS: escape karakter HTML dari semua input yang berasal dari user (nama, judul, username, dll)
     function escapeHtml(str) {
         if (str === null || str === undefined) return '';
         return String(str).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
@@ -756,7 +754,7 @@
 
     window.onload = () => { 
         initTheme(); 
-        handleJoinParam(); // deteksi ?join=UID dari hasil scan QR undangan pertandingan
+        handleJoinParam();
         updateOnlineStatus();
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);
@@ -787,7 +785,6 @@
                             
                             initSocial(user.uid);
                             
-                            // Load dari memori agar saat di-refresh tidak kehilangan status menonton match orang lain
                             let lastViewed = localStorage.getItem('HH_LAST_VIEWED');
                             if (lastViewed) {
                                 setupRealtimeListener(lastViewed);
@@ -795,7 +792,6 @@
                                 setupRealtimeListener(user.uid); 
                             }
 
-                            // Kalau sebelumnya ada permintaan join tertunda (user scan QR sebelum login), proses sekarang
                             if(window._pendingJoinUid) {
                                 let pending = window._pendingJoinUid;
                                 window._pendingJoinUid = null;
@@ -819,7 +815,6 @@
 
     let authMode = 'login';
 
-    // Menampilkan/menyembunyikan banner "MODE OFFLINE" berdasarkan status koneksi browser.
     function updateOnlineStatus() {
         let banner = document.getElementById('offlineBanner');
         if(!banner) return;
@@ -862,53 +857,48 @@
     }
 
     function handleAuthSubmit() {
-    playSfx('pop');
-    const userInp = document.getElementById('authUsername').value.trim();
-    const pass = document.getElementById('authPassword').value.trim();
-    
-    if(!userInp || !pass) return appAlert('Error', 'Username dan Password wajib diisi!');
+        playSfx('pop');
+        const userInp = document.getElementById('authUsername').value.trim();
+        const pass = document.getElementById('authPassword').value.trim();
+        
+        if(!userInp || !pass) return appAlert('Error', 'Username dan Password wajib diisi!');
 
-    // Ubah status tombol menjadi loading
-    const btn = document.getElementById('authBtnSubmit');
-    const originalText = btn.innerText;
-    btn.innerText = "Memproses...";
-    btn.disabled = true;
-    
-    // Konversi otomatis Username ke format Email (Sistem Belakang Layar)
-    let isSuperAdmin = (userInp.toLowerCase() === 'admin' || userInp.toLowerCase() === 'superadmin');
-    let loginEmail = isSuperAdmin ? (userInp.toLowerCase() + '@happyhitters.app') : (userInp.replace(/\s+/g, '').toLowerCase() + '@happyhitters.app');
+        const btn = document.getElementById('authBtnSubmit');
+        const originalText = btn.innerText;
+        btn.innerText = "Memproses...";
+        btn.disabled = true;
+        
+        let isSuperAdmin = (userInp.toLowerCase() === 'admin' || userInp.toLowerCase() === 'superadmin');
+        let loginEmail = isSuperAdmin ? (userInp.toLowerCase() + '@happyhitters.app') : (userInp.replace(/\s+/g, '').toLowerCase() + '@happyhitters.app');
 
-    if(authMode === 'register') {
-        auth.createUserWithEmailAndPassword(loginEmail, pass)
-            .then((cred) => {
-                db.collection('users').doc(cred.user.uid).set({
-                    username: userInp, email: loginEmail, role: isSuperAdmin ? 'admin' : 'user', friends: [], friendRequests: [],
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        if(authMode === 'register') {
+            auth.createUserWithEmailAndPassword(loginEmail, pass)
+                .then((cred) => {
+                    db.collection('users').doc(cred.user.uid).set({
+                        username: userInp, email: loginEmail, role: isSuperAdmin ? 'admin' : 'user', friends: [], friendRequests: [],
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                    appSuccess('Berhasil', 'Akun berhasil didaftarkan. Anda akan segera masuk.');
+                })
+                .catch(err => {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                    appAlert("Registrasi Gagal", err.message);
                 });
-                btn.innerText = originalText;
-                btn.disabled = false;
-                appSuccess('Berhasil', 'Akun berhasil didaftarkan. Anda akan segera masuk.');
-            })
-            .catch(err => {
-                btn.innerText = originalText;
-                btn.disabled = false;
-                appAlert("Registrasi Gagal", err.message);
-            });
-    } else {
-        auth.signInWithEmailAndPassword(loginEmail, pass)
-            .then(() => {
-                // Jika sukses, biarkan tombol menjadi "Berhasil!" 
-                // karena onAuthStateChanged akan otomatis memindahkan halaman
-                btn.innerText = "Berhasil!"; 
-            })
-            .catch(err => {
-                // Jika gagal (password salah, dll), kembalikan teks tombol dan tampilkan error
-                btn.innerText = originalText;
-                btn.disabled = false;
-                appAlert("Login Gagal", "Username atau Password salah. Pastikan ejaan benar!");
-            });
+        } else {
+            auth.signInWithEmailAndPassword(loginEmail, pass)
+                .then(() => {
+                    btn.innerText = "Berhasil!"; 
+                })
+                .catch(err => {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                    appAlert("Login Gagal", "Username atau Password salah. Pastikan ejaan benar!");
+                });
+        }
     }
-}
 
     function doLogout() {
         appConfirm('Logout', 'Yakin ingin keluar dari aplikasi?', () => { 
@@ -948,7 +938,6 @@
         appConfirm("Hapus User", "Yakin ingin menghapus user ini?", () => { db.collection('users').doc(uid).delete().then(() => loadAdminUsers()); });
     }
 
-    // --- FITUR TOAST NOTIFICATION ---
     function showToast(title, msg, type='primary') {
         let tc = document.getElementById('toastContainer');
         let color = type==='success'?'var(--success)':(type==='warning'?'var(--warning)':'var(--primary)');
@@ -970,7 +959,6 @@
         }, 5000);
     }
 
-    // --- FITUR SOSIAL & PERTEMANAN ---
     function initSocial(uid) {
         db.collection('users').doc(uid).onSnapshot(doc => {
             if(doc.exists) {
@@ -1123,9 +1111,6 @@
         nav('home'); 
     }
 
-    // ======================================================
-    // GABUNG PERTANDINGAN VIA QR CODE / LINK UNDANGAN
-    // ======================================================
     function getJoinedList() {
         try { return JSON.parse(localStorage.getItem('HH_JOINED_TOURNAMENTS') || '[]'); } catch(e) { return []; }
     }
@@ -1205,7 +1190,6 @@
         container.innerHTML = html || '<span style="font-size:12px; color:var(--text-muted);">Belum ada pertandingan yang diikuti.</span>';
     }
 
-    // --- MANAJER AKSES (UNTUK HOST) ---
     async function openAccessManager() {
         if(!data.viewRequests) data.viewRequests = [];
         if(!data.approvedViewers) data.approvedViewers = [];
@@ -1305,20 +1289,40 @@
         save(); openAccessManager();
     }
 
+    // LOGIKA CO-HOST: Admin sekarang membypass status not-owner agar bisa menekan tombol Host
     function checkPermissions() {
         if(!auth.currentUser) return;
         let isOwner = currentViewingId === auth.currentUser.uid;
         let isAdmin = data.matchAdmins && data.matchAdmins.includes(auth.currentUser.uid);
         
-        document.body.classList.remove('not-owner', 'viewer-only');
-        if(!isOwner) document.body.classList.add('not-owner');
-        if(!isOwner && !isAdmin) document.body.classList.add('viewer-only');
+        document.body.classList.remove('not-owner', 'viewer-only', 'not-true-owner');
+        
+        // BUKAN OWNER DAN BUKAN ADMIN (Hanya Penonton)
+        if(!isOwner && !isAdmin) { 
+            document.body.classList.add('not-owner');
+            document.body.classList.add('viewer-only');
+        }
+        
+        // BATASAN KHUSUS UNTUK CO-HOST (Sembunyikan tombol hapus turnamen & manajer akses)
+        if(!isOwner) {
+            document.body.classList.add('not-true-owner');
+        }
         
         let alertEl = document.getElementById('viewingAlert');
-        if(!isOwner) alertEl.classList.remove('hidden'); else alertEl.classList.add('hidden');
+        if(!isOwner) {
+            alertEl.classList.remove('hidden');
+            if(isAdmin) {
+                alertEl.innerHTML = '<i class="fas fa-shield-alt"></i> ANDA ADALAH CO-HOST. KLIK UNTUK KEMBALI.';
+                alertEl.style.background = 'var(--primary)';
+            } else {
+                alertEl.innerHTML = '<i class="fas fa-arrow-left"></i> MELIHAT PERTANDINGAN TEMAN. KLIK UNTUK KEMBALI.';
+                alertEl.style.background = 'var(--warning)';
+            }
+        } else { 
+            alertEl.classList.add('hidden'); 
+        }
     }
 
-    // --- SISTEM UTAMA TURNAMEN ---
     function setupRealtimeListener(uid) {
         if (dbUnsubscribe) dbUnsubscribe();
         currentViewingId = uid;
@@ -1391,7 +1395,8 @@
         let isAdmin = data.matchAdmins && data.matchAdmins.includes(auth.currentUser.uid);
         
         if (isOwner || isAdmin) {
-            db.collection("tournaments").doc(currentViewingId).set(data, {merge: true}).catch(err => {
+            // Kita tidak pakai merge: true agar semua perubahan array tertimpa utuh
+            db.collection("tournaments").doc(currentViewingId).set(data).catch(err => {
                 console.error("Gagal menyimpan ke server:", err);
                 showToast('Gagal Menyimpan', 'Periksa koneksi internet Anda, perubahan belum tersimpan ke server.', 'warning');
             });
@@ -1745,9 +1750,6 @@
         document.getElementById('fixedPartnerSetup').classList.toggle('hidden', mode !== 'tetap');
     }
 
-    // ======================================================
-    // MODE TURNAMEN: LIGA (Round Robin) vs KNOCKOUT (Gugur)
-    // ======================================================
     function setTournamentMode(mode, playSnd=true) {
         if(playSnd) {
             if(data.currentMatches && data.currentMatches.length > 0) {
@@ -1839,7 +1841,6 @@
         return `BABAK ${idx+1}`;
     }
 
-    // --- GENERATOR BRACKET KNOCKOUT ---
     function generateBracket() {
         if(data.isFinished) return appAlert("Perhatian", "Turnamen sudah selesai! Buka kembali turnamen di menu Ranking jika ingin membuat bracket baru.");
         if(data.currentMatches && data.currentMatches.length > 0) return appAlert("Perhatian", "Selesaikan pertandingan yang sedang berjalan terlebih dahulu.");
@@ -2093,7 +2094,6 @@
         } else {
             if(activePlayers.length < reqP * numCourts) return appAlert("Error", `Butuh minimal ${reqP * numCourts} pemain HADIR untuk mengisi ${numCourts} lapangan!`);
             
-            // PRIORITAS ALGORITMA BARU: Sortir ketat berdasarkan jumlah main terkecil, lalu acak jika sama.
             let pool = [...activePlayers].sort((a, b) => {
                 if (a.stats.p !== b.stats.p) return a.stats.p - b.stats.p;
                 return Math.random() - 0.5;
@@ -2115,11 +2115,9 @@
                         let t1 = [cP[0], cP[1]], t2 = [cP[2], cP[3]];
                         if(!isValidCourtGender(t1, t2)) { valid = false; break; }
                         
-                        // PENALTI DIPERBESAR: Jangan gabungkan yang sudah sering satu tim
                         currentScore += countPartnership(t1[0].id, t1[1].id) * 10;
                         currentScore += countPartnership(t2[0].id, t2[1].id) * 10;
                         
-                        // PENALTI DIPERBESAR: Jangan hadapkan musuh yang sama terus
                         currentScore += countOpponent(t1[0].id, t2[0].id) * 2;
                         currentScore += countOpponent(t1[0].id, t2[1].id) * 2;
                         currentScore += countOpponent(t1[1].id, t2[0].id) * 2;
@@ -2187,9 +2185,10 @@
             document.getElementById('setupArea').style.display = 'block';
             document.getElementById('matchArea').classList.add('hidden');
             
-            // Tampilkan tulisan "Menunggu Host" jika bukan owner
             let isOwner = (auth.currentUser && currentViewingId === auth.currentUser.uid);
-            document.getElementById('waitingHostArea').classList.toggle('hidden', isOwner);
+            let isAdmin = (auth.currentUser && data.matchAdmins && data.matchAdmins.includes(auth.currentUser.uid));
+            
+            document.getElementById('waitingHostArea').classList.toggle('hidden', isOwner || isAdmin);
             return;
         } else {
             let waitArea = document.getElementById('waitingHostArea');
