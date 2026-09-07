@@ -862,28 +862,53 @@
     }
 
     function handleAuthSubmit() {
-        playSfx('pop');
-        const userInp = document.getElementById('authUsername').value.trim();
-        const pass = document.getElementById('authPassword').value.trim();
-        if(!userInp || !pass) return appAlert('Error', 'Username dan Password wajib diisi!');
-        
-        let isSuperAdmin = (userInp.toLowerCase() === 'admin' || userInp.toLowerCase() === 'superadmin');
-        let loginEmail = isSuperAdmin ? (userInp.toLowerCase() + '@happyhitters.app') : (userInp.replace(/\s+/g, '').toLowerCase() + '@happyhitters.app');
+    playSfx('pop');
+    const userInp = document.getElementById('authUsername').value.trim();
+    const pass = document.getElementById('authPassword').value.trim();
+    
+    if(!userInp || !pass) return appAlert('Error', 'Username dan Password wajib diisi!');
 
-        if(authMode === 'register') {
-            auth.createUserWithEmailAndPassword(loginEmail, pass)
-                .then((cred) => {
-                    db.collection('users').doc(cred.user.uid).set({
-                        username: userInp, email: loginEmail, role: isSuperAdmin ? 'admin' : 'user', friends: [], friendRequests: [],
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    appSuccess('Berhasil', 'Akun berhasil didaftarkan. Anda akan segera masuk.');
-                })
-                .catch(err => appAlert("Registrasi Gagal", err.message));
-        } else {
-            auth.signInWithEmailAndPassword(loginEmail, pass).catch(err => appAlert("Login Gagal", err.message));
-        }
+    // Ubah status tombol menjadi loading
+    const btn = document.getElementById('authBtnSubmit');
+    const originalText = btn.innerText;
+    btn.innerText = "Memproses...";
+    btn.disabled = true;
+    
+    // Konversi otomatis Username ke format Email (Sistem Belakang Layar)
+    let isSuperAdmin = (userInp.toLowerCase() === 'admin' || userInp.toLowerCase() === 'superadmin');
+    let loginEmail = isSuperAdmin ? (userInp.toLowerCase() + '@happyhitters.app') : (userInp.replace(/\s+/g, '').toLowerCase() + '@happyhitters.app');
+
+    if(authMode === 'register') {
+        auth.createUserWithEmailAndPassword(loginEmail, pass)
+            .then((cred) => {
+                db.collection('users').doc(cred.user.uid).set({
+                    username: userInp, email: loginEmail, role: isSuperAdmin ? 'admin' : 'user', friends: [], friendRequests: [],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                btn.innerText = originalText;
+                btn.disabled = false;
+                appSuccess('Berhasil', 'Akun berhasil didaftarkan. Anda akan segera masuk.');
+            })
+            .catch(err => {
+                btn.innerText = originalText;
+                btn.disabled = false;
+                appAlert("Registrasi Gagal", err.message);
+            });
+    } else {
+        auth.signInWithEmailAndPassword(loginEmail, pass)
+            .then(() => {
+                // Jika sukses, biarkan tombol menjadi "Berhasil!" 
+                // karena onAuthStateChanged akan otomatis memindahkan halaman
+                btn.innerText = "Berhasil!"; 
+            })
+            .catch(err => {
+                // Jika gagal (password salah, dll), kembalikan teks tombol dan tampilkan error
+                btn.innerText = originalText;
+                btn.disabled = false;
+                appAlert("Login Gagal", "Username atau Password salah. Pastikan ejaan benar!");
+            });
     }
+}
 
     function doLogout() {
         appConfirm('Logout', 'Yakin ingin keluar dari aplikasi?', () => { 
