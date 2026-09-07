@@ -587,6 +587,12 @@
             <button id="btnViewBracketInline" class="btn btn-ghost hidden" style="margin-top:10px; padding:8px;" onclick="openBracketView()"><i class="fas fa-sitemap"></i> Lihat Bagan Bracket</button>
         </div>
 
+        <!-- TAMBAHAN: Area Penonton Saat Match Belum Dimulai -->
+        <div id="waitingHostArea" class="card hidden" style="text-align:center; margin-top:20px;">
+            <h3 style="color:var(--text-muted);"><i class="fas fa-hourglass-half"></i> Menunggu Host...</h3>
+            <p style="font-size:13px; color:var(--text-muted);">Host sedang mengatur dan menyiapkan pertandingan.</p>
+        </div>
+
         <div id="matchArea" class="hidden animate__animated animate__fadeInUp">
             <div id="multiCourtContainer"></div>
         </div>
@@ -695,9 +701,6 @@
         auth = firebase.auth();
         db = firebase.firestore();
 
-        // Mode offline penuh: skor, pemain, & pasangan tetap bisa diubah tanpa koneksi.
-        // Firestore SDK otomatis menyimpan perubahan ke antrean lokal (IndexedDB) dan
-        // mengirimkannya ke server begitu koneksi internet kembali stabil.
         db.enablePersistence({ synchronizeTabs: true }).catch(err => {
             if(err.code === 'failed-precondition') {
                 console.warn("Firestore offline persistence: browser tidak mendukung synchronizeTabs, tetap berjalan tanpa cache offline penuh di tab ini.");
@@ -736,6 +739,12 @@
     let prevFriendReqs = null;
     let prevViewReqs = null;
     
+    // Helper fungsi untuk parse JSON dengan aman
+    function getSafeArchives() {
+        try { return JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]'); } 
+        catch(e) { return []; }
+    }
+
     // Mencegah XSS: escape karakter HTML dari semua input yang berasal dari user (nama, judul, username, dll)
     function escapeHtml(str) {
         if (str === null || str === undefined) return '';
@@ -777,7 +786,14 @@
                             document.getElementById('appContainer').classList.add('visible');
                             
                             initSocial(user.uid);
-                            setupRealtimeListener(user.uid); 
+                            
+                            // Load dari memori agar saat di-refresh tidak kehilangan status menonton match orang lain
+                            let lastViewed = localStorage.getItem('HH_LAST_VIEWED');
+                            if (lastViewed) {
+                                setupRealtimeListener(lastViewed);
+                            } else {
+                                setupRealtimeListener(user.uid); 
+                            }
 
                             // Kalau sebelumnya ada permintaan join tertunda (user scan QR sebelum login), proses sekarang
                             if(window._pendingJoinUid) {
@@ -786,6 +802,10 @@
                                 setTimeout(() => processJoin(pending), 800);
                             }
                         }
+                    }).catch(err => {
+                        console.error(err);
+                        appAlert("Koneksi Error", "Gagal memuat profil. Pastikan koneksi internet stabil.");
+                        document.getElementById('appContainer').classList.add('visible'); 
                     });
                 } else {
                     document.getElementById('appContainer').classList.remove('visible');
@@ -800,8 +820,6 @@
     let authMode = 'login';
 
     // Menampilkan/menyembunyikan banner "MODE OFFLINE" berdasarkan status koneksi browser.
-    // Skor & data tetap bisa diubah saat offline berkat Firestore offline persistence;
-    // banner ini hanya pemberitahuan visual agar admin tenang datanya aman.
     function updateOnlineStatus() {
         let banner = document.getElementById('offlineBanner');
         if(!banner) return;
@@ -868,7 +886,11 @@
     }
 
     function doLogout() {
-        appConfirm('Logout', 'Yakin ingin keluar dari aplikasi?', () => { if(dbUnsubscribe) dbUnsubscribe(); auth.signOut().then(() => location.reload()); });
+        appConfirm('Logout', 'Yakin ingin keluar dari aplikasi?', () => { 
+            if(dbUnsubscribe) dbUnsubscribe(); 
+            localStorage.removeItem('HH_LAST_VIEWED');
+            auth.signOut().then(() => location.reload()); 
+        });
     }
 
     function showAdminScreen() {
@@ -1063,8 +1085,18 @@
         });
     }
 
-    function viewFriendMatch(uid) { appSuccess("Berhasil", "Memasuki pertandingan teman..."); setupRealtimeListener(uid); nav('home'); }
-    function returnToMyMatch() { setupRealtimeListener(auth.currentUser.uid); nav('home'); }
+    function viewFriendMatch(uid) { 
+        appSuccess("Berhasil", "Memasuki pertandingan teman..."); 
+        localStorage.setItem('HH_LAST_VIEWED', uid);
+        setupRealtimeListener(uid); 
+        nav('home'); 
+    }
+    
+    function returnToMyMatch() { 
+        localStorage.removeItem('HH_LAST_VIEWED');
+        setupRealtimeListener(auth.currentUser.uid); 
+        nav('home'); 
+    }
 
     // ======================================================
     // GABUNG PERTANDINGAN VIA QR CODE / LINK UNDANGAN
@@ -1077,13 +1109,11 @@
         if(!list.includes(uid)) { list.push(uid); localStorage.setItem('HH_JOINED_TOURNAMENTS', JSON.stringify(list)); }
     }
 
-    // Dipanggil sekali di awal (window.onload) untuk mendeteksi parameter ?join=UID di URL hasil scan QR.
-    // Kalau user belum login, permintaan disimpan dulu (window._pendingJoinUid) dan diproses setelah login berhasil.
     function handleJoinParam() {
         let params = new URLSearchParams(location.search);
         let joinUid = params.get('join');
         if(!joinUid) return;
-        history.replaceState({}, '', location.pathname); // bersihkan URL agar refresh tidak memicu ulang
+        history.replaceState({}, '', location.pathname); 
         if(!auth.currentUser) { window._pendingJoinUid = joinUid; return; }
         processJoin(joinUid);
     }
@@ -1119,8 +1149,6 @@
         });
     }
 
-    // Menampilkan daftar turnamen yang pernah di-join lewat QR/link (termasuk yang bukan teman),
-    // beserta status: menunggu persetujuan, atau sudah bisa ditonton.
     async function renderJoinedTournaments() {
         let container = document.getElementById('joinedTournamentsList');
         if(!container || !auth.currentUser) return;
@@ -1180,7 +1208,6 @@
         for(let id of data.approvedViewers) {
             if(data.matchAdmins.includes(id)) continue;
             let un = await getUser(id);
-            // Promosi jadi Admin hanya boleh untuk yang sudah berteman (mencegah orang tak dikenal dari QR langsung bisa isi skor)
             let isFriend = myUserData.friends && myUserData.friends.includes(id);
             let adminAction = isFriend
                 ? `<button class="btn btn-primary" style="padding:4px 8px; width:auto; display:inline-block; font-size:12px;" onclick="setAdmin('${id}', true)">Jadikan Admin</button>`
@@ -1208,7 +1235,6 @@
         document.getElementById('accessManagerModal').classList.remove('hidden');
     }
 
-    // Membuat QR code + link undangan untuk turnamen yang sedang dimiliki user saat ini
     function renderJoinQR() {
         if(!auth.currentUser) return;
         let url = location.origin + location.pathname + '?join=' + auth.currentUser.uid;
@@ -1347,16 +1373,12 @@
         }
     }
 
-    // Versi save() yang di-debounce, dipakai untuk aksi cepat berulang (misal tap tombol +/- skor)
-    // agar tidak membanjiri Firestore dengan write & render ulang di setiap tap.
-    // Cukup 1 write + 1 render setelah tap berhenti sejenak (~500ms).
     let _saveDebounceTimer = null;
     function saveDebounced(delay = 500) {
         if(_saveDebounceTimer) clearTimeout(_saveDebounceTimer);
         _saveDebounceTimer = setTimeout(() => { save(); }, delay);
     }
     
-    // PERBAIKAN: BUG SAVE DI NAV DIHAPUS UNTUK MENCEGAH RACE CONDITION!
     function nav(id, playSound=true) {
         if(playSound) playSfx('pop');
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
@@ -1365,7 +1387,6 @@
         if (data.activeTab !== id) {
             data.activeTab = id; 
             localStorage.setItem("HH_ACTIVE_TAB", id);
-            // Fungsi save() sengaja ditiadakan dari sini agar local storage teman yang kosong tidak menimpa DB saat ia pindah tab
         }
     }
     
@@ -1433,8 +1454,6 @@
         renderTitleSetup();
     }
     function editTitle() {
-        // Catatan: window.prompt() TIDAK berfungsi saat aplikasi berjalan sebagai PWA
-        // "Add to Home Screen" di iOS (standalone mode), jadi kita pakai dialog kustom sendiri.
         playSfx('pop');
         const dialog = document.getElementById('customDialog');
         document.getElementById('dialogTitle').innerText = "Ubah Judul Turnamen";
@@ -1461,7 +1480,7 @@
         if(data.title) {
             document.getElementById('titleArea').classList.add('hidden');
             document.getElementById('playerArea').classList.remove('hidden');
-            document.getElementById('tourTitleDisplay').innerText = data.title; // innerText sudah aman dari XSS
+            document.getElementById('tourTitleDisplay').innerText = data.title; 
         } else {
             document.getElementById('titleArea').classList.remove('hidden');
             document.getElementById('playerArea').classList.add('hidden');
@@ -1470,7 +1489,7 @@
     }
 
     function renderQuickArchives() {
-        let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
+        let archives = getSafeArchives();
         let section = document.getElementById('quickArchiveSection');
         let listContainer = document.getElementById('quickArchiveList');
         
@@ -1496,7 +1515,7 @@
     
     function createNewTournament() {
         appConfirm("Buat Turnamen Baru", "Turnamen saat ini akan diarsipkan secara lokal. Lanjutkan?", () => {
-            let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
+            let archives = getSafeArchives();
             data.dateArchived = new Date().toLocaleString('id-ID');
             archives.push(data);
             localStorage.setItem('HH_ARCHIVES', JSON.stringify(archives));
@@ -1510,7 +1529,7 @@
     }
 
     function openArchives() {
-        let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
+        let archives = getSafeArchives();
         let html = '';
         if(archives.length === 0) {
             html = '<p style="color:var(--text-muted); font-size:13px;">Belum ada turnamen yang diarsipkan.</p>';
@@ -1533,7 +1552,7 @@
 
     function deleteArchive(idx) {
         appConfirm("Hapus Arsip", "Yakin ingin menghapus arsip turnamen ini secara permanen?", () => {
-            let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
+            let archives = getSafeArchives();
             archives.splice(idx, 1);
             localStorage.setItem('HH_ARCHIVES', JSON.stringify(archives));
             openArchives(); 
@@ -1543,7 +1562,7 @@
 
     function viewArchive(idx) {
         let loadData = () => {
-            let archives = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]');
+            let archives = getSafeArchives();
             data = archives[idx];
             save();
             document.getElementById('archivesDialog').classList.add('hidden');
@@ -1595,11 +1614,6 @@
         });
     }
 
-    // Menerapkan filter gaya foto secara nyata memakai Canvas 2D (bukan AI generatif — melainkan
-    // pemrosesan gambar di perangkat: warna, kontras, dan efek vignette ala polaroid/vintage).
-    // Catatan: untuk avatar hasil AI generatif sungguhan (foto digambar ulang gaya ilustrasi/kartun),
-    // dibutuhkan API image-generation eksternal (mis. Stability AI/OpenAI/Anthropic) dengan API key milik Anda
-    // sendiri, karena aplikasi client-side ini tidak menyimpan kredensial API pihak ketiga.
     function applyAvatarStyle(sourceCanvas, style) {
         if(style === 'normal') return sourceCanvas;
         let out = document.createElement('canvas');
@@ -1711,7 +1725,6 @@
     // ======================================================
     function setTournamentMode(mode, playSnd=true) {
         if(playSnd) {
-            // Cegah pindah mode kalau ada pertandingan yang sedang berjalan, supaya data tidak kacau
             if(data.currentMatches && data.currentMatches.length > 0) {
                 return appAlert("Tidak Bisa Ganti Mode", "Selesaikan atau batalkan pertandingan yang sedang berjalan terlebih dahulu sebelum mengganti mode turnamen.");
             }
@@ -1731,8 +1744,6 @@
         save(); renderRoundInfo();
     }
 
-    // Preview siapa yang akan bermain berikutnya (berdasarkan siapa yang paling sedikit bermain),
-    // membantu host melihat rotasi pemain sebelum menekan MULAI PERTANDINGAN.
     function renderNextUpPreview() {
         let container = document.getElementById('nextUpPreview');
         if(!container) return;
@@ -1750,7 +1761,6 @@
         container.innerHTML = `<label style="font-size:11px; font-weight:bold; color:var(--text-muted); margin-bottom:6px; display:block;">BERIKUTNYA BERMAIN (PRIORITAS)</label><div>${chips}</div>`;
     }
 
-    // Menampilkan badge babak/ronde saat ini di tab Play, serta tombol lihat bracket & ringkasan sesi
     function renderRoundInfo() {
         let bar = document.getElementById('roundInfoBar');
         let txt = document.getElementById('roundInfoText');
@@ -1787,7 +1797,6 @@
         if(prInp && document.activeElement !== prInp) prInp.value = data.plannedRounds || '';
         renderNextUpPreview();
 
-        // Jika target ronde terjadwal sudah tercapai & tidak ada match berjalan, tawarkan ringkasan sesi otomatis
         if(data.tournamentMode === 'league' && data.plannedRounds && data.roundNumber >= data.plannedRounds &&
            (!data.currentMatches || data.currentMatches.length === 0) && !window._sessionOfferShown) {
             window._sessionOfferShown = true;
@@ -1860,7 +1869,6 @@
         renderRoundInfo();
     }
 
-    // Mengisi data.currentMatches dari babak (round) bracket yang sedang aktif (babak terakhir yang dibuat)
     function syncBracketCurrentMatches() {
         let roundIdx = data.bracket.rounds.length - 1;
         let round = data.bracket.rounds[roundIdx];
@@ -1877,13 +1885,9 @@
             }
         });
         data.currentMatches = cm;
-        // Kasus jarang: seluruh match di babak ini ternyata BYE semua -> langsung coba maju ke babak berikutnya
         if(cm.length === 0) tryAdvanceBracketRound();
     }
 
-    // Dipanggil setelah sebuah match knockout selesai disubmit; mengecek apakah seluruh
-    // pertandingan di babak saat ini sudah tuntas, lalu otomatis membuat babak berikutnya
-    // atau menobatkan juara jika ini adalah babak final.
     function tryAdvanceBracketRound() {
         let roundIdx = data.bracket.rounds.length - 1;
         let round = data.bracket.rounds[roundIdx];
@@ -1910,7 +1914,6 @@
         syncBracketCurrentMatches();
     }
 
-    // Menampilkan seluruh bagan bracket (semua babak) dalam modal
     function openBracketView() {
         playSfx('pop');
         if(!data.bracket) return appAlert("Info", "Belum ada bracket yang dibuat untuk turnamen ini.");
@@ -1942,7 +1945,6 @@
         document.getElementById('bracketViewModal').classList.remove('hidden');
     }
 
-    // --- RINGKASAN SESI (untuk mode turnamen terjadwal) ---
     function openSessionSummary() {
         playSfx('pop');
         let totalMatches = data.matches.length;
@@ -2066,7 +2068,11 @@
         } else {
             if(activePlayers.length < reqP * numCourts) return appAlert("Error", `Butuh minimal ${reqP * numCourts} pemain HADIR untuk mengisi ${numCourts} lapangan!`);
             
-            let pool = activePlayers.sort((a,b) => a.stats.p - b.stats.p || Math.random() - 0.5).slice(0, reqP * numCourts);
+            // PRIORITAS ALGORITMA BARU: Sortir ketat berdasarkan jumlah main terkecil, lalu acak jika sama.
+            let pool = [...activePlayers].sort((a, b) => {
+                if (a.stats.p !== b.stats.p) return a.stats.p - b.stats.p;
+                return Math.random() - 0.5;
+            }).slice(0, reqP * numCourts);
             
             let newMatches = [];
             if(reqP === 4) {
@@ -2084,13 +2090,15 @@
                         let t1 = [cP[0], cP[1]], t2 = [cP[2], cP[3]];
                         if(!isValidCourtGender(t1, t2)) { valid = false; break; }
                         
-                        currentScore += countPartnership(t1[0].id, t1[1].id);
-                        currentScore += countPartnership(t2[0].id, t2[1].id);
+                        // PENALTI DIPERBESAR: Jangan gabungkan yang sudah sering satu tim
+                        currentScore += countPartnership(t1[0].id, t1[1].id) * 10;
+                        currentScore += countPartnership(t2[0].id, t2[1].id) * 10;
                         
-                        currentScore += countOpponent(t1[0].id, t2[0].id) * 0.5;
-                        currentScore += countOpponent(t1[0].id, t2[1].id) * 0.5;
-                        currentScore += countOpponent(t1[1].id, t2[0].id) * 0.5;
-                        currentScore += countOpponent(t1[1].id, t2[1].id) * 0.5;
+                        // PENALTI DIPERBESAR: Jangan hadapkan musuh yang sama terus
+                        currentScore += countOpponent(t1[0].id, t2[0].id) * 2;
+                        currentScore += countOpponent(t1[0].id, t2[1].id) * 2;
+                        currentScore += countOpponent(t1[1].id, t2[0].id) * 2;
+                        currentScore += countOpponent(t1[1].id, t2[1].id) * 2;
 
                         currentArrangement.push({t1, t2});
                     }
@@ -2153,8 +2161,16 @@
         if(!data.currentMatches || data.currentMatches.length === 0) {
             document.getElementById('setupArea').style.display = 'block';
             document.getElementById('matchArea').classList.add('hidden');
+            
+            // Tampilkan tulisan "Menunggu Host" jika bukan owner
+            let isOwner = (auth.currentUser && currentViewingId === auth.currentUser.uid);
+            document.getElementById('waitingHostArea').classList.toggle('hidden', isOwner);
             return;
+        } else {
+            let waitArea = document.getElementById('waitingHostArea');
+            if(waitArea) waitArea.classList.add('hidden');
         }
+        
         document.getElementById('setupArea').style.display = 'none';
         
         let html = '';
@@ -2319,7 +2335,6 @@
         if(idx === -1) return;
         let crt = data.currentMatches[idx].court;
         if(data.tournamentMode === 'knockout') {
-            // Di mode knockout, match tidak boleh dihapus (harus tetap dimainkan), cukup reset skor ke 0-0
             appConfirm("Reset Skor", `Reset skor pertandingan Lapangan ${crt} ke 0-0?`, () => {
                 data.currentMatches[idx].g1 = 0; data.currentMatches[idx].g2 = 0;
                 save(); renderMatches();
@@ -2384,12 +2399,9 @@
         });
     }
 
-    // Memproses hasil pertandingan pada mode KNOCKOUT: update statistik, catat riwayat,
-    // lalu cek apakah babak saat ini sudah selesai untuk otomatis membuat babak berikutnya.
     function submitKnockoutMatch(m, idx) {
         let s1 = m.g1, s2 = m.g2;
         let bracketMatch = data.bracket.rounds[m.bracketRound][m.bracketMatchIndex];
-        // Sinkronkan kalau ada perubahan pemain manual (Edit Pemain) sebelum menentukan pemenang
         bracketMatch.p1 = m.t1; bracketMatch.p2 = m.t2;
         bracketMatch.s1 = s1; bracketMatch.s2 = s2;
         bracketMatch.winner = s1 > s2 ? 'p1' : 'p2';
@@ -2425,7 +2437,6 @@
         renderRoundInfo();
     }
 
-    // FITUR BARU: MENGEDIT SKOR DAN PEMAIN DI RIWAYAT MATCH
     function openEditScore(id) {
         let m = data.matches.find(x => x.id === id);
         if(!m) return;
@@ -2459,7 +2470,6 @@
         }
         document.getElementById('editHistoryPlayersContainer').innerHTML = html;
 
-        // Set value dropdown yang sebelumnya terpilih
         if(document.getElementById('hist_t1_0') && m.ids1[0]) document.getElementById('hist_t1_0').value = m.ids1[0];
         if(document.getElementById('hist_t1_1') && m.ids1[1]) document.getElementById('hist_t1_1').value = m.ids1[1];
         if(document.getElementById('hist_t2_0') && m.ids2[0]) document.getElementById('hist_t2_0').value = m.ids2[0];
@@ -2478,7 +2488,6 @@
         let ns2 = parseInt(document.getElementById('editInpS2').value);
         if(isNaN(ns1) || isNaN(ns2)) return appAlert("Error", "Skor yang Anda masukkan tidak valid!");
 
-        // Ambil ID pemain-pemain yang baru dipilih
         let nt1_ids = [];
         let nt2_ids = [];
 
@@ -2503,12 +2512,11 @@
             if(t1_0 === t2_0) return appAlert("Error", "Pemain tidak boleh sama!");
         }
 
-        // Fungsi kembalikan/hapus stats pemain lama
         const rev = (arr, ms, os) => {
             arr.forEach(pid => {
                 let p = data.players.find(x=>x.id===pid);
                 if(p) { 
-                    p.stats.p--; // Kurangi jumlah bermain (karena diganti)
+                    p.stats.p--; 
                     p.stats.gd -= (ms-os); 
                     if(ms>os){p.stats.w--; p.stats.pts-=3;} 
                     else if(ms==os){p.stats.d--; p.stats.pts-=1;} 
@@ -2519,7 +2527,6 @@
         rev(m.ids1, m.s1, m.s2); 
         rev(m.ids2, m.s2, m.s1);
 
-        // Update struktur data riwayat dengan nilai baru
         m.s1 = ns1; 
         m.s2 = ns2;
         m.ids1 = nt1_ids; 
@@ -2530,12 +2537,11 @@
         m.t1 = p1Arr.map(x => x ? x.name : 'Unknown').join(' & ');
         m.t2 = p2Arr.map(x => x ? x.name : 'Unknown').join(' & ');
 
-        // Fungsi aplikasikan stats pemain yang baru
         const apply = (arr, ms, os) => {
             arr.forEach(pid => {
                 let p = data.players.find(x=>x.id===pid);
                 if(p) { 
-                    p.stats.p++; // Tambah jumlah bermain
+                    p.stats.p++; 
                     p.stats.gd += (ms-os); 
                     if(ms>os){p.stats.w++; p.stats.pts+=3;} 
                     else if(ms==os){p.stats.d++; p.stats.pts+=1;} 
