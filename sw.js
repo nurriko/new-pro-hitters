@@ -1,11 +1,17 @@
-// UBAH BARIS INI: Naikkan versi dari v4 ke v5
-const CACHE_NAME = 'happy-hitters-v6'; 
+// Naikkan angka versi ini setiap kali ada perubahan pada file yang di-precache di bawah,
+// supaya Service Worker lama otomatis dibersihkan dan pengguna mendapat versi terbaru.
+const CACHE_NAME = 'happy-hitters-v7';
 
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
-  './logo.png'
+  './logo.png',
+  './icon-512.png',
+  './icon-192.png',
+  './apple-touch-icon.png',
+  './favicon-32.png',
+  './qrcode_min.js'
 ];
 
 // ... (Sisa kode di sw.js biarkan sama persis seperti sebelumnya) ...
