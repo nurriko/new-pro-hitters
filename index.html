@@ -10,7 +10,8 @@
     <meta name="apple-mobile-web-app-title" content="Happy Hitters">
     
     <title>Happy Hitters Tournament</title>
-    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
@@ -22,7 +23,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-    <script src="qrcode.min.js"></script>
+    <script src="qrcode_min.js"></script>
 
     <!-- FIREBASE COMPAT SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -863,14 +864,17 @@
         btn.innerText = "Memproses...";
         btn.disabled = true;
         
-        let isSuperAdmin = (userInp.toLowerCase() === 'admin' || userInp.toLowerCase() === 'superadmin');
-        let loginEmail = isSuperAdmin ? (userInp.toLowerCase() + '@happyhitters.app') : (userInp.replace(/\s+/g, '').toLowerCase() + '@happyhitters.app');
+        // CATATAN KEAMANAN: role 'admin' TIDAK PERNAH diberikan otomatis lewat form registrasi.
+        // Status SuperAdmin murni ditentukan oleh email tetap yang dicek di onAuthStateChanged,
+        // sehingga tidak ada lagi cara bagi pengguna biasa untuk mendapatkan akses admin
+        // hanya dengan mengetik username "admin" / "superadmin" saat mendaftar.
+        let loginEmail = userInp.replace(/\s+/g, '').toLowerCase() + '@happyhitters.app';
 
         if(authMode === 'register') {
             auth.createUserWithEmailAndPassword(loginEmail, pass)
                 .then((cred) => {
                     db.collection('users').doc(cred.user.uid).set({
-                        username: userInp, email: loginEmail, role: isSuperAdmin ? 'admin' : 'user', friends: [], friendRequests: [],
+                        username: userInp, email: loginEmail, role: 'user', friends: [], friendRequests: [],
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     btn.innerText = originalText;
@@ -1718,14 +1722,27 @@
         if(p) { p.isPresent = (p.isPresent === false) ? true : false; save(); }
     }
 
+    function updateFormatAvailability() {
+        // Padel tidak memiliki mode 1 VS 1 (Singles) -> tombolnya divisualisasikan nonaktif
+        let singlesBtn = document.getElementById('btnFormatSingles');
+        if(!singlesBtn) return;
+        singlesBtn.classList.toggle('disabled', selectedSport === 'padel');
+    }
     function setSport(s, playSnd=true) {
         if(playSnd) playSfx('pop');
         selectedSport = s;
         document.getElementById('btnSportTennis').className = s==='tennis' ? 'seg-btn active' : 'seg-btn';
         document.getElementById('btnSportPadel').className = s==='padel' ? 'seg-btn active' : 'seg-btn';
+        updateFormatAvailability();
+        // Jika sedang di mode Singles lalu pindah ke Padel, otomatis alihkan ke Doubles
+        // supaya tidak tersangkut di kombinasi Padel+Singles yang sebenarnya tidak valid.
+        if(s === 'padel' && selectedFormat === 'singles') setFormat('doubles', false);
     }
     function setFormat(f, playSnd=true) {
-        if(selectedSport === 'padel' && f === 'singles') return; 
+        if(selectedSport === 'padel' && f === 'singles') {
+            showToast('Tidak Tersedia', 'Padel tidak memiliki mode 1 VS 1 (Singles). Pilih Tennis untuk mode ini.', 'warning');
+            return;
+        }
         if(playSnd) playSfx('pop');
         selectedFormat = f;
         document.getElementById('btnFormatSingles').className = f==='singles' ? 'seg-btn active' : 'seg-btn';
@@ -2002,7 +2019,7 @@
     function renderFixedPairsUI() {
         let activePlayers = data.players.filter(p => p.isPresent !== false);
         let opts = '<option value="">-- Pilih Pemain --</option>';
-        activePlayers.forEach(p => opts += `<option value="${p.id}">${p.name}</option>`);
+        activePlayers.forEach(p => opts += `<option value="${p.id}">${escapeHtml(p.name)}</option>`);
         document.getElementById('selP1').innerHTML = opts; document.getElementById('selP2').innerHTML = opts;
 
         if(!data.fixedPairs) data.fixedPairs = [];
@@ -2013,7 +2030,7 @@
             if(!p1 || !p2) return '';
             let warn = (p1.isPresent===false || p2.isPresent===false) ? '<small style="color:var(--warning); font-weight:bold;">(Absen)</small>' : '';
             return `<div style="display:flex; justify-content:space-between; align-items:center; background:var(--input-bg); padding:10px 15px; margin-bottom:8px; border-radius:10px; border:1px solid var(--border-color);">
-                <div style="font-weight:bold; color:var(--text-main);">${p1.name} & ${p2.name} ${warn}</div>
+                <div style="font-weight:bold; color:var(--text-main);">${escapeHtml(p1.name)} & ${escapeHtml(p2.name)} ${warn}</div>
                 <button onclick="delFixedPair(${i})" style="color:#ef4444; background:none; border:none; cursor:pointer;"><i class="fas fa-trash-alt"></i></button>
             </div>`;
         }).join('');
@@ -2252,7 +2269,7 @@
         let activePlayers = data.players.filter(p => p.isPresent !== false);
         
         let opts = `<option value="">-- Kosong --</option>`;
-        activePlayers.forEach(p => opts += `<option value="${p.id}">${p.name} (${p.gender === 'M' ? 'Pria' : 'Wanita'})</option>`);
+        activePlayers.forEach(p => opts += `<option value="${p.id}">${escapeHtml(p.name)} (${p.gender === 'M' ? 'Pria' : 'Wanita'})</option>`);
 
         let html = '';
         if(m.format === 'doubles') {
@@ -2459,7 +2476,7 @@
 
         let activePlayers = data.players;
         let opts = `<option value="">-- Pilih Pemain --</option>`;
-        activePlayers.forEach(p => opts += `<option value="${p.id}">${p.name}</option>`);
+        activePlayers.forEach(p => opts += `<option value="${p.id}">${escapeHtml(p.name)}</option>`);
 
         let html = '';
         if(m.format === 'doubles') {
