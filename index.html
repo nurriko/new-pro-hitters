@@ -13,7 +13,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="manifest" href="manifest.json">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -39,6 +39,8 @@
             --bg-grad: linear-gradient(135deg, #8BC6EC 0%, #9599E2 100%);
             --dock-bg: #ffffff;
             --gold: #FFD700; --silver: #C0C0C0; --bronze: #CD7F32;
+            --tennis-glow: #22d3ee; --padel-glow: #ec4899;
+            --glass-panel-bg: rgba(255, 255, 255, 0.85);
         }
 
         [data-theme="dark"] {
@@ -48,6 +50,7 @@
             --input-bg: #0f172a; --border-color: #334155;
             --bg-grad: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             --dock-bg: #1e293b;
+            --glass-panel-bg: rgba(15, 23, 42, 0.75);
         }
 
         body { font-family: 'Outfit', sans-serif; background: var(--bg-grad); margin: 0; padding: 0; min-height: 100vh; color: var(--text-main); overflow-x: hidden; user-select: none; transition: background 0.3s, color 0.3s; }
@@ -88,7 +91,7 @@
         .content.active { display: block; }
         
         .card { background: var(--card-bg); border-radius: 18px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border-color); transition: 0.3s; }
-        .auth-card { background: var(--card-bg); width: 85%; max-width: 350px; border-radius: 20px; padding: 30px 25px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); }
+        .auth-card { background: var(--glass-panel-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); width: 85%; max-width: 350px; border-radius: 20px; padding: 30px 25px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); }
         .btn { width: 100%; border: none; padding: 14px; border-radius: 12px; font-weight: 700; cursor: pointer; font-family:'Outfit'; display:flex; align-items:center; justify-content:center; gap:8px; font-size:15px; transition: 0.2s; }
         .btn:active { transform: scale(0.95); }
         .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3); }
@@ -118,7 +121,7 @@
         .g-btn.active-f { border-color: var(--accent); color: var(--accent); background: rgba(247, 37, 133, 0.1); }
 
         #customDialog { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); animation: fadeIn 0.2s; }
-        .dialog-box { background: var(--card-bg); width: 85%; max-width: 350px; border-radius: 20px; padding: 25px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.4); border: 1px solid var(--border-color); transform: scale(0.9); animation: popIn 0.3s forwards; }
+        .dialog-box { background: var(--glass-panel-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); width: 85%; max-width: 350px; border-radius: 20px; padding: 25px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.12); transform: scale(0.9); animation: popIn 0.3s forwards; }
         .dialog-icon { font-size: 40px; margin-bottom: 15px; }
         .dialog-icon.success { color: var(--success); }
         .dialog-icon.warning { color: var(--warning); }
@@ -134,7 +137,7 @@
         .score-team-name { font-weight: 900; font-size: 15px; color: var(--text-main); }
         .score-controls { display: flex; align-items: center; gap: 10px; }
         
-        .point-display { width: 60px; height: 50px; display: flex; justify-content: center; align-items: center; border-radius: 10px; font-size: 24px; font-weight: 900; color: #fff; transition: 0.3s; }
+        .point-display { width: 60px; height: 50px; display: flex; justify-content: center; align-items: center; border-radius: 10px; font-size: 28px; font-weight: 700; font-family: 'Rajdhani', 'Outfit', sans-serif; color: #fff; transition: transform 0.15s; }
         .score-box-a { background: var(--accent); border: 2px solid var(--accent); box-shadow: 0 0 15px rgba(247, 37, 133, 0.5); }
         .score-box-b { background: var(--primary); border: 2px solid var(--primary); box-shadow: 0 0 15px rgba(67, 97, 238, 0.5); }
         
@@ -182,11 +185,17 @@
 
         /* BRACKET & SESI TERJADWAL CSS */
         .bracket-round-title { font-size:13px; font-weight:900; color:var(--primary); text-transform:uppercase; letter-spacing:1px; margin:20px 0 10px 0; text-align:left; display:flex; align-items:center; gap:8px; }
-        .bracket-match { background:var(--input-bg); border:1px solid var(--border-color); border-radius:12px; padding:10px 14px; margin-bottom:8px; text-align:left; }
+        .bracket-match { background:var(--input-bg); border:1px solid var(--border-color); border-left:3px solid var(--border-color); border-radius:12px; padding:10px 14px; margin-bottom:8px; text-align:left; transition: 0.3s; }
+        .bracket-match.decided { border-left-color: var(--success); }
         .bracket-side { display:flex; justify-content:space-between; align-items:center; padding:4px 0; font-size:13px; font-weight:700; color:var(--text-muted); }
-        .bracket-side.winner { color:var(--success); font-weight:900; }
+        .bracket-side.winner { color:var(--success); font-weight:900; text-shadow: 0 0 12px rgba(16,185,129,0.35); }
         .bracket-vs { font-size:10px; color:var(--text-muted); text-align:center; padding:2px 0; }
         .bracket-bye { font-size:11px; color:var(--warning); font-style:italic; text-align:center; padding:6px 0; }
+        .champion-card { position:relative; overflow:hidden; }
+        .champion-card::before { content:''; position:absolute; inset:-40%; background: conic-gradient(from 0deg, transparent, rgba(255,215,0,0.25), transparent 30%); animation: champSpin 4s linear infinite; }
+        .champion-card > * { position:relative; z-index:1; }
+        @keyframes champSpin { to { transform: rotate(360deg); } }
+        @keyframes crownFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
         .next-up-chip { display:inline-flex; align-items:center; gap:6px; background:var(--input-bg); border:1px solid var(--border-color); border-radius:20px; padding:5px 12px 5px 5px; font-size:12px; font-weight:700; margin:3px 4px 3px 0; color:var(--text-main); }
         .next-up-chip img { width:22px; height:22px; border-radius:50%; object-fit:cover; }
         .summary-stat-box { background:var(--input-bg); border:1px solid var(--border-color); border-radius:14px; padding:14px; flex:1; }
@@ -197,6 +206,43 @@
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* ===== AKSEN WARNA PER-OLAHRAGA ===== */
+        .match-card.sport-tennis { border-color: rgba(34,211,238,0.5) !important; box-shadow: 0 0 26px rgba(34,211,238,0.18), 0 4px 15px rgba(0,0,0,0.05); }
+        .match-card.sport-padel { border-color: rgba(236,72,153,0.5) !important; box-shadow: 0 0 26px rgba(236,72,153,0.18), 0 4px 15px rgba(0,0,0,0.05); }
+        .sport-chip { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:800; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px; }
+        .sport-chip.sport-tennis { color: var(--tennis-glow); background: rgba(34,211,238,0.12); }
+        .sport-chip.sport-padel { color: var(--padel-glow); background: rgba(236,72,153,0.12); }
+
+        /* ===== TIER RANKING (EMAS/PERAK/PERUNGGU) ===== */
+        .rank-row.tier-gold { border-color: rgba(255,215,0,0.5) !important; background: linear-gradient(90deg, rgba(255,215,0,0.12), var(--input-bg) 60%); }
+        .rank-row.tier-silver { border-color: rgba(192,192,192,0.5) !important; background: linear-gradient(90deg, rgba(192,192,192,0.12), var(--input-bg) 60%); }
+        .rank-row.tier-bronze { border-color: rgba(205,127,50,0.5) !important; background: linear-gradient(90deg, rgba(205,127,50,0.12), var(--input-bg) 60%); }
+        .rank-medal { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; font-size:11px; font-weight:900; color:#3d2b00; }
+        .rank-medal.gold { background: linear-gradient(145deg, #FFE58A, #FFD700); box-shadow: 0 0 10px rgba(255,215,0,0.6); }
+        .rank-medal.silver { background: linear-gradient(145deg, #F1F1F1, #C0C0C0); box-shadow: 0 0 10px rgba(192,192,192,0.6); }
+        .rank-medal.bronze { background: linear-gradient(145deg, #E3A467, #CD7F32); box-shadow: 0 0 10px rgba(205,127,50,0.6); color:#3d1f00; }
+
+        /* ===== BADGE LIVE BERDENYUT ===== */
+        .live-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(239,68,68,0.12); color:#ef4444; font-size:10px; font-weight:900; letter-spacing:1px; padding:4px 10px 4px 8px; border-radius:20px; text-transform:uppercase; }
+        .live-dot { width:7px; height:7px; border-radius:50%; background:#ef4444; animation: livePulse 1.4s infinite; }
+        @keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.6); } 70% { box-shadow: 0 0 0 7px rgba(239,68,68,0); } 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); } }
+
+        /* ===== ANIMASI POP SAAT SKOR BERUBAH ===== */
+        @keyframes scorePop { 0% { transform: scale(1); } 35% { transform: scale(1.28); } 100% { transform: scale(1); } }
+        .score-pop { animation: scorePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+        /* ===== SKELETON LOADING ===== */
+        #appSkeleton { position:fixed; top:0; left:0; width:100%; height:100%; background: var(--bg-grad); z-index: 9998; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; transition: opacity 0.4s ease, visibility 0.4s; }
+        #appSkeleton.hidden { opacity:0; visibility:hidden; pointer-events:none; }
+        .skel-block { border-radius: 14px; background: linear-gradient(90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.25) 37%, rgba(255,255,255,0.08) 63%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; }
+        @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state-box { text-align:center; padding: 40px 20px; color: var(--text-muted); }
+        .empty-state-box i { font-size: 34px; margin-bottom: 12px; opacity: 0.5; display:block; }
+        .empty-state-box b { display:block; color: var(--text-main); font-size:14px; margin-bottom:4px; }
+        .empty-state-box span { font-size: 12px; }
     </style>
 </head>
 <body>
@@ -432,6 +478,12 @@
     </div>
 </div>
 
+<div id="appSkeleton">
+    <div class="skel-block" style="width:64px; height:64px; border-radius:50%;"></div>
+    <div class="skel-block" style="width:160px; height:16px;"></div>
+    <div class="skel-block" style="width:220px; height:70px; margin-top:10px;"></div>
+    <div class="skel-block" style="width:220px; height:70px;"></div>
+</div>
 <div class="app-container" id="appContainer">
     <div id="offlineBanner" class="hidden" style="background:#374151; color:#fff; text-align:center; padding:8px; font-size:11px; font-weight:bold;">
         <i class="fas fa-wifi" style="opacity:0.6;"></i> MODE OFFLINE — Perubahan tetap tersimpan &amp; akan otomatis tersinkron saat internet kembali.
@@ -743,6 +795,10 @@
     function escapeHtml(str) {
         if (str === null || str === undefined) return '';
         return String(str).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+    }
+
+    function emptyStateHtml(icon, title, subtitle) {
+        return `<div class="empty-state-box"><i class="fas ${icon}"></i><b>${escapeHtml(title)}</b><span>${escapeHtml(subtitle)}</span></div>`;
     }
 
     const DEF_M = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23dbeafe'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%233b82f6'/%3E%3C/svg%3E";
@@ -1377,8 +1433,13 @@
                 renderTitleSetup();
                 renderAll();
                 renderRoundInfo();
+
+                let skel = document.getElementById('appSkeleton');
+                if(skel && !skel.classList.contains('hidden')) skel.classList.add('hidden');
             }, err => {
                 console.error("Gagal menarik data:", err);
+                let skel = document.getElementById('appSkeleton');
+                if(skel) skel.classList.add('hidden');
             });
     }
 
@@ -1963,7 +2024,7 @@
                 } else {
                     let w1 = m.winner === 'p1' ? 'winner' : ''; let w2 = m.winner === 'p2' ? 'winner' : '';
                     let s = (m.winner) ? `${m.s1} - ${m.s2}` : 'vs';
-                    html += `<div class="bracket-match">
+                    html += `<div class="bracket-match ${m.winner ? 'decided' : ''}">
                         <div class="bracket-side ${w1}">${m.winner==='p1'?'<i class="fas fa-trophy" style="color:var(--gold);"></i> ':''}${n1}</div>
                         <div class="bracket-vs">${s}</div>
                         <div class="bracket-side ${w2}">${m.winner==='p2'?'<i class="fas fa-trophy" style="color:var(--gold);"></i> ':''}${n2}</div>
@@ -1973,9 +2034,9 @@
         });
         if(data.bracket.championId) {
             let champ = data.bracket.championId.map(id => { let p = data.players.find(x=>x.id===id); return p ? escapeHtml(p.name) : '?'; }).join(' & ');
-            html += `<div class="card" style="text-align:center; padding:20px; border:2px solid var(--gold); margin-top:10px;"><div style="font-size:36px;">🏆</div><b style="color:var(--gold); font-size:18px;">${champ}</b></div>`;
+            html += `<div class="card champion-card" style="text-align:center; padding:20px; border:2px solid var(--gold); margin-top:10px;"><div style="font-size:36px; animation: crownFloat 2s ease-in-out infinite;">🏆</div><b style="color:var(--gold); font-size:18px; text-shadow:0 0 16px rgba(255,215,0,0.5);">${champ}</b></div>`;
         }
-        document.getElementById('bracketViewContainer').innerHTML = html || '<p style="color:var(--text-muted);">Bracket kosong.</p>';
+        document.getElementById('bracketViewContainer').innerHTML = html || emptyStateHtml('fa-sitemap', 'Bracket kosong', 'Belum ada pertandingan di bagan ini');
         document.getElementById('bracketViewModal').classList.remove('hidden');
     }
 
@@ -1986,17 +2047,39 @@
         let mvp = sorted[0];
         let mostWins = [...data.players].sort((a,b) => b.stats.w - a.stats.w)[0];
 
+        let podiumHtml = '';
+        if(sorted.length > 0) {
+            let p1 = sorted[0], p2 = sorted[1], p3 = sorted[2];
+            let slot = (p, place, height, color, textColor) => {
+                if(!p) return `<div style="flex:1;"></div>`;
+                return `
+                <div style="flex:1; text-align:center; cursor:pointer;" onclick="document.getElementById('sessionSummaryModal').classList.add('hidden'); openPlayerCard('${p.id}')">
+                    ${place===1 ? `<i class="fas fa-crown" style="color:var(--gold); font-size:20px; margin-bottom:4px; display:block; text-shadow:0 0 10px rgba(255,215,0,0.6);"></i>` : `<div style="height:24px;"></div>`}
+                    <img src="${getAvatar(p)}" style="width:${place===1?56:44}px; height:${place===1?56:44}px; border-radius:50%; object-fit:cover; border:3px solid ${color}; box-shadow:0 0 14px ${color}88; margin-bottom:6px;">
+                    <div style="font-weight:800; font-size:12px; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 4px;">${escapeHtml(p.name)}</div>
+                    <div style="font-size:10px; color:var(--text-muted); margin-bottom:6px;">${p.stats.pts} pts</div>
+                    <div style="height:${height}px; background:linear-gradient(180deg, ${color}, ${color}cc); border-radius:10px 10px 0 0; display:flex; align-items:flex-start; justify-content:center; padding-top:8px; font-size:20px; font-weight:900; color:${textColor};">${place}</div>
+                </div>`;
+            };
+            podiumHtml = `<div style="display:flex; align-items:flex-end; gap:8px; margin-bottom:18px;">
+                ${slot(p2, 2, 55, 'var(--silver)', '#3d3d3d')}
+                ${slot(p1, 1, 85, 'var(--gold)', '#4a3600')}
+                ${slot(p3, 3, 40, 'var(--bronze)', '#3d1f00')}
+            </div>`;
+        }
+
         let html = `
+            ${podiumHtml}
             <div style="display:flex; gap:10px; margin-bottom:15px;">
                 <div class="summary-stat-box"><div class="num">${totalMatches}</div><div class="lbl">Total Match</div></div>
                 <div class="summary-stat-box"><div class="num">${data.players.length}</div><div class="lbl">Pemain</div></div>
                 <div class="summary-stat-box"><div class="num">${data.roundNumber || 0}</div><div class="lbl">Ronde</div></div>
             </div>
-            ${mvp ? `<div class="card" style="padding:14px; text-align:center; margin-bottom:10px;"><div style="font-size:11px; color:var(--text-muted); font-weight:bold;">⭐ MVP SESI INI</div><div style="font-size:18px; font-weight:900; color:var(--primary);">${escapeHtml(mvp.name)}</div><div style="font-size:12px; color:var(--text-muted);">${mvp.stats.pts} poin</div></div>` : ''}
             ${mostWins && mostWins.stats.w > 0 ? `<div class="card" style="padding:14px; text-align:center;"><div style="font-size:11px; color:var(--text-muted); font-weight:bold;">🔥 KEMENANGAN TERBANYAK</div><div style="font-size:16px; font-weight:900; color:var(--success);">${escapeHtml(mostWins.name)} (${mostWins.stats.w}x menang)</div></div>` : ''}
         `;
         document.getElementById('sessionSummaryContainer').innerHTML = html;
         document.getElementById('sessionSummaryModal').classList.remove('hidden');
+        if(typeof confetti === 'function') confetti({ particleCount: 140, spread: 90, origin: { y: 0.5 }, colors: ['#FFD700', '#22d3ee', '#ec4899'] });
     }
 
     function shareSessionWhatsApp() {
@@ -2215,16 +2298,22 @@
     function generateMatchHTML(m) {
         let t1Names = m.t1.map(x=>x.name).join(' & ');
         let t2Names = m.t2.map(x=>x.name).join(' & ');
+        let sportClass = m.sport === 'padel' ? 'sport-padel' : 'sport-tennis';
+        let sportColorVar = m.sport === 'padel' ? '--padel-glow' : '--tennis-glow';
 
         return `
-        <div class="card" style="margin-bottom: 25px; border: 2px solid var(--border-color); position:relative;">
-            <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:var(--primary); color:white; padding:4px 15px; border-radius:20px; font-weight:900; font-size:13px; box-shadow:0 4px 10px rgba(67, 97, 238, 0.4);">LAPANGAN ${m.court}</div>
-            
+        <div class="card match-card ${sportClass}" style="margin-bottom: 25px; border: 2px solid var(--border-color); position:relative;">
+            <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:var(${sportColorVar}); color:#04202b; padding:4px 15px; border-radius:20px; font-weight:900; font-size:13px; box-shadow:0 4px 10px rgba(0,0,0,0.25);">LAPANGAN ${m.court}</div>
+
+            <div style="display:flex; justify-content:center; margin-top:10px;">
+                <span class="live-badge"><span class="live-dot"></span>LIVE</span>
+            </div>
+
             <div style="position:absolute; top:10px; right:15px; z-index:10;">
                 <button class="btn btn-ghost admin-only" style="padding:4px 8px; font-size:11px; background:var(--input-bg);" onclick="openEditMatchPlayers('${m.id}')"><i class="fas fa-user-edit"></i> Edit Pemain</button>
             </div>
 
-            <div style="margin-top:15px;">
+            <div style="margin-top:12px;">
                 <h4 style="margin:0 0 10px 0; color:var(--primary); text-align:center;"><i class="fas fa-stopwatch"></i> SCOREBOARD</h4>
 
                 <div class="live-scoreboard">
@@ -2347,8 +2436,8 @@
         if(!m) return;
         let gD1 = document.getElementById(`gDisp1_${matchId}`);
         let gD2 = document.getElementById(`gDisp2_${matchId}`);
-        if (gD1) gD1.innerText = m.g1;
-        if (gD2) gD2.innerText = m.g2;
+        if (gD1 && gD1.innerText != m.g1) { gD1.innerText = m.g1; gD1.classList.remove('score-pop'); void gD1.offsetWidth; gD1.classList.add('score-pop'); }
+        if (gD2 && gD2.innerText != m.g2) { gD2.innerText = m.g2; gD2.classList.remove('score-pop'); void gD2.offsetWidth; gD2.classList.add('score-pop'); }
     }
 
     function adjGame(matchId, team, change) {
@@ -2691,7 +2780,7 @@
 
     function renderAll() {
         document.getElementById('pCount').innerText = data.players.length;
-        document.getElementById('playerList').innerHTML = data.players.slice().reverse().map(p => {
+        document.getElementById('playerList').innerHTML = data.players.length === 0 ? emptyStateHtml('fa-user-plus', 'Belum ada pemain', 'Tambahkan pemain pertama untuk mulai turnamen') : data.players.slice().reverse().map(p => {
             let pStatus = p.isPresent === false ? false : true;
             let stText = pStatus ? '<i class="fas fa-check"></i> Hadir' : '<i class="fas fa-times"></i> Absen';
             let stClass = pStatus ? 'btn-success' : 'btn-danger';
@@ -2729,9 +2818,11 @@
         let finAlert = document.getElementById('finishedSetupAlert');
         if(finAlert) finAlert.classList.toggle('hidden', !isFin);
         
-        document.getElementById('rankBody').innerHTML = sorted.map((p,i) => {
-            return `<tr class="rank-row" onclick="openPlayerCard('${p.id}')">
-                <td style="padding-left:12px; font-weight:900; color:var(--text-muted);">${i+1}</td>
+        document.getElementById('rankBody').innerHTML = sorted.length === 0 ? `<tr><td colspan="7">${emptyStateHtml('fa-chart-bar', 'Klasemen masih kosong', 'Mainkan match pertama untuk mengisi klasemen')}</td></tr>` : sorted.map((p,i) => {
+            let tierClass = i===0 ? 'tier-gold' : i===1 ? 'tier-silver' : i===2 ? 'tier-bronze' : '';
+            let medal = i===0 ? '<span class="rank-medal gold"><i class="fas fa-crown"></i></span>' : i===1 ? '<span class="rank-medal silver">2</span>' : i===2 ? '<span class="rank-medal bronze">3</span>' : `<span style="padding-left:6px;">${i+1}</span>`;
+            return `<tr class="rank-row ${tierClass}" onclick="openPlayerCard('${p.id}')">
+                <td style="padding-left:12px; font-weight:900; color:var(--text-muted);">${medal}</td>
                 <td><div class="p-item"><b style="font-size:14px;">${escapeHtml(p.name)}</b></div></td>
                 <td style="text-align:center; font-weight:bold;">${p.stats.p}</td>
                 <td style="text-align:center; font-weight:bold; color:var(--success);">${p.stats.w}</td>
@@ -2741,19 +2832,21 @@
             </tr>`
         }).join('');
         
-        document.getElementById('histList').innerHTML = data.matches.map(m => {
+        document.getElementById('histList').innerHTML = data.matches.length === 0 ? emptyStateHtml('fa-history', 'Belum ada riwayat', 'Match yang sudah selesai akan muncul di sini') : data.matches.map(m => {
+            let sportClass = m.sport === 'padel' ? 'sport-padel' : 'sport-tennis';
             let icon = m.sport === 'padel' ? '🏸' : '🎾';
             let typeStr = m.format === 'singles' ? '(1v1)' : '(2v2)';
             let logicStr = m.logic === 'fixed' ? ' • Fixed Partner' : '';
             return `
-            <div class="card" style="padding:15px; font-size:13px; margin-bottom:0; position:relative;">
-                <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:8px; font-size:11px; color:var(--text-muted); font-weight:bold;">
-                    <span>${icon} ${m.sport ? m.sport.toUpperCase() : 'TENNIS'} ${typeStr}${logicStr} (Lap ${m.court || 1})</span>
+            <div class="card" style="padding:15px; font-size:13px; margin-bottom:0; position:relative; border-left:3px solid var(--${m.sport === 'padel' ? 'padel-glow' : 'tennis-glow'});">
+                <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:8px;">
+                    <span class="sport-chip ${sportClass}">${icon} ${m.sport ? m.sport.toUpperCase() : 'TENNIS'} ${typeStr}</span>
+                    <span style="font-size:11px; color:var(--text-muted); font-weight:bold;">${logicStr} Lap ${m.court || 1}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold;">
                     <span style="flex:1; text-align:right;">${escapeHtml(m.t1)}</span>
                     <div style="display:flex; align-items:center;">
-                        <b style="font-size:16px; color:var(--primary); padding:0 10px;">${m.s1} - ${m.s2}</b>
+                        <b style="font-size:16px; color:var(--primary); padding:0 10px; font-family:'Rajdhani',sans-serif;">${m.s1} - ${m.s2}</b>
                         <div class="admin-only" style="display:flex; flex-direction:column; gap:5px;">
                             <button onclick="openEditScore('${m.id}')" style="background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-muted); border-radius:5px; padding:4px 8px; cursor:pointer;"><i class="fas fa-edit"></i></button>
                         </div>
