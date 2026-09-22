@@ -60,8 +60,8 @@
         body.viewer-only .admin-only { display: none !important; pointer-events: none; }
         body.not-true-owner .true-owner-only { display: none !important; pointer-events: none; }
 
-        #welcomeScreen, #authScreen, #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #adminScreen, #cropModal, #editMatchPlayersModal, #accessManagerModal, #bracketViewModal, #sessionSummaryModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-grad); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: opacity 0.5s ease, visibility 0.5s; }
-        #welcomeScreen.hidden, #authScreen.hidden, #fixedPairsDialog.hidden, #editScoreDialog.hidden, #archivesDialog.hidden, #playerCardModal.hidden, #shareMatchModal.hidden, #adminScreen.hidden, #cropModal.hidden, #editMatchPlayersModal.hidden, #accessManagerModal.hidden, #bracketViewModal.hidden, #sessionSummaryModal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        #welcomeScreen, #authScreen, #sportPickerScreen, #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #adminScreen, #cropModal, #editMatchPlayersModal, #accessManagerModal, #bracketViewModal, #sessionSummaryModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-grad); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: opacity 0.5s ease, visibility 0.5s; }
+        #welcomeScreen.hidden, #authScreen.hidden, #sportPickerScreen.hidden, #fixedPairsDialog.hidden, #editScoreDialog.hidden, #archivesDialog.hidden, #playerCardModal.hidden, #shareMatchModal.hidden, #adminScreen.hidden, #cropModal.hidden, #editMatchPlayersModal.hidden, #accessManagerModal.hidden, #bracketViewModal.hidden, #sessionSummaryModal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
         #fixedPairsDialog, #editScoreDialog, #archivesDialog, #playerCardModal, #shareMatchModal, #editMatchPlayersModal, #accessManagerModal, #bracketViewModal, #sessionSummaryModal { background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001; }
         #cropModal { background: #000; z-index: 10005; }
         
@@ -214,6 +214,36 @@
         .sport-chip.sport-tennis { color: var(--tennis-glow); background: rgba(34,211,238,0.12); }
         .sport-chip.sport-padel { color: var(--padel-glow); background: rgba(236,72,153,0.12); }
 
+        /* ===== TEMA APLIKASI MENYESUAIKAN OLAHRAGA YANG DIPILIH ===== */
+        body[data-sport="tennis"] { --primary: #06b6d4; --accent: #0891b2; }
+        body[data-sport="padel"] { --primary: #db2777; --accent: #be185d; }
+
+        /* ===== KARTU PEMILIH OLAHRAGA (SPORT GATE) ===== */
+        .sport-pick-card { background: rgba(255,255,255,0.08); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 2px solid rgba(255,255,255,0.18); border-radius: 20px; padding: 22px 24px; cursor: pointer; display: flex; align-items: center; gap: 18px; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; }
+        .sport-pick-card:active { transform: scale(0.96); }
+        .sport-pick-icon { font-size: 42px; line-height: 1; filter: drop-shadow(0 0 8px rgba(255,255,255,0.4)); }
+        .sport-pick-label { font-size: 19px; font-weight: 900; color: #fff; letter-spacing: 0.5px; }
+        .sport-pick-sub { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+        .sport-pick-tennis:hover, .sport-pick-tennis:active { border-color: var(--tennis-glow); box-shadow: 0 0 28px rgba(34,211,238,0.35); }
+        .sport-pick-padel:hover, .sport-pick-padel:active { border-color: var(--padel-glow); box-shadow: 0 0 28px rgba(236,72,153,0.35); }
+
+        /* ===== ANIMASI LATAR LAYAR LOGIN & SPORT PICKER ===== */
+        .auth-bg-anim { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; }
+        .bg-orb { position: absolute; bottom: -100px; border-radius: 50%; filter: blur(1px); opacity: 0; animation: orbFloat linear infinite; }
+        .orb-1 { left: 8%;  width: 60px; height: 60px; background: radial-gradient(circle, rgba(34,211,238,0.9), transparent 70%); animation-duration: 11s; animation-delay: 0s; }
+        .orb-2 { left: 82%; width: 34px; height: 34px; background: radial-gradient(circle, rgba(236,72,153,0.9), transparent 70%); animation-duration: 8s;  animation-delay: 1.5s; }
+        .orb-3 { left: 45%; width: 26px; height: 26px; background: radial-gradient(circle, rgba(255,215,0,0.85), transparent 70%);  animation-duration: 13s; animation-delay: 3s; }
+        .orb-4 { left: 65%; width: 48px; height: 48px; background: radial-gradient(circle, rgba(34,211,238,0.8), transparent 70%);  animation-duration: 10s; animation-delay: 4.5s; }
+        .orb-5 { left: 22%; width: 38px; height: 38px; background: radial-gradient(circle, rgba(236,72,153,0.8), transparent 70%);  animation-duration: 9.5s; animation-delay: 6s; }
+        @keyframes orbFloat {
+            0%   { transform: translateY(0) translateX(0) scale(0.7); opacity: 0; }
+            12%  { opacity: 0.8; }
+            85%  { opacity: 0.5; }
+            100% { transform: translateY(-620px) translateX(24px) scale(1.15); opacity: 0; }
+        }
+        .auth-logo { position: relative; z-index: 1; width: 84px; height: auto; border-radius: 18px; margin-bottom: 16px; box-shadow: 0 0 30px rgba(67,97,238,0.4); animation-delay: 0.1s; }
+        .auth-card { z-index: 1; }
+
         /* ===== TIER RANKING (EMAS/PERAK/PERUNGGU) ===== */
         .rank-row.tier-gold { border-color: rgba(255,215,0,0.5) !important; background: linear-gradient(90deg, rgba(255,215,0,0.12), var(--input-bg) 60%); }
         .rank-row.tier-silver { border-color: rgba(192,192,192,0.5) !important; background: linear-gradient(90deg, rgba(192,192,192,0.12), var(--input-bg) 60%); }
@@ -269,6 +299,14 @@
 </div>
 
 <div id="authScreen" class="hidden">
+    <div class="auth-bg-anim">
+        <span class="bg-orb orb-1"></span>
+        <span class="bg-orb orb-2"></span>
+        <span class="bg-orb orb-3"></span>
+        <span class="bg-orb orb-4"></span>
+        <span class="bg-orb orb-5"></span>
+    </div>
+    <img src="logo.png" class="auth-logo animate__animated animate__fadeInDown" alt="Pro Hitters">
     <div class="auth-card animate__animated animate__zoomIn">
         <h2 id="authTitle" style="color:var(--primary); font-weight:900; margin-top:0;">LOGIN APLIKASI</h2>
         <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">Silakan otentikasi untuk melanjutkan</p>
@@ -287,6 +325,18 @@
         </div>
     </div>
 </div>
+
+<div id="sportPickerScreen" class="hidden">
+    <div class="auth-bg-anim">
+        <span class="bg-orb orb-1"></span>
+        <span class="bg-orb orb-2"></span>
+        <span class="bg-orb orb-3"></span>
+        <span class="bg-orb orb-4"></span>
+        <span class="bg-orb orb-5"></span>
+    </div>
+    <div id="sportPickerContent" class="animate__animated animate__fadeInUp" style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:center;"></div>
+</div>
+
 
 <div id="adminScreen" class="hidden">
     <div class="card animate__animated animate__fadeInUp" style="width: 100%; max-width: 500px; margin-top: 20px; text-align:center;">
@@ -574,22 +624,23 @@
         <div id="setupArea" class="card owner-only" style="padding:20px;">
             <h3 style="margin:0 0 15px 0; text-align:center; color:var(--text-main);"><i class="fas fa-sliders-h"></i> Pengaturan Match</h3>
 
+            <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:15px; padding:10px; background:var(--input-bg); border-radius:12px; border:1px solid var(--border-color);">
+                <span style="font-size:11px; color:var(--text-muted); font-weight:bold;">OLAHRAGA TURNAMEN:</span>
+                <span id="currentSportBadge" class="sport-chip sport-tennis">🎾 TENNIS</span>
+                <button class="btn btn-ghost owner-only" style="width:auto; padding:4px 10px; font-size:11px; margin-left:auto;" onclick="requestChangeSport()"><i class="fas fa-exchange-alt"></i> Ganti</button>
+            </div>
+
             <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">MODE TURNAMEN</label>
             <div class="segmented-control">
                 <button id="btnModeLeague" class="seg-btn active" onclick="setTournamentMode('league')"><i class="fas fa-list-ol"></i> LIGA</button>
                 <button id="btnModeKnockout" class="seg-btn" onclick="setTournamentMode('knockout')"><i class="fas fa-sitemap"></i> KNOCKOUT</button>
             </div>
 
-            <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">JENIS OLAHRAGA</label>
-            <div class="segmented-control">
-                <button id="btnSportTennis" class="seg-btn active" onclick="setSport('tennis')">🎾 TENNIS</button>
-                <button id="btnSportPadel" class="seg-btn" onclick="setSport('padel')">🏸 PADEL</button>
-            </div>
-
             <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">FORMAT PERTANDINGAN</label>
             <div class="segmented-control" id="formatToggleDiv">
                 <button id="btnFormatSingles" class="seg-btn" onclick="setFormat('singles')"><i class="fas fa-user"></i> 1 VS 1</button>
                 <button id="btnFormatDoubles" class="seg-btn active" onclick="setFormat('doubles')"><i class="fas fa-user-friends"></i> 2 VS 2</button>
+
             </div>
 
             <div id="leagueSetupFields">
@@ -773,7 +824,7 @@
         title: "", players: [], matches: [], fixedPairs: [],
         isFinished: false, currentMatches: [], activeTab: 'home',
         viewRequests: [], approvedViewers: [], matchAdmins: [],
-        tournamentMode: 'league', bracket: null,
+        tournamentMode: 'league', bracket: null, sport: null,
         plannedRounds: null, roundNumber: 0
     };
     
@@ -1397,6 +1448,7 @@
                     data.matchAdmins = loadedData.matchAdmins || [];
                     data.tournamentMode = loadedData.tournamentMode || 'league';
                     data.bracket = loadedData.bracket || null;
+                    data.sport = loadedData.sport || null;
                     data.plannedRounds = loadedData.plannedRounds || null;
                     data.roundNumber = loadedData.roundNumber || 0;
 
@@ -1416,6 +1468,7 @@
                 }
                 
                 checkPermissions();
+                renderSportGate();
 
                 let t = localStorage.getItem('HH_ACTIVE_TAB');
                 if(!t) t = 'home';
@@ -1426,7 +1479,7 @@
                 
                 if(data.currentMatches && data.currentMatches.length > 0) {
                     let sample = data.currentMatches[0];
-                    if(sample.sport) setSport(sample.sport, false);
+                    if(sample.sport) { selectedSport = sample.sport; updateFormatAvailability(); }
                     if(sample.format) setFormat(sample.format, false);
                     renderMatches();
                 }
@@ -1606,11 +1659,12 @@
             archives.push(data);
             localStorage.setItem('HH_ARCHIVES', JSON.stringify(archives));
             
-            data = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [], tournamentMode: 'league', bracket: null, plannedRounds: null, roundNumber: 0 };
+            data = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [], tournamentMode: 'league', bracket: null, sport: null, plannedRounds: null, roundNumber: 0 };
             save();
             appSuccess("Berhasil", "Turnamen baru siap dimulai!");
             nav('home');
             renderTitleSetup();
+            renderSportGate();
         });
     }
 
@@ -1789,16 +1843,78 @@
         if(!singlesBtn) return;
         singlesBtn.classList.toggle('disabled', selectedSport === 'padel');
     }
-    function setSport(s, playSnd=true) {
-        if(playSnd) playSfx('pop');
-        selectedSport = s;
-        document.getElementById('btnSportTennis').className = s==='tennis' ? 'seg-btn active' : 'seg-btn';
-        document.getElementById('btnSportPadel').className = s==='padel' ? 'seg-btn active' : 'seg-btn';
-        updateFormatAvailability();
-        // Jika sedang di mode Singles lalu pindah ke Padel, otomatis alihkan ke Doubles
-        // supaya tidak tersangkut di kombinasi Padel+Singles yang sebenarnya tidak valid.
-        if(s === 'padel' && selectedFormat === 'singles') setFormat('doubles', false);
+    function renderSportGate() {
+        let gate = document.getElementById('sportPickerScreen');
+        let content = document.getElementById('sportPickerContent');
+        if(!gate || !content) return;
+
+        if(data.sport) {
+            gate.classList.add('hidden');
+            document.body.setAttribute('data-sport', data.sport);
+            selectedSport = data.sport;
+            updateFormatAvailability();
+            let badge = document.getElementById('currentSportBadge');
+            if(badge) {
+                badge.innerHTML = data.sport === 'padel' ? '🏸 PADEL' : '🎾 TENNIS';
+                badge.className = 'sport-chip ' + (data.sport === 'padel' ? 'sport-padel' : 'sport-tennis');
+            }
+            return;
+        }
+
+        document.body.removeAttribute('data-sport');
+        let isOwner = (auth.currentUser && currentViewingId === auth.currentUser.uid);
+        let isAdmin = (auth.currentUser && data.matchAdmins && data.matchAdmins.includes(auth.currentUser.uid));
+
+        if(isOwner || isAdmin) {
+            content.innerHTML = `
+                <h2 style="color:#fff; margin:0 0 6px 0; font-weight:900;">PILIH OLAHRAGA</h2>
+                <p style="color:rgba(255,255,255,0.8); font-size:13px; margin:0 0 26px 0; max-width:300px;">Tentukan jenis olahraga untuk turnamen ini. Tampilan aplikasi akan menyesuaikan otomatis.</p>
+                <div style="display:flex; flex-direction:column; gap:16px; width:90%; max-width:320px;">
+                    <div class="sport-pick-card sport-pick-tennis" onclick="chooseTournamentSport('tennis')">
+                        <div class="sport-pick-icon">🎾</div>
+                        <div style="text-align:left;"><div class="sport-pick-label">TENNIS</div><div class="sport-pick-sub">1 VS 1 atau 2 VS 2</div></div>
+                    </div>
+                    <div class="sport-pick-card sport-pick-padel" onclick="chooseTournamentSport('padel')">
+                        <div class="sport-pick-icon">🏸</div>
+                        <div style="text-align:left;"><div class="sport-pick-label">PADEL</div><div class="sport-pick-sub">2 VS 2</div></div>
+                    </div>
+                </div>`;
+        } else {
+            content.innerHTML = `
+                <i class="fas fa-hourglass-half" style="font-size:32px; color:rgba(255,255,255,0.6); margin-bottom:14px;"></i>
+                <h3 style="color:#fff; margin:0 0 6px 0;">Menunggu Host</h3>
+                <p style="color:rgba(255,255,255,0.75); font-size:13px;">Host sedang memilih jenis olahraga untuk turnamen ini...</p>`;
+        }
+        gate.classList.remove('hidden');
     }
+
+    function chooseTournamentSport(sport) {
+        data.sport = sport;
+        selectedSport = sport;
+        document.body.setAttribute('data-sport', sport);
+        updateFormatAvailability();
+        if(sport === 'padel' && selectedFormat === 'singles') setFormat('doubles', false);
+        playSfx('whistle');
+        save();
+        document.getElementById('sportPickerScreen').classList.add('hidden');
+        let badge = document.getElementById('currentSportBadge');
+        if(badge) {
+            badge.innerHTML = sport === 'padel' ? '🏸 PADEL' : '🎾 TENNIS';
+            badge.className = 'sport-chip ' + (sport === 'padel' ? 'sport-padel' : 'sport-tennis');
+        }
+    }
+
+    function requestChangeSport() {
+        if(data.currentMatches && data.currentMatches.length > 0) {
+            return appAlert("Perhatian", "Selesaikan pertandingan yang sedang berjalan terlebih dahulu sebelum mengganti olahraga.");
+        }
+        appConfirm("Ganti Olahraga", "Olahraga turnamen ini akan diatur ulang dan Anda akan diminta memilih lagi. Lanjutkan?", () => {
+            data.sport = null;
+            save();
+            renderSportGate();
+        });
+    }
+
     function setFormat(f, playSnd=true) {
         if(selectedSport === 'padel' && f === 'singles') {
             showToast('Tidak Tersedia', 'Padel tidak memiliki mode 1 VS 1 (Singles). Pilih Tennis untuk mode ini.', 'warning');
@@ -1940,9 +2056,15 @@
         let bracketSize = 1;
         while(bracketSize < entrants.length) bracketSize *= 2;
 
-        let slots = [...entrants];
-        while(slots.length < bracketSize) slots.push(null);
-        slots.sort(() => Math.random() - 0.5);
+        // PERBAIKAN: dulu semua slot (termasuk slot BYE/kosong) diacak jadi satu,
+        // sehingga ada kemungkinan 2 slot kosong berpasangan jadi 1 match "hantu"
+        // (p1=null, p2=null) yang bikin seluruh papan skor gagal dirender.
+        // Sekarang: isi 1 entrant asli dulu ke tiap match (slot A), baru sisanya
+        // ke slot B — menjamin setiap match selalu punya minimal 1 tim asli.
+        let numMatches = bracketSize / 2;
+        let slots = new Array(bracketSize).fill(null);
+        for(let i = 0; i < numMatches; i++) slots[i*2] = entrants[i] || null;
+        for(let i = numMatches; i < entrants.length; i++) slots[(i - numMatches) * 2 + 1] = entrants[i];
 
         let round0 = [];
         for(let i=0; i<bracketSize; i+=2) {
@@ -1969,7 +2091,7 @@
         let round = data.bracket.rounds[roundIdx];
         let cm = [];
         round.forEach((bm, i) => {
-            if(!bm.bye) {
+            if(!bm.bye && bm.p1 && bm.p2) {
                 cm.push({
                     id: bm.id, court: i+1,
                     t1: bm.p1, t2: bm.p2,
@@ -2289,7 +2411,10 @@
         document.getElementById('setupArea').style.display = 'none';
         
         let html = '';
-        data.currentMatches.forEach((m) => { html += generateMatchHTML(m); });
+        data.currentMatches.forEach((m) => {
+            try { html += generateMatchHTML(m); }
+            catch(e) { console.error('Gagal merender match:', m, e); }
+        });
         
         document.getElementById('multiCourtContainer').innerHTML = html;
         document.getElementById('matchArea').classList.remove('hidden');
@@ -2685,7 +2810,7 @@
 
     function resetConfirm() {
         appConfirm("RESET DATA", "PERINGATAN: Semua data pemain, judul, dan riwayat pertandingan aktif akan dihapus. Yakin?", () => {
-            let defaultData = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [], tournamentMode: 'league', bracket: null, plannedRounds: null, roundNumber: 0 };
+            let defaultData = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [], tournamentMode: 'league', bracket: null, sport: null, plannedRounds: null, roundNumber: 0 };
             if(db && auth.currentUser) {
                 db.collection("tournaments").doc(auth.currentUser.uid).set(defaultData).then(() => location.reload());
             } else {
