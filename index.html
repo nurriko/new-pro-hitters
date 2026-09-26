@@ -484,6 +484,10 @@
         <select id="selP1"></select>
         <div style="text-align:center; font-weight:bold; color:var(--text-muted);">+</div>
         <select id="selP2"></select>
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+            <input type="text" id="teamNameInput" placeholder="Nama Tim (opsional, misal: Tim Kuning)" style="flex:1; margin-bottom:0;">
+            <button type="button" class="btn btn-ghost" style="width:auto; padding:0 14px; margin-bottom:0;" onclick="document.getElementById('teamNameInput').value = pickRandomTeamNames(1)[0]" title="Acak nama tim"><i class="fas fa-dice"></i></button>
+        </div>
         <button class="btn btn-primary" onclick="addManualPair()" style="margin-bottom:15px;">Tambah Pasangan</button>
         
         <hr style="border:0; border-top:1px dashed var(--border-color); margin:15px 0;">
@@ -645,13 +649,7 @@
 
             </div>
 
-            <div id="leagueSetupFields">
-                <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">JUMLAH LAPANGAN AKTIF</label>
-                <input type="number" id="numCourts" value="1" min="1" max="10" style="text-align:center; font-weight:900; font-size:16px;" oninput="renderNextUpPreview()">
-
-                <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">RONDE DIRENCANAKAN (OPSIONAL)</label>
-                <input type="number" id="plannedRoundsInp" placeholder="Kosongkan jika tidak dibatasi" min="1" onchange="setPlannedRounds(this.value)">
-
+            <div id="partnerModeSetup">
                 <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">SISTEM PASANGAN (PARTNER)</label>
                 <div class="segmented-control">
                     <button id="btnPasanganAcak" class="seg-btn active" onclick="setPartnerMode('acak')"><i class="fas fa-random"></i> ACAK</button>
@@ -661,6 +659,14 @@
                 <div id="fixedPartnerSetup" class="hidden" style="margin-bottom:15px; text-align:center;">
                     <button id="btnKelolaPasangan" class="btn btn-ghost owner-only" onclick="openFixedPairsDialog()"><i class="fas fa-users-cog"></i> Kelola Pasangan Tetap</button>
                 </div>
+            </div>
+
+            <div id="leagueSetupFields">
+                <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">JUMLAH LAPANGAN AKTIF</label>
+                <input type="number" id="numCourts" value="1" min="1" max="10" style="text-align:center; font-weight:900; font-size:16px;" oninput="renderNextUpPreview()">
+
+                <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">RONDE DIRENCANAKAN (OPSIONAL)</label>
+                <input type="number" id="plannedRoundsInp" placeholder="Kosongkan jika tidak dibatasi" min="1" onchange="setPlannedRounds(this.value)">
 
                 <div id="nextUpPreview" style="margin-bottom:15px;"></div>
 
@@ -670,11 +676,12 @@
             </div>
 
             <div id="knockoutSetupFields" class="hidden">
-                <p style="font-size:12px; color:var(--text-muted); text-align:center; margin-bottom:15px;">Bracket gugur akan dibuat otomatis dari semua pemain berstatus HADIR, diacak secara acak. Jika jumlah peserta bukan kelipatan 2, sebagian akan mendapat BYE (otomatis lolos) di babak pertama.</p>
+                <p style="font-size:12px; color:var(--text-muted); text-align:center; margin-bottom:15px;">Bracket gugur akan dibuat otomatis dari semua pemain berstatus HADIR. Jika jumlah peserta bukan kelipatan 2, sebagian akan mendapat BYE (otomatis lolos) di babak pertama.</p>
                 <button id="btnBuatBracket" class="btn btn-primary owner-only" style="font-size:16px; padding:16px;" onclick="generateBracket()">
                     <i class="fas fa-sitemap"></i> BUAT BRACKET OTOMATIS
                 </button>
             </div>
+
             
             <div id="finishedSetupAlert" class="hidden" style="text-align:center; padding: 15px; background: rgba(239, 68, 68, 0.1); border: 1px dashed #ef4444; border-radius: 12px; margin-top: 15px; color: #ef4444; font-weight: bold; font-size: 13px;">
                 <i class="fas fa-lock"></i> Turnamen Telah Selesai.<br>Buka kembali turnamen di menu <b>Klasemen</b> untuk mengacak permainan lagi.
@@ -720,7 +727,7 @@
 
         <div id="rankCaptureArea" class="card" style="padding:20px;">
             <div style="text-align:center; margin-bottom:20px; border-bottom:2px dashed var(--border-color); padding-bottom:15px;">
-                <h4 style="margin:0; color:var(--primary); font-weight:900; letter-spacing:1px; font-size: 18px;">LEADERBOARD</h4>
+                <h4 id="rankTabTitle" style="margin:0; color:var(--primary); font-weight:900; letter-spacing:1px; font-size: 18px;">LEADERBOARD</h4>
                 <div id="finishBadge" class="hidden" style="background:var(--gold); color:#000; display:inline-block; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:900; margin-top:8px;">🏆 TURNAMEN SELESAI</div>
             </div>
             <div id="rankTableContainer" style="overflow-x: auto;">
@@ -739,6 +746,7 @@
                     <tbody id="rankBody"></tbody>
                 </table>
             </div>
+            <div id="rankBracketContainer" class="hidden" style="text-align:left;"></div>
         </div>
 
         <div id="finishArea" class="owner-only" style="margin-top:20px;">
@@ -852,6 +860,18 @@
 
     function emptyStateHtml(icon, title, subtitle) {
         return `<div class="empty-state-box"><i class="fas ${icon}"></i><b>${escapeHtml(title)}</b><span>${escapeHtml(subtitle)}</span></div>`;
+    }
+
+    const TEAM_NAME_POOL = ['Tim Kuning','Tim Hijau','Tim Merah','Tim Biru','Tim Ungu','Tim Oranye','Tim Perak','Tim Emas','Tim Elang','Tim Singa','Tim Naga','Tim Rajawali','Tim Badai','Tim Petir','Tim Kobra','Tim Macan','Tim Garuda','Tim Banteng'];
+    function pickRandomTeamNames(count) {
+        let pool = [...TEAM_NAME_POOL];
+        while(pool.length < count) pool = pool.concat(TEAM_NAME_POOL);
+        pool.sort(() => Math.random() - 0.5);
+        return pool.slice(0, count);
+    }
+    function teamDisplayName(playersArr, customName) {
+        if(customName) return escapeHtml(customName);
+        return escapeHtml(playersArr.map(p=>p.name).join(' & '));
     }
 
     const DEF_M = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23dbeafe'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%233b82f6'/%3E%3C/svg%3E";
@@ -1896,6 +1916,7 @@
         document.body.setAttribute('data-sport', sport);
         updateFormatAvailability();
         if(sport === 'padel' && selectedFormat === 'singles') setFormat('doubles', false);
+        else setFormat(selectedFormat, false);
         playSfx('whistle');
         save();
         document.getElementById('sportPickerScreen').classList.add('hidden');
@@ -1926,6 +1947,8 @@
         selectedFormat = f;
         document.getElementById('btnFormatSingles').className = f==='singles' ? 'seg-btn active' : 'seg-btn';
         document.getElementById('btnFormatDoubles').className = f==='doubles' ? 'seg-btn active' : 'seg-btn';
+        let pms = document.getElementById('partnerModeSetup');
+        if(pms) pms.classList.toggle('hidden', f !== 'doubles');
         renderNextUpPreview();
     }
     function setPartnerMode(mode, playSnd=true) {
@@ -1986,9 +2009,9 @@
         if(data.tournamentMode === 'knockout' && data.bracket) {
             bar.classList.remove('hidden');
             if(btnInline) btnInline.classList.remove('hidden');
-            if(btnRank) btnRank.classList.remove('hidden');
+            if(btnRank) btnRank.classList.add('hidden');
             if(data.bracket.championId) {
-                let champ = data.bracket.championId.map(id => { let p = data.players.find(x=>x.id===id); return p ? p.name : '?'; }).join(' & ');
+                let champ = data.bracket.championName || data.bracket.championId.map(id => { let p = data.players.find(x=>x.id===id); return p ? p.name : '?'; }).join(' & ');
                 txt.innerHTML = `🏆 JUARA: ${escapeHtml(champ)}`;
             } else {
                 let curRoundIdx = data.bracket.rounds.length - 1;
@@ -2003,6 +2026,23 @@
                 txt.innerText = `RONDE ${data.roundNumber || 0} DARI ${data.plannedRounds}`;
             } else {
                 bar.classList.add('hidden');
+            }
+        }
+
+        let rankTableBox = document.getElementById('rankTableContainer');
+        let rankBracketBox = document.getElementById('rankBracketContainer');
+        let rankTitle = document.getElementById('rankTabTitle');
+        if(rankTableBox && rankBracketBox) {
+            if(data.tournamentMode === 'knockout' && data.bracket) {
+                rankTableBox.classList.add('hidden');
+                rankBracketBox.classList.remove('hidden');
+                if(rankTitle) rankTitle.innerText = 'BAGAN BRACKET';
+                let { html } = buildBracketTreeHTML();
+                rankBracketBox.innerHTML = html;
+            } else {
+                rankTableBox.classList.remove('hidden');
+                rankBracketBox.classList.add('hidden');
+                if(rankTitle) rankTitle.innerText = 'LEADERBOARD';
             }
         }
 
@@ -2042,16 +2082,31 @@
 
     function buildFreshBracket() {
         let activePlayers = data.players.filter(p => p.isPresent !== false);
-        let entrants = [];
+        let entrants = []; // setiap entrant: { players: [...], teamName: string|null }
 
         if(selectedFormat === 'doubles') {
             if(activePlayers.length < 4) return appAlert("Error", "Minimal 4 pemain HADIR dibutuhkan untuk bracket ganda (2 VS 2).");
-            let pool = [...activePlayers].sort(() => Math.random() - 0.5);
-            for(let i=0; i+1<pool.length; i+=2) entrants.push([pool[i], pool[i+1]]);
-            if(pool.length % 2 !== 0) appAlert("Info", `Pemain ${pool[pool.length-1].name} tidak ikut bracket karena jumlah pemain hadir ganjil.`);
+
+            if(currentPartnerMode === 'tetap') {
+                let validPairs = (data.fixedPairs || []).filter(fp => {
+                    let p1 = data.players.find(x => x.id === fp.p1); let p2 = data.players.find(x => x.id === fp.p2);
+                    return p1 && p1.isPresent !== false && p2 && p2.isPresent !== false;
+                });
+                if(validPairs.length < 2) return appAlert("Error", "Minimal 2 Pasangan Tetap yang HADIR dibutuhkan untuk bracket ganda. Kelola pasangan lewat tombol 'Kelola Pasangan Tetap'.");
+                entrants = validPairs.map(fp => ({
+                    players: [data.players.find(x=>x.id===fp.p1), data.players.find(x=>x.id===fp.p2)],
+                    teamName: fp.teamName || null
+                }));
+            } else {
+                let pool = [...activePlayers].sort(() => Math.random() - 0.5);
+                let pairCount = Math.floor(pool.length / 2);
+                let teamNames = pickRandomTeamNames(pairCount);
+                for(let i=0; i+1<pool.length; i+=2) entrants.push({ players: [pool[i], pool[i+1]], teamName: teamNames[i/2] });
+                if(pool.length % 2 !== 0) appAlert("Info", `Pemain ${pool[pool.length-1].name} tidak ikut bracket karena jumlah pemain hadir ganjil.`);
+            }
         } else {
             if(activePlayers.length < 2) return appAlert("Error", "Minimal 2 pemain HADIR dibutuhkan untuk bracket tunggal (1 VS 1).");
-            entrants = activePlayers.map(p => [p]);
+            entrants = activePlayers.map(p => ({ players: [p], teamName: null }));
         }
         entrants.sort(() => Math.random() - 0.5);
 
@@ -2071,14 +2126,14 @@
         let round0 = [];
         for(let i=0; i<bracketSize; i+=2) {
             let a = slots[i], b = slots[i+1];
-            let match = { id: 'BM_'+Date.now()+'_'+i, p1: a, p2: b, s1: null, s2: null, winner: null, bye: false };
+            let match = { id: 'BM_'+Date.now()+'_'+i, p1: a ? a.players : null, p2: b ? b.players : null, p1Name: a ? a.teamName : null, p2Name: b ? b.teamName : null, s1: null, s2: null, winner: null, bye: false };
             if(a && b) { match.s1 = 0; match.s2 = 0; }
             else if(a && !b) { match.winner = 'p1'; match.bye = true; }
             else if(b && !a) { match.winner = 'p2'; match.bye = true; }
             round0.push(match);
         }
 
-        data.bracket = { format: selectedFormat, sport: selectedSport, totalRounds: Math.log2(bracketSize), rounds: [round0], championId: null };
+        data.bracket = { format: selectedFormat, sport: selectedSport, partnerMode: currentPartnerMode, totalRounds: Math.log2(bracketSize), rounds: [round0], championId: null, championName: null };
         data.isFinished = false;
 
         playSfx('whistle');
@@ -2096,7 +2151,7 @@
             if(!bm.bye && bm.p1 && bm.p2) {
                 cm.push({
                     id: bm.id, court: i+1,
-                    t1: bm.p1, t2: bm.p2,
+                    t1: bm.p1, t2: bm.p2, t1Name: bm.p1Name || null, t2Name: bm.p2Name || null,
                     sport: data.bracket.sport, format: data.bracket.format,
                     partnerMode: 'acak', g1: 0, g2: 0,
                     bracketRound: roundIdx, bracketMatchIndex: i
@@ -2114,20 +2169,22 @@
         if(!allResolved) return;
 
         let winners = round.map(m => m.winner === 'p1' ? m.p1 : m.p2);
+        let winnerNames = round.map(m => m.winner === 'p1' ? m.p1Name : m.p2Name);
 
         if(winners.length === 1) {
             data.bracket.championId = winners[0].map(p => p.id);
+            data.bracket.championName = winnerNames[0] || null;
             data.isFinished = true;
             data.currentMatches = [];
             confetti({ particleCount: 250, spread: 120, origin: { y: 0.5 }, colors: ['#FFD700', '#4361ee', '#f72585'] });
-            let champName = winners[0].map(p => p.name).join(' & ');
+            let champName = winnerNames[0] || winners[0].map(p => p.name).join(' & ');
             setTimeout(() => appSuccess("🏆 JUARA TURNAMEN!", `Selamat kepada ${champName} sebagai JUARA turnamen Knockout!`), 300);
             return;
         }
 
         let nextRound = [];
         for(let i=0; i<winners.length; i+=2) {
-            nextRound.push({ id: 'BM_'+Date.now()+'_'+i, p1: winners[i], p2: winners[i+1], s1: 0, s2: 0, winner: null, bye: false });
+            nextRound.push({ id: 'BM_'+Date.now()+'_'+i, p1: winners[i], p2: winners[i+1], p1Name: winnerNames[i] || null, p2Name: winnerNames[i+1] || null, s1: 0, s2: 0, winner: null, bye: false });
         }
         data.bracket.rounds.push(nextRound);
         syncBracketCurrentMatches();
@@ -2148,16 +2205,15 @@
         }, 250);
     }
 
-    function openBracketView() {
-        playSfx('pop');
-        if(!data.bracket) return appAlert("Info", "Belum ada bracket yang dibuat untuk turnamen ini.");
+    function buildBracketTreeHTML() {
+        if(!data.bracket) return { html: emptyStateHtml('fa-sitemap', 'Bracket kosong', 'Belum ada pertandingan di bagan ini'), hasLiveMatch: false };
         let html = '';
         let hasLiveMatch = false;
         data.bracket.rounds.forEach((round, rIdx) => {
             html += `<div class="bracket-round-title"><i class="fas fa-layer-group"></i> ${roundLabel(rIdx, data.bracket.totalRounds)}</div>`;
             round.forEach(m => {
-                let n1 = m.p1 ? escapeHtml(m.p1.map(p=>p.name).join(' & ')) : '???';
-                let n2 = m.p2 ? escapeHtml(m.p2.map(p=>p.name).join(' & ')) : '???';
+                let n1 = m.p1 ? (m.p1Name ? escapeHtml(m.p1Name) : escapeHtml(m.p1.map(p=>p.name).join(' & '))) : '???';
+                let n2 = m.p2 ? (m.p2Name ? escapeHtml(m.p2Name) : escapeHtml(m.p2.map(p=>p.name).join(' & '))) : '???';
                 if(m.bye) {
                     let winnerName = m.winner === 'p1' ? n1 : n2;
                     html += `<div class="bracket-match"><div class="bracket-bye"><i class="fas fa-forward"></i> ${winnerName} lolos otomatis (BYE)</div></div>`;
@@ -2176,11 +2232,18 @@
             });
         });
         if(data.bracket.championId) {
-            let champ = data.bracket.championId.map(id => { let p = data.players.find(x=>x.id===id); return p ? escapeHtml(p.name) : '?'; }).join(' & ');
+            let champ = data.bracket.championName ? escapeHtml(data.bracket.championName) : data.bracket.championId.map(id => { let p = data.players.find(x=>x.id===id); return p ? escapeHtml(p.name) : '?'; }).join(' & ');
             html += `<div class="card champion-card" style="text-align:center; padding:20px; border:2px solid var(--gold); margin-top:10px;"><div style="font-size:36px; animation: crownFloat 2s ease-in-out infinite;">🏆</div><b style="color:var(--gold); font-size:18px; text-shadow:0 0 16px rgba(255,215,0,0.5);">${champ}</b></div>`;
         }
+        return { html, hasLiveMatch };
+    }
+
+    function openBracketView() {
+        playSfx('pop');
+        if(!data.bracket) return appAlert("Info", "Belum ada bracket yang dibuat untuk turnamen ini.");
+        let { html, hasLiveMatch } = buildBracketTreeHTML();
         let banner = hasLiveMatch ? `<div class="admin-only" style="font-size:11px; color:var(--text-muted); background:var(--input-bg); border-radius:10px; padding:8px 12px; margin-bottom:12px;"><i class="fas fa-circle-info"></i> Bagan ini hanya menampilkan progres. Ketuk tombol <b>INPUT SKOR MATCH INI</b> di bawah untuk mencatat hasil, atau buka tab <b>Main</b>.</div>` : '';
-        document.getElementById('bracketViewContainer').innerHTML = banner + (html || emptyStateHtml('fa-sitemap', 'Bracket kosong', 'Belum ada pertandingan di bagan ini'));
+        document.getElementById('bracketViewContainer').innerHTML = banner + html;
         document.getElementById('bracketViewModal').classList.remove('hidden');
     }
 
@@ -2256,8 +2319,9 @@
             let p1 = data.players.find(x=>x.id===fp.p1); let p2 = data.players.find(x=>x.id===fp.p2);
             if(!p1 || !p2) return '';
             let warn = (p1.isPresent===false || p2.isPresent===false) ? '<small style="color:var(--warning); font-weight:bold;">(Absen)</small>' : '';
+            let nameLabel = fp.teamName ? `${escapeHtml(fp.teamName)} <small style="color:var(--text-muted); font-weight:normal;">(${escapeHtml(p1.name)} & ${escapeHtml(p2.name)})</small>` : `${escapeHtml(p1.name)} & ${escapeHtml(p2.name)}`;
             return `<div style="display:flex; justify-content:space-between; align-items:center; background:var(--input-bg); padding:10px 15px; margin-bottom:8px; border-radius:10px; border:1px solid var(--border-color);">
-                <div style="font-weight:bold; color:var(--text-main);">${escapeHtml(p1.name)} & ${escapeHtml(p2.name)} ${warn}</div>
+                <div style="font-weight:bold; color:var(--text-main);">${nameLabel} ${warn}</div>
                 <button onclick="delFixedPair(${i})" style="color:#ef4444; background:none; border:none; cursor:pointer;"><i class="fas fa-trash-alt"></i></button>
             </div>`;
         }).join('');
@@ -2265,18 +2329,23 @@
     }
     function addManualPair() {
         let p1 = document.getElementById('selP1').value; let p2 = document.getElementById('selP2').value;
+        let teamName = document.getElementById('teamNameInput').value.trim();
         if(!p1 || !p2 || p1===p2) return appAlert("Error", "Pilih dua pemain yang berbeda!");
         let exists = data.fixedPairs.find(f => f.p1===p1 || f.p1===p2 || f.p2===p1 || f.p2===p2);
         if(exists) return appAlert("Error", "Salah satu pemain sudah memiliki pasangan! Hapus dulu pasangan sebelumnya.");
-        data.fixedPairs.push({p1, p2, playCount:0}); save(); renderFixedPairsUI();
+        data.fixedPairs.push({p1, p2, playCount:0, teamName: teamName || null});
+        document.getElementById('teamNameInput').value = '';
+        save(); renderFixedPairsUI();
     }
     function generateRandomPairs() {
         appConfirm("Acak Pasangan Tetap", "Ini akan menghapus pasangan tetap yang ada saat ini dan mengacak ulang semua pemain berstatus HADIR. Lanjutkan?", () => {
             let active = data.players.filter(p => p.isPresent !== false);
             active.sort(() => Math.random() - 0.5);
             data.fixedPairs = [];
+            let pairCount = Math.floor(active.length / 2);
+            let teamNames = pickRandomTeamNames(pairCount);
             for(let i=0; i<active.length-1; i+=2) {
-                data.fixedPairs.push({ p1: active[i].id, p2: active[i+1].id, playCount: 0 });
+                data.fixedPairs.push({ p1: active[i].id, p2: active[i+1].id, playCount: 0, teamName: teamNames[i/2] });
             }
             save(); renderFixedPairsUI();
             if(active.length % 2 !== 0) appAlert("Info", `Pemain ${active[active.length-1].name} tidak mendapat pasangan karena jumlah pemain ganjil.`);
@@ -2323,7 +2392,7 @@
                 let pA = selectedPairs[i*2]; let pB = selectedPairs[i*2 + 1];
                 let t1 = [ data.players.find(x=>x.id===pA.p1), data.players.find(x=>x.id===pA.p2) ];
                 let t2 = [ data.players.find(x=>x.id===pB.p1), data.players.find(x=>x.id===pB.p2) ];
-                newMatches.push(createMatchObj(i+1, t1, t2));
+                newMatches.push(createMatchObj(i+1, t1, t2, pA.teamName || null, pB.teamName || null));
             }
             data.currentMatches = newMatches;
         } else {
@@ -2393,10 +2462,10 @@
         save(); renderMatches(); renderRoundInfo();
     }
 
-    function createMatchObj(courtNum, t1, t2) {
+    function createMatchObj(courtNum, t1, t2, t1Name=null, t2Name=null) {
         return {
             id: 'MC_'+Date.now()+'_'+courtNum, court: courtNum,
-            t1, t2, sport: selectedSport, format: selectedFormat,
+            t1, t2, t1Name, t2Name, sport: selectedSport, format: selectedFormat,
             partnerMode: currentPartnerMode,
             g1:0, g2:0
         };
@@ -2443,8 +2512,8 @@
     }
 
     function generateMatchHTML(m) {
-        let t1Names = m.t1.map(x=>x.name).join(' & ');
-        let t2Names = m.t2.map(x=>x.name).join(' & ');
+        let t1Names = m.t1Name || m.t1.map(x=>x.name).join(' & ');
+        let t2Names = m.t2Name || m.t2.map(x=>x.name).join(' & ');
         let sportClass = m.sport === 'padel' ? 'sport-padel' : 'sport-tennis';
         let sportColorVar = m.sport === 'padel' ? '--padel-glow' : '--tennis-glow';
 
@@ -2653,7 +2722,7 @@
             data.matches.unshift({
                 id: 'HIST_' + Date.now() + '_' + Math.floor(Math.random()*1000),
                 sport: m.sport, format: m.format, logic: m.partnerMode === 'tetap' ? 'fixed' : (m.padelLogic || 'standard'),
-                t1: m.t1.map(x=>x.name).join(' & '), t2: m.t2.map(x=>x.name).join(' & '), 
+                t1: m.t1Name || m.t1.map(x=>x.name).join(' & '), t2: m.t2Name || m.t2.map(x=>x.name).join(' & '), 
                 ids1: m.t1.map(x=>x.id), ids2: m.t2.map(x=>x.id), court: m.court,
                 s1, s2, time: new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}),
                 dateStr: new Date().toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'})
@@ -2690,7 +2759,7 @@
             id: 'HIST_' + Date.now() + '_' + Math.floor(Math.random()*1000),
             sport: m.sport, format: m.format, logic: 'knockout',
             roundLabel: label,
-            t1: m.t1.map(x=>x.name).join(' & '), t2: m.t2.map(x=>x.name).join(' & '),
+            t1: m.t1Name || m.t1.map(x=>x.name).join(' & '), t2: m.t2Name || m.t2.map(x=>x.name).join(' & '),
             ids1: m.t1.map(x=>x.id), ids2: m.t2.map(x=>x.id), court: m.court,
             s1, s2, time: new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}),
             dateStr: new Date().toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'})
