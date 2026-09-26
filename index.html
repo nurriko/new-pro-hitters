@@ -870,8 +870,8 @@
         return pool.slice(0, count);
     }
     function teamDisplayName(playersArr, customName) {
-        if(customName) return escapeHtml(customName);
-        return escapeHtml(playersArr.map(p=>p.name).join(' & '));
+        let playerNames = (playersArr || []).map(p=>p.name).join(' & ');
+        return customName ? `${customName} (${playerNames})` : playerNames;
     }
 
     const DEF_M = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23dbeafe'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%233b82f6'/%3E%3C/svg%3E";
@@ -2177,7 +2177,7 @@
             data.isFinished = true;
             data.currentMatches = [];
             confetti({ particleCount: 250, spread: 120, origin: { y: 0.5 }, colors: ['#FFD700', '#4361ee', '#f72585'] });
-            let champName = winnerNames[0] || winners[0].map(p => p.name).join(' & ');
+            let champName = teamDisplayName(winners[0], winnerNames[0]);
             setTimeout(() => appSuccess("🏆 JUARA TURNAMEN!", `Selamat kepada ${champName} sebagai JUARA turnamen Knockout!`), 300);
             return;
         }
@@ -2212,8 +2212,8 @@
         data.bracket.rounds.forEach((round, rIdx) => {
             html += `<div class="bracket-round-title"><i class="fas fa-layer-group"></i> ${roundLabel(rIdx, data.bracket.totalRounds)}</div>`;
             round.forEach(m => {
-                let n1 = m.p1 ? (m.p1Name ? escapeHtml(m.p1Name) : escapeHtml(m.p1.map(p=>p.name).join(' & '))) : '???';
-                let n2 = m.p2 ? (m.p2Name ? escapeHtml(m.p2Name) : escapeHtml(m.p2.map(p=>p.name).join(' & '))) : '???';
+                let n1 = m.p1 ? escapeHtml(teamDisplayName(m.p1, m.p1Name)) : '???';
+                let n2 = m.p2 ? escapeHtml(teamDisplayName(m.p2, m.p2Name)) : '???';
                 if(m.bye) {
                     let winnerName = m.winner === 'p1' ? n1 : n2;
                     html += `<div class="bracket-match"><div class="bracket-bye"><i class="fas fa-forward"></i> ${winnerName} lolos otomatis (BYE)</div></div>`;
@@ -2232,7 +2232,8 @@
             });
         });
         if(data.bracket.championId) {
-            let champ = data.bracket.championName ? escapeHtml(data.bracket.championName) : data.bracket.championId.map(id => { let p = data.players.find(x=>x.id===id); return p ? escapeHtml(p.name) : '?'; }).join(' & ');
+            let champPlayers = data.bracket.championId.map(id => { let p = data.players.find(x=>x.id===id); return p ? p : { name: '?' }; });
+            let champ = escapeHtml(teamDisplayName(champPlayers, data.bracket.championName));
             html += `<div class="card champion-card" style="text-align:center; padding:20px; border:2px solid var(--gold); margin-top:10px;"><div style="font-size:36px; animation: crownFloat 2s ease-in-out infinite;">🏆</div><b style="color:var(--gold); font-size:18px; text-shadow:0 0 16px rgba(255,215,0,0.5);">${champ}</b></div>`;
         }
         return { html, hasLiveMatch };
@@ -2512,8 +2513,8 @@
     }
 
     function generateMatchHTML(m) {
-        let t1Names = m.t1Name || m.t1.map(x=>x.name).join(' & ');
-        let t2Names = m.t2Name || m.t2.map(x=>x.name).join(' & ');
+        let t1Names = teamDisplayName(m.t1, m.t1Name);
+        let t2Names = teamDisplayName(m.t2, m.t2Name);
         let sportClass = m.sport === 'padel' ? 'sport-padel' : 'sport-tennis';
         let sportColorVar = m.sport === 'padel' ? '--padel-glow' : '--tennis-glow';
 
@@ -2722,7 +2723,7 @@
             data.matches.unshift({
                 id: 'HIST_' + Date.now() + '_' + Math.floor(Math.random()*1000),
                 sport: m.sport, format: m.format, logic: m.partnerMode === 'tetap' ? 'fixed' : (m.padelLogic || 'standard'),
-                t1: m.t1Name || m.t1.map(x=>x.name).join(' & '), t2: m.t2Name || m.t2.map(x=>x.name).join(' & '), 
+                t1: teamDisplayName(m.t1, m.t1Name), t2: teamDisplayName(m.t2, m.t2Name), 
                 ids1: m.t1.map(x=>x.id), ids2: m.t2.map(x=>x.id), court: m.court,
                 s1, s2, time: new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}),
                 dateStr: new Date().toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'})
@@ -2759,7 +2760,7 @@
             id: 'HIST_' + Date.now() + '_' + Math.floor(Math.random()*1000),
             sport: m.sport, format: m.format, logic: 'knockout',
             roundLabel: label,
-            t1: m.t1Name || m.t1.map(x=>x.name).join(' & '), t2: m.t2Name || m.t2.map(x=>x.name).join(' & '),
+            t1: teamDisplayName(m.t1, m.t1Name), t2: teamDisplayName(m.t2, m.t2Name),
             ids1: m.t1.map(x=>x.id), ids2: m.t2.map(x=>x.id), court: m.court,
             s1, s2, time: new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}),
             dateStr: new Date().toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'})
