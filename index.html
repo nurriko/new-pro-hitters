@@ -843,6 +843,11 @@
     let currentEditMatchId = null;
     let currentEditCourtMatchId = null;
     let dbUnsubscribe = null;
+    let socialUnsub = null, socialUid = null;
+    let _socialRenderToken = 0, _joinedRenderToken = 0;
+    let _pendingLocalSave = false, _writesInFlight = 0, _lastRemoteToastAt = 0;
+    const DEVICE_ID = 'D' + Math.random().toString(36).slice(2, 10);
+    const ACCESS_FIELDS = ['viewRequests', 'approvedViewers', 'matchAdmins'];
     let cropper = null;
     
     let prevFriendReqs = null;
@@ -870,8 +875,8 @@
         return pool.slice(0, count);
     }
     function teamDisplayName(playersArr, customName) {
-        let playerNames = (playersArr || []).map(p=>p.name).join(' & ');
-        return customName ? `${customName} (${playerNames})` : playerNames;
+        if(customName) return escapeHtml(customName);
+        return escapeHtml(playersArr.map(p=>p.name).join(' & '));
     }
 
     const DEF_M = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23dbeafe'/%3E%3Cpath d='M50 25a15 15 0 1 1-15 15 15 15 0 0 1 15-15zm0 35c-20 0-30 15-30 15v5h60v-5s-10-15-30-15z' fill='%233b82f6'/%3E%3C/svg%3E";
@@ -887,47 +892,9 @@
         if (auth) {
             auth.onAuthStateChanged(user => {
                 if (user) {
-                    db.collection('users').doc(user.uid).get().then(doc => {
-                        let uData = doc.exists ? doc.data() : null;
-                        let uName = (uData && uData.username) ? uData.username.toLowerCase() : '';
-                        let isSuperAdmin = user.email === 'admin@happyhitters.app' || 
-                                           user.email === 'superadmin@happyhitters.app' || 
-                                           (uData && (uData.role === 'admin' || uName === 'superadmin' || uName === 'admin'));
-
-                        if(!doc.exists && !isSuperAdmin) {
-                            auth.signOut();
-                            appAlert("Akses Ditolak", "Akun Anda tidak ditemukan atau telah dihapus oleh Admin.");
-                            return;
-                        }
-
-                        if(isSuperAdmin) {
-                            showAdminScreen();
-                        } else {
-                            document.getElementById('welcomeScreen').classList.add('hidden');
-                            document.getElementById('authScreen').classList.add('hidden');
-                            document.getElementById('adminScreen').classList.add('hidden');
-                            document.getElementById('appContainer').classList.add('visible');
-                            
-                            initSocial(user.uid);
-                            
-                            let lastViewed = localStorage.getItem('HH_LAST_VIEWED');
-                            if (lastViewed) {
-                                setupRealtimeListener(lastViewed);
-                            } else {
-                                setupRealtimeListener(user.uid); 
-                            }
-
-                            if(window._pendingJoinUid) {
-                                let pending = window._pendingJoinUid;
-                                window._pendingJoinUid = null;
-                                setTimeout(() => processJoin(pending), 800);
-                            }
-                        }
-                    }).catch(err => {
-                        console.error(err);
-                        appAlert("Koneksi Error", "Gagal memuat profil. Pastikan koneksi internet stabil.");
-                        document.getElementById('appContainer').classList.add('visible'); 
-                    });
+                    // Saat registrasi berlangsung, profil belum tertulis: jangan dianggap "akun dihapus".
+                    if(window._registering) return;
+                    handleSignedInUser(user);
                 } else {
                     document.getElementById('appContainer').classList.remove('visible');
                     document.getElementById('authScreen').classList.add('hidden');
@@ -937,6 +904,50 @@
             });
         }
     };
+
+    function handleSignedInUser(user) {
+        db.collection('users').doc(user.uid).get().then(doc => {
+            let uData = doc.exists ? doc.data() : null;
+            let uName = (uData && uData.username) ? uData.username.toLowerCase() : '';
+            let isSuperAdmin = user.email === 'admin@happyhitters.app' || 
+                               user.email === 'superadmin@happyhitters.app' || 
+                               (uData && (uData.role === 'admin' || uName === 'superadmin' || uName === 'admin'));
+
+            if(!doc.exists && !isSuperAdmin) {
+                auth.signOut();
+                appAlert("Akses Ditolak", "Akun Anda tidak ditemukan atau telah dihapus oleh Admin.");
+                return;
+            }
+
+            if(isSuperAdmin) {
+                showAdminScreen();
+            } else {
+                document.getElementById('welcomeScreen').classList.add('hidden');
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('adminScreen').classList.add('hidden');
+                document.getElementById('appContainer').classList.add('visible');
+                
+                initSocial(user.uid);
+                
+                let lastViewed = localStorage.getItem('HH_LAST_VIEWED');
+                if (lastViewed) {
+                    setupRealtimeListener(lastViewed);
+                } else {
+                    setupRealtimeListener(user.uid); 
+                }
+
+                if(window._pendingJoinUid) {
+                    let pending = window._pendingJoinUid;
+                    window._pendingJoinUid = null;
+                    setTimeout(() => processJoin(pending), 800);
+                }
+            }
+        }).catch(err => {
+            console.error(err);
+            appAlert("Koneksi Error", "Gagal memuat profil. Pastikan koneksi internet stabil.");
+            document.getElementById('appContainer').classList.add('visible'); 
+        });
+    }
 
     let authMode = 'login';
 
@@ -1000,20 +1011,30 @@
         let loginEmail = userInp.replace(/\s+/g, '').toLowerCase() + '@happyhitters.app';
 
         if(authMode === 'register') {
+            window._registering = true;
             auth.createUserWithEmailAndPassword(loginEmail, pass)
                 .then((cred) => {
-                    db.collection('users').doc(cred.user.uid).set({
+                    // Tulis profil DULU (dan tunggu selesai), baru masuk ke aplikasi.
+                    return db.collection('users').doc(cred.user.uid).set({
                         username: userInp, email: loginEmail, role: 'user', friends: [], friendRequests: [],
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }).then(() => {
+                        window._registering = false;
+                        btn.innerText = originalText;
+                        btn.disabled = false;
+                        appSuccess('Berhasil', 'Akun berhasil didaftarkan. Anda akan segera masuk.');
+                        handleSignedInUser(cred.user);
+                    }).catch(err => {
+                        // Profil gagal dibuat: hapus akun setengah jadi agar username tidak "terbakar".
+                        return cred.user.delete().catch(() => auth.signOut()).then(() => { throw err; });
                     });
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                    appSuccess('Berhasil', 'Akun berhasil didaftarkan. Anda akan segera masuk.');
                 })
                 .catch(err => {
+                    window._registering = false;
                     btn.innerText = originalText;
                     btn.disabled = false;
-                    appAlert("Registrasi Gagal", err.message);
+                    let msg = (err && err.code === 'auth/email-already-in-use') ? 'Username sudah dipakai. Coba username lain.' : (err && err.message ? err.message : 'Terjadi kesalahan.');
+                    appAlert("Registrasi Gagal", msg);
                 });
         } else {
             auth.signInWithEmailAndPassword(loginEmail, pass)
@@ -1088,7 +1109,11 @@
     }
 
     function initSocial(uid) {
-        db.collection('users').doc(uid).onSnapshot(doc => {
+        if(socialUnsub && socialUid === uid) return; // sudah aktif, cegah listener ganda
+        if(socialUnsub) { socialUnsub(); socialUnsub = null; }
+        socialUid = uid;
+        prevFriendReqs = null;
+        socialUnsub = db.collection('users').doc(uid).onSnapshot(doc => {
             if(doc.exists) {
                 myUserData = doc.data();
                 if(!myUserData.friends) myUserData.friends = [];
@@ -1097,16 +1122,18 @@
                 if(prevFriendReqs !== null) {
                     let newReqs = myUserData.friendRequests.filter(x => !prevFriendReqs.includes(x));
                     newReqs.forEach(async reqUid => {
-                        let d = await db.collection('users').doc(reqUid).get();
-                        let un = d.exists ? d.data().username : 'Seseorang';
-                        showToast('Request Pertemanan', `<b>${escapeHtml(un)}</b> ingin menambahkan Anda sebagai teman. Cek tab Sosial!`, 'primary');
+                        try {
+                            let d = await db.collection('users').doc(reqUid).get();
+                            let un = d.exists ? d.data().username : 'Seseorang';
+                            showToast('Request Pertemanan', `<b>${escapeHtml(un)}</b> ingin menambahkan Anda sebagai teman. Cek tab Sosial!`, 'primary');
+                        } catch(e) { console.warn(e); }
                     });
                 }
                 prevFriendReqs = [...myUserData.friendRequests];
 
                 renderSocialTab();
             }
-        });
+        }, err => console.error("Listener sosial error:", err));
     }
 
     function searchFriend() {
@@ -1122,10 +1149,12 @@
                 if(u.username && u.username.toLowerCase().includes(q)) {
                     let isFriend = myUserData.friends && myUserData.friends.includes(doc.id);
                     let isReq = u.friendRequests && u.friendRequests.includes(auth.currentUser.uid);
+                    let isIncoming = myUserData.friendRequests && myUserData.friendRequests.includes(doc.id);
                     
                     let btn = isFriend ? '<button class="btn btn-ghost" style="padding:6px 12px; width:auto; font-size:12px;" disabled>Sudah Berteman</button>' : 
+                             (isIncoming ? `<button class="btn btn-success" style="padding:6px 12px; width:auto; font-size:12px;" onclick="acceptFriend('${doc.id}'); setTimeout(searchFriend, 700);">Terima Request</button>` :
                              (isReq ? '<button class="btn btn-warning" style="padding:6px 12px; width:auto; font-size:12px;" disabled>Menunggu</button>' : 
-                             `<button class="btn btn-primary" style="padding:6px 12px; width:auto; font-size:12px;" onclick="addFriend('${doc.id}')">Add Friend</button>`);
+                             `<button class="btn btn-primary" style="padding:6px 12px; width:auto; font-size:12px;" onclick="addFriend('${doc.id}')">Add Friend</button>`));
                     
                     html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; padding:10px; background:var(--input-bg); border-radius:8px; border:1px solid var(--border-color);">
                         <b>${escapeHtml(u.username)}</b> ${btn}
@@ -1141,25 +1170,46 @@
     }
 
     function addFriend(uid) {
+        if(!auth.currentUser || uid === auth.currentUser.uid) return;
+        if(myUserData.friends && myUserData.friends.includes(uid)) return appAlert("Info", "Anda sudah berteman dengan user ini.");
+        // Jika user tsb ternyata sudah lebih dulu mengirim request ke kita, langsung terima saja.
+        if(myUserData.friendRequests && myUserData.friendRequests.includes(uid)) return acceptFriend(uid);
         db.collection('users').doc(uid).update({ friendRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) })
-        .then(() => { appSuccess("Terkirim", "Permintaan pertemanan berhasil dikirim."); searchFriend(); });
+        .then(() => { appSuccess("Terkirim", "Permintaan pertemanan berhasil dikirim."); searchFriend(); })
+        .catch(err => { console.error(err); appAlert("Gagal", "Permintaan pertemanan gagal dikirim. Akun tujuan mungkin sudah dihapus atau koneksi bermasalah."); });
     }
 
     function removeFriend(uid) {
         appConfirm("Hapus Teman", "Apakah Anda yakin ingin menghapus teman ini?", () => {
-            db.collection('users').doc(auth.currentUser.uid).update({ friends: firebase.firestore.FieldValue.arrayRemove(uid) });
-            db.collection('users').doc(uid).update({ friends: firebase.firestore.FieldValue.arrayRemove(auth.currentUser.uid) });
-            appSuccess("Berhasil", "Teman berhasil dihapus.");
+            // Batch = dua sisi dihapus bersamaan (atomik), tidak mungkin tersisa pertemanan sepihak.
+            let batch = db.batch();
+            batch.update(db.collection('users').doc(auth.currentUser.uid), { friends: firebase.firestore.FieldValue.arrayRemove(uid) });
+            batch.update(db.collection('users').doc(uid), { friends: firebase.firestore.FieldValue.arrayRemove(auth.currentUser.uid) });
+            batch.commit()
+                .then(() => appSuccess("Berhasil", "Teman berhasil dihapus."))
+                .catch(err => {
+                    console.error(err);
+                    // Akun teman mungkin sudah dihapus: setidaknya bersihkan sisi kita sendiri.
+                    db.collection('users').doc(auth.currentUser.uid).update({ friends: firebase.firestore.FieldValue.arrayRemove(uid) })
+                        .then(() => appSuccess("Berhasil", "Teman dihapus dari daftar Anda."))
+                        .catch(() => appAlert("Gagal", "Tidak bisa menghapus teman. Periksa koneksi internet Anda."));
+                });
         });
     }
 
     async function renderSocialTab() {
         if(!myUserData) return;
-        
+        let token = ++_socialRenderToken; // hanya render terbaru yang boleh menulis ke layar
+        const me = auth.currentUser ? auth.currentUser.uid : null;
+        const safeGet = async (col, id) => { try { return await db.collection(col).doc(id).get(); } catch(e) { return null; } };
+
+        // ----- Permintaan pertemanan masuk -----
+        let reqDocs = await Promise.all(myUserData.friendRequests.map(id => safeGet('users', id)));
+        if(token !== _socialRenderToken) return;
         let reqHtml = '';
-        for(let id of myUserData.friendRequests) {
-            let d = await db.collection('users').doc(id).get();
-            if(d.exists) {
+        reqDocs.forEach((d, i) => {
+            let id = myUserData.friendRequests[i];
+            if(d && d.exists) {
                 reqHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
                     <b>${escapeHtml(d.data().username)}</b>
                     <div>
@@ -1168,55 +1218,68 @@
                     </div>
                 </div>`;
             }
-        }
+        });
         document.getElementById('friendRequestsList').innerHTML = reqHtml || '<span style="font-size:12px; color:var(--text-muted);">Belum ada permintaan.</span>';
         
-        let frHtml = '';
-        for(let id of myUserData.friends) {
-            let d = await db.collection('users').doc(id).get();
-            if(d.exists) {
-                let uName = d.data().username;
-                let t = await db.collection('tournaments').doc(id).get();
-                let tData = t.exists ? t.data() : null;
-                let actionBtn = '';
-                
-                if(tData && tData.title && !tData.isFinished) {
-                    let isViewReq = tData.viewRequests && tData.viewRequests.includes(auth.currentUser.uid);
-                    let isAppr = tData.approvedViewers && tData.approvedViewers.includes(auth.currentUser.uid);
-                    let isAdm = tData.matchAdmins && tData.matchAdmins.includes(auth.currentUser.uid);
-                    
-                    if(isAppr || isAdm) {
-                        actionBtn = `<button class="btn btn-success" style="padding:6px 10px; width:auto; font-size:12px;" onclick="viewFriendMatch('${id}')" title="Tonton Match"><i class="fas fa-eye"></i></button>`;
-                    } else if(isViewReq) {
-                        actionBtn = `<span style="font-size:11px; color:var(--warning); font-weight:bold;">Menunggu...</span>`;
-                    } else {
-                        actionBtn = `<button class="btn btn-primary" style="padding:6px 10px; width:auto; font-size:12px;" onclick="reqJoinMatch('${id}')" title="Request Join"><i class="fas fa-door-open"></i></button>`;
-                    }
-                } else {
-                    actionBtn = `<span style="font-size:11px; color:var(--text-muted);">Tidak ada match aktif</span>`;
-                }
+        // ----- Daftar teman (dibaca paralel, satu kegagalan tidak menggagalkan yang lain) -----
+        let friendIds = [...myUserData.friends];
+        let pairs = await Promise.all(friendIds.map(async id => [await safeGet('users', id), await safeGet('tournaments', id)]));
+        if(token !== _socialRenderToken) return;
 
-                actionBtn = `<div style="display:flex; gap:5px; align-items:center;">
-                                ${actionBtn}
-                                <button class="btn btn-danger" style="padding:6px 10px; width:auto; font-size:12px;" onclick="removeFriend('${id}')" title="Hapus Teman"><i class="fas fa-user-times"></i></button>
-                             </div>`;
+        let frHtml = '';
+        pairs.forEach(([d, t], i) => {
+            let id = friendIds[i];
+            if(!d || !d.exists) return;
+            let uName = d.data().username;
+            let tData = (t && t.exists) ? t.data() : null;
+            let actionBtn = '';
+            
+            if(tData && tData.title && !tData.isFinished) {
+                let isViewReq = tData.viewRequests && tData.viewRequests.includes(me);
+                let isAppr = tData.approvedViewers && tData.approvedViewers.includes(me);
+                let isAdm = tData.matchAdmins && tData.matchAdmins.includes(me);
                 
-                frHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
-                    <b>${escapeHtml(uName)}</b> ${actionBtn}
-                </div>`;
+                if(isAppr || isAdm) {
+                    actionBtn = `<button class="btn btn-success" style="padding:6px 10px; width:auto; font-size:12px;" onclick="viewFriendMatch('${id}')" title="Tonton Match"><i class="fas fa-eye"></i></button>`;
+                } else if(isViewReq) {
+                    actionBtn = `<span style="font-size:11px; color:var(--warning); font-weight:bold;">Menunggu...</span>`;
+                } else {
+                    actionBtn = `<button class="btn btn-primary" style="padding:6px 10px; width:auto; font-size:12px;" onclick="reqJoinMatch('${id}')" title="Request Join"><i class="fas fa-door-open"></i></button>`;
+                }
+            } else {
+                actionBtn = `<span style="font-size:11px; color:var(--text-muted);">Tidak ada match aktif</span>`;
             }
-        }
+
+            actionBtn = `<div style="display:flex; gap:5px; align-items:center;">
+                            ${actionBtn}
+                            <button class="btn btn-danger" style="padding:6px 10px; width:auto; font-size:12px;" onclick="removeFriend('${id}')" title="Hapus Teman"><i class="fas fa-user-times"></i></button>
+                         </div>`;
+            
+            frHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
+                <b>${escapeHtml(uName)}</b> ${actionBtn}
+            </div>`;
+        });
         document.getElementById('friendsList').innerHTML = frHtml || '<span style="font-size:12px; color:var(--text-muted);">Belum ada teman.</span>';
         renderJoinedTournaments();
     }
 
     function acceptFriend(uid) {
-        db.collection('users').doc(auth.currentUser.uid).update({ friendRequests: firebase.firestore.FieldValue.arrayRemove(uid), friends: firebase.firestore.FieldValue.arrayUnion(uid) });
-        db.collection('users').doc(uid).update({ friends: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) });
+        if(!myUserData.friendRequests || !myUserData.friendRequests.includes(uid)) return;
+        const FV = firebase.firestore.FieldValue;
+        let batch = db.batch();
+        batch.update(db.collection('users').doc(auth.currentUser.uid), { friendRequests: FV.arrayRemove(uid), friends: FV.arrayUnion(uid) });
+        batch.update(db.collection('users').doc(uid), { friends: FV.arrayUnion(auth.currentUser.uid) });
+        batch.commit()
+            .then(() => showToast('Berteman', 'Permintaan pertemanan diterima.', 'success'))
+            .catch(err => {
+                console.error(err);
+                appAlert("Gagal", "Tidak bisa menerima pertemanan. Akun tersebut mungkin sudah dihapus atau koneksi bermasalah.");
+            });
     }
 
     function rejectFriend(uid) {
-        db.collection('users').doc(auth.currentUser.uid).update({ friendRequests: firebase.firestore.FieldValue.arrayRemove(uid) });
+        db.collection('users').doc(auth.currentUser.uid).update({ friendRequests: firebase.firestore.FieldValue.arrayRemove(uid) })
+            .catch(err => { console.error(err); appAlert("Gagal", "Tidak bisa menolak permintaan. Periksa koneksi internet Anda."); });
     }
 
     function reqJoinMatch(uid) {
@@ -1290,17 +1353,19 @@
     async function renderJoinedTournaments() {
         let container = document.getElementById('joinedTournamentsList');
         if(!container || !auth.currentUser) return;
+        let token = ++_joinedRenderToken;
         let list = getJoinedList().filter(id => id !== auth.currentUser.uid);
         if(list.length === 0) { container.innerHTML = '<span style="font-size:12px; color:var(--text-muted);">Belum ada pertandingan yang diikuti lewat QR/Link.</span>'; return; }
 
+        const safeGet = async (col, id) => { try { return await db.collection(col).doc(id).get(); } catch(e) { return null; } };
+        let results = await Promise.all(list.map(async uid => [uid, await safeGet('tournaments', uid), await safeGet('users', uid)]));
+        if(token !== _joinedRenderToken) return;
+
         let html = '';
-        for(let uid of list) {
-            let d;
-            try { d = await db.collection('tournaments').doc(uid).get(); } catch(e) { continue; }
-            if(!d.exists) continue;
+        for(let [uid, d, ownerDoc] of results) {
+            if(!d || !d.exists) continue;
             let t = d.data();
-            let ownerDoc = await db.collection('users').doc(uid).get();
-            let ownerName = ownerDoc.exists ? ownerDoc.data().username : 'Unknown';
+            let ownerName = (ownerDoc && ownerDoc.exists) ? ownerDoc.data().username : 'Unknown';
             let isAppr = t.approvedViewers && t.approvedViewers.includes(auth.currentUser.uid);
             let isAdm = t.matchAdmins && t.matchAdmins.includes(auth.currentUser.uid);
             let isPending = t.viewRequests && t.viewRequests.includes(auth.currentUser.uid);
@@ -1326,7 +1391,10 @@
         document.getElementById('countViewReq').innerText = data.viewRequests.length;
         renderJoinQR();
         
-        const getUser = async (id) => { let d = await db.collection('users').doc(id).get(); return escapeHtml(d.exists ? d.data().username : 'Unknown'); };
+        const getUser = async (id) => {
+            try { let d = await db.collection('users').doc(id).get(); return escapeHtml(d.exists ? d.data().username : 'Unknown'); }
+            catch(e) { return 'Unknown'; }
+        };
         
         let vHtml = '';
         for(let id of data.viewRequests) {
@@ -1399,22 +1467,41 @@
         showToast('Disalin', 'Tautan undangan pertandingan disalin ke clipboard.', 'success');
     }
     
+    // Perubahan daftar akses dikirim sebagai update atomik (arrayUnion/arrayRemove), bukan menimpa seluruh dokumen.
+    function updateAccess(updateObj) {
+        if(!auth.currentUser || currentViewingId !== auth.currentUser.uid) return;
+        db.collection('tournaments').doc(currentViewingId).update(updateObj)
+            .catch(err => {
+                console.error(err);
+                showToast('Gagal', 'Perubahan akses belum tersimpan. Periksa koneksi internet Anda.', 'warning');
+            });
+    }
+
     function actViewReq(id, accept) {
-        if(accept) { data.viewRequests = data.viewRequests.filter(x=>x!==id); if(!data.approvedViewers.includes(id)) data.approvedViewers.push(id); } 
-        else { data.viewRequests = data.viewRequests.filter(x=>x!==id); }
-        save(); openAccessManager();
+        const FV = firebase.firestore.FieldValue;
+        data.viewRequests = data.viewRequests.filter(x=>x!==id);
+        let upd = { viewRequests: FV.arrayRemove(id) };
+        if(accept) {
+            if(!data.approvedViewers.includes(id)) data.approvedViewers.push(id);
+            upd.approvedViewers = FV.arrayUnion(id);
+        }
+        updateAccess(upd); openAccessManager();
     }
 
     function setAdmin(id, isAdmin) {
-        if(isAdmin) { if(!data.matchAdmins.includes(id)) data.matchAdmins.push(id); } 
+        const FV = firebase.firestore.FieldValue;
+        if(isAdmin) { if(!data.matchAdmins.includes(id)) data.matchAdmins.push(id); }
         else { data.matchAdmins = data.matchAdmins.filter(x=>x!==id); }
-        save(); openAccessManager();
+        updateAccess({ matchAdmins: isAdmin ? FV.arrayUnion(id) : FV.arrayRemove(id) });
+        openAccessManager();
     }
 
     function kickViewer(id) {
+        const FV = firebase.firestore.FieldValue;
         data.approvedViewers = data.approvedViewers.filter(x=>x!==id);
         data.matchAdmins = data.matchAdmins.filter(x=>x!==id);
-        save(); openAccessManager();
+        updateAccess({ approvedViewers: FV.arrayRemove(id), matchAdmins: FV.arrayRemove(id) });
+        openAccessManager();
     }
 
     function checkPermissions() {
@@ -1448,46 +1535,86 @@
         }
     }
 
+    function handleAccessLost(msg) {
+        localStorage.removeItem('HH_LAST_VIEWED');
+        if(auth.currentUser) setupRealtimeListener(auth.currentUser.uid);
+        appAlert("Akses Tidak Tersedia", msg);
+    }
+
     function setupRealtimeListener(uid) {
         if (dbUnsubscribe) dbUnsubscribe();
         currentViewingId = uid;
         prevViewReqs = null; 
+        let firstSnap = true;
+        if(_saveDebounceTimer) { clearTimeout(_saveDebounceTimer); _saveDebounceTimer = null; }
+        _pendingLocalSave = false;
+        _writesInFlight = 0;
         
         dbUnsubscribe = db.collection("tournaments").doc(uid)
             .onSnapshot(doc => {
+                let isMine = auth.currentUser && uid === auth.currentUser.uid;
                 if (doc.exists) {
                     let loadedData = doc.data();
-                    data.title = loadedData.title || "";
-                    data.players = loadedData.players || [];
-                    data.matches = loadedData.matches || [];
-                    data.fixedPairs = loadedData.fixedPairs || [];
-                    data.isFinished = loadedData.isFinished || false;
-                    data.currentMatches = loadedData.currentMatches || (loadedData.currentMatch ? [loadedData.currentMatch] : []);
-                    data.activeTab = loadedData.activeTab || 'home';
-                    data.dateArchived = loadedData.dateArchived || null;
+
+                    // Daftar akses SELALU mengikuti server.
                     data.viewRequests = loadedData.viewRequests || [];
                     data.approvedViewers = loadedData.approvedViewers || [];
                     data.matchAdmins = loadedData.matchAdmins || [];
-                    data.tournamentMode = loadedData.tournamentMode || 'league';
-                    data.bracket = loadedData.bracket || null;
-                    data.sport = loadedData.sport || null;
-                    data.plannedRounds = loadedData.plannedRounds || null;
-                    data.roundNumber = loadedData.roundNumber || 0;
 
-                    if (auth.currentUser && uid === auth.currentUser.uid) {
+                    // Melihat turnamen orang lain: wajib sudah disetujui / co-host. Kalau akses dicabut, kembali ke turnamen sendiri.
+                    if (auth.currentUser && !isMine) {
+                        let me = auth.currentUser.uid;
+                        if (!data.approvedViewers.includes(me) && !data.matchAdmins.includes(me)) {
+                            return handleAccessLost("Akses Anda ke pertandingan ini sudah dicabut atau belum disetujui oleh pembuatnya.");
+                        }
+                    }
+
+                    // Jangan menimpa perubahan lokal yang belum sempat tersimpan (mis. tap skor cepat)
+                    // dengan data server yang lebih lama. Snapshot berikutnya akan menyelaraskan kembali.
+                    let hasLocalUnsaved = _pendingLocalSave || _writesInFlight > 0;
+                    if (!hasLocalUnsaved) {
+                        data.title = loadedData.title || "";
+                        data.players = loadedData.players || [];
+                        data.matches = loadedData.matches || [];
+                        data.fixedPairs = loadedData.fixedPairs || [];
+                        data.isFinished = loadedData.isFinished || false;
+                        data.currentMatches = loadedData.currentMatches || (loadedData.currentMatch ? [loadedData.currentMatch] : []);
+                        data.activeTab = loadedData.activeTab || 'home';
+                        data.dateArchived = loadedData.dateArchived || null;
+                        data.tournamentMode = loadedData.tournamentMode || 'league';
+                        data.bracket = loadedData.bracket || null;
+                        data.sport = loadedData.sport || null;
+                        data.plannedRounds = loadedData.plannedRounds || null;
+                        data.roundNumber = loadedData.roundNumber || 0;
+
+                        if (!firstSnap && !doc.metadata.hasPendingWrites && loadedData.lastWriter && loadedData.lastWriter !== DEVICE_ID && Date.now() - _lastRemoteToastAt > 15000) {
+                            _lastRemoteToastAt = Date.now();
+                            showToast('Data Diperbarui', 'Ada perubahan dari perangkat lain / co-host. Tampilan sudah disinkronkan.', 'primary');
+                        }
+                    }
+
+                    if (isMine) {
                         if (prevViewReqs !== null) {
                             let newReqs = data.viewRequests.filter(x => !prevViewReqs.includes(x));
                             newReqs.forEach(async reqUid => {
-                                let d = await db.collection('users').doc(reqUid).get();
-                                let un = d.exists ? d.data().username : 'Seseorang';
-                                showToast('Permintaan Menonton', `<b>${escapeHtml(un)}</b> meminta akses untuk menonton pertandingan Anda. Cek ikon Kunci!`, 'warning');
+                                try {
+                                    let d = await db.collection('users').doc(reqUid).get();
+                                    let un = d.exists ? d.data().username : 'Seseorang';
+                                    showToast('Permintaan Menonton', `<b>${escapeHtml(un)}</b> meminta akses untuk menonton pertandingan Anda. Cek ikon Kunci!`, 'warning');
+                                } catch(e) { console.warn(e); }
                             });
                         }
                         prevViewReqs = [...data.viewRequests];
                     }
                 } else {
-                    if(auth.currentUser && uid === auth.currentUser.uid) save(); 
+                    if(isMine) {
+                        // Dokumen turnamen belum ada: buat penuh (termasuk daftar akses kosong).
+                        db.collection('tournaments').doc(uid).set(data).catch(e => console.error("Gagal membuat turnamen baru:", e));
+                    } else {
+                        return handleAccessLost("Pertandingan tersebut sudah tidak ada.");
+                    }
                 }
+                firstSnap = false;
                 
                 checkPermissions();
                 renderSportGate();
@@ -1515,11 +1642,18 @@
                 console.error("Gagal menarik data:", err);
                 let skel = document.getElementById('appSkeleton');
                 if(skel) skel.classList.add('hidden');
+                if(auth.currentUser && uid !== auth.currentUser.uid) {
+                    handleAccessLost("Tidak dapat memuat pertandingan tersebut (akses ditolak atau koneksi bermasalah). Anda dikembalikan ke turnamen sendiri.");
+                }
             });
     }
 
-    function save() { 
+    function save(forceFullAccessReset = false) { 
         renderAll(); 
+        // Selalu bersihkan penanda "edit belum tersimpan", termasuk untuk penonton (yang tidak menulis),
+        // supaya listener realtime tidak pernah macet menunggu penyimpanan yang tidak akan terjadi.
+        if(_saveDebounceTimer) { clearTimeout(_saveDebounceTimer); _saveDebounceTimer = null; }
+        _pendingLocalSave = false;
         if(!auth.currentUser) return;
         if(auth.currentUser.email === 'admin@happyhitters.app' || auth.currentUser.email === 'superadmin@happyhitters.app') return;
         
@@ -1527,15 +1661,29 @@
         let isAdmin = data.matchAdmins && data.matchAdmins.includes(auth.currentUser.uid);
         
         if (isOwner || isAdmin) {
-            db.collection("tournaments").doc(currentViewingId).set(data).catch(err => {
-                console.error("Gagal menyimpan ke server:", err);
-                showToast('Gagal Menyimpan', 'Periksa koneksi internet Anda, perubahan belum tersimpan ke server.', 'warning');
+            // Daftar akses TIDAK ikut ditulis di sini (diubah lewat update atomik terpisah),
+            // supaya permintaan menonton baru / perubahan admin tidak tertimpa data lokal yang basi.
+            // Kecuali forceFullAccessReset=true (mis. saat "Turnamen Baru"), yang memang sengaja
+            // menghapus semua co-host/penonton lama sebagai bagian dari reset total.
+            let payload = {};
+            Object.keys(data).forEach(k => {
+                if((forceFullAccessReset || !ACCESS_FIELDS.includes(k)) && data[k] !== undefined) payload[k] = data[k];
             });
+            payload.lastWriter = DEVICE_ID;
+
+            _writesInFlight++;
+            db.collection("tournaments").doc(currentViewingId).set(payload, { mergeFields: Object.keys(payload) })
+                .catch(err => {
+                    console.error("Gagal menyimpan ke server:", err);
+                    showToast('Gagal Menyimpan', 'Periksa koneksi internet Anda, perubahan belum tersimpan ke server.', 'warning');
+                })
+                .then(() => { _writesInFlight = Math.max(0, _writesInFlight - 1); });
         }
     }
 
     let _saveDebounceTimer = null;
     function saveDebounced(delay = 500) {
+        _pendingLocalSave = true;
         if(_saveDebounceTimer) clearTimeout(_saveDebounceTimer);
         _saveDebounceTimer = setTimeout(() => { save(); }, delay);
     }
@@ -1682,7 +1830,7 @@
             localStorage.setItem('HH_ARCHIVES', JSON.stringify(archives));
             
             data = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [], tournamentMode: 'league', bracket: null, sport: null, plannedRounds: null, roundNumber: 0 };
-            save();
+            save(true);
             appSuccess("Berhasil", "Turnamen baru siap dimulai!");
             nav('home');
             renderTitleSetup();
@@ -2177,7 +2325,7 @@
             data.isFinished = true;
             data.currentMatches = [];
             confetti({ particleCount: 250, spread: 120, origin: { y: 0.5 }, colors: ['#FFD700', '#4361ee', '#f72585'] });
-            let champName = teamDisplayName(winners[0], winnerNames[0]);
+            let champName = winnerNames[0] || winners[0].map(p => p.name).join(' & ');
             setTimeout(() => appSuccess("🏆 JUARA TURNAMEN!", `Selamat kepada ${champName} sebagai JUARA turnamen Knockout!`), 300);
             return;
         }
@@ -2212,8 +2360,8 @@
         data.bracket.rounds.forEach((round, rIdx) => {
             html += `<div class="bracket-round-title"><i class="fas fa-layer-group"></i> ${roundLabel(rIdx, data.bracket.totalRounds)}</div>`;
             round.forEach(m => {
-                let n1 = m.p1 ? escapeHtml(teamDisplayName(m.p1, m.p1Name)) : '???';
-                let n2 = m.p2 ? escapeHtml(teamDisplayName(m.p2, m.p2Name)) : '???';
+                let n1 = m.p1 ? (m.p1Name ? escapeHtml(m.p1Name) : escapeHtml(m.p1.map(p=>p.name).join(' & '))) : '???';
+                let n2 = m.p2 ? (m.p2Name ? escapeHtml(m.p2Name) : escapeHtml(m.p2.map(p=>p.name).join(' & '))) : '???';
                 if(m.bye) {
                     let winnerName = m.winner === 'p1' ? n1 : n2;
                     html += `<div class="bracket-match"><div class="bracket-bye"><i class="fas fa-forward"></i> ${winnerName} lolos otomatis (BYE)</div></div>`;
@@ -2232,8 +2380,7 @@
             });
         });
         if(data.bracket.championId) {
-            let champPlayers = data.bracket.championId.map(id => { let p = data.players.find(x=>x.id===id); return p ? p : { name: '?' }; });
-            let champ = escapeHtml(teamDisplayName(champPlayers, data.bracket.championName));
+            let champ = data.bracket.championName ? escapeHtml(data.bracket.championName) : data.bracket.championId.map(id => { let p = data.players.find(x=>x.id===id); return p ? escapeHtml(p.name) : '?'; }).join(' & ');
             html += `<div class="card champion-card" style="text-align:center; padding:20px; border:2px solid var(--gold); margin-top:10px;"><div style="font-size:36px; animation: crownFloat 2s ease-in-out infinite;">🏆</div><b style="color:var(--gold); font-size:18px; text-shadow:0 0 16px rgba(255,215,0,0.5);">${champ}</b></div>`;
         }
         return { html, hasLiveMatch };
@@ -2513,8 +2660,8 @@
     }
 
     function generateMatchHTML(m) {
-        let t1Names = teamDisplayName(m.t1, m.t1Name);
-        let t2Names = teamDisplayName(m.t2, m.t2Name);
+        let t1Names = m.t1Name || m.t1.map(x=>x.name).join(' & ');
+        let t2Names = m.t2Name || m.t2.map(x=>x.name).join(' & ');
         let sportClass = m.sport === 'padel' ? 'sport-padel' : 'sport-tennis';
         let sportColorVar = m.sport === 'padel' ? '--padel-glow' : '--tennis-glow';
 
@@ -2723,7 +2870,7 @@
             data.matches.unshift({
                 id: 'HIST_' + Date.now() + '_' + Math.floor(Math.random()*1000),
                 sport: m.sport, format: m.format, logic: m.partnerMode === 'tetap' ? 'fixed' : (m.padelLogic || 'standard'),
-                t1: teamDisplayName(m.t1, m.t1Name), t2: teamDisplayName(m.t2, m.t2Name), 
+                t1: m.t1Name || m.t1.map(x=>x.name).join(' & '), t2: m.t2Name || m.t2.map(x=>x.name).join(' & '), 
                 ids1: m.t1.map(x=>x.id), ids2: m.t2.map(x=>x.id), court: m.court,
                 s1, s2, time: new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}),
                 dateStr: new Date().toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'})
@@ -2760,7 +2907,7 @@
             id: 'HIST_' + Date.now() + '_' + Math.floor(Math.random()*1000),
             sport: m.sport, format: m.format, logic: 'knockout',
             roundLabel: label,
-            t1: teamDisplayName(m.t1, m.t1Name), t2: teamDisplayName(m.t2, m.t2Name),
+            t1: m.t1Name || m.t1.map(x=>x.name).join(' & '), t2: m.t2Name || m.t2.map(x=>x.name).join(' & '),
             ids1: m.t1.map(x=>x.id), ids2: m.t2.map(x=>x.id), court: m.court,
             s1, s2, time: new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}),
             dateStr: new Date().toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'})
