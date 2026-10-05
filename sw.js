@@ -1,6 +1,6 @@
 // Naikkan angka versi ini setiap kali ada perubahan pada file yang di-precache di bawah,
 // supaya Service Worker lama otomatis dibersihkan dan pengguna mendapat versi terbaru.
-const CACHE_NAME = 'happy-hitters-v16';
+const CACHE_NAME = 'happy-hitters-v18';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -14,7 +14,6 @@ const ASSETS_TO_CACHE = [
   './qrcode_min.js'
 ];
 
-// ... (Sisa kode di sw.js biarkan sama persis seperti sebelumnya) ...
 const EXCLUDED_HOSTS = [
   'firestore.googleapis.com',
   'identitytoolkit.googleapis.com',
@@ -49,7 +48,8 @@ self.addEventListener('fetch', event => {
     }).catch(() => {
       return caches.match(req).then(cached => {
         if (cached) return cached;
-        if (req.mode === 'navigate') return caches.match('./index.html');
+        if (req.mode === 'navigate') return caches.match('./index.html').then(r => r || Response.error());
+        return Response.error(); // sebelumnya mengembalikan undefined -> TypeError di respondWith()
       });
     })
   );
