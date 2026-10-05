@@ -151,7 +151,8 @@
         .rank-row:active { transform: scale(0.98); }
 
         .nav-dock { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 420px; background: var(--dock-bg); border-radius: 25px; display: flex; justify-content: space-around; padding: 12px 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); z-index: 99; border: 1px solid var(--border-color); backdrop-filter: blur(10px);}
-        .nav-item { border: none; background: none; font-size: 22px; color: var(--text-muted); cursor: pointer; transition: all 0.3s; padding: 10px;}
+        .nav-item { border: none; background: none; font-size: 22px; color: var(--text-muted); cursor: pointer; transition: all 0.3s; padding: 6px 10px; display:flex; flex-direction:column; align-items:center; gap:3px; min-width:62px; font-family:inherit;}
+        .nav-item span { font-size: 10px; font-weight: 800; letter-spacing: 0.3px; line-height: 1; }
         .nav-item.active { color: var(--primary); transform: translateY(-5px) scale(1.1); text-shadow: 0 10px 15px rgba(67, 97, 238, 0.4);}
 
         /* TOAST NOTIFICATION CSS */
@@ -275,6 +276,43 @@
         .empty-state-box i { font-size: 34px; margin-bottom: 12px; opacity: 0.5; display:block; }
         .empty-state-box b { display:block; color: var(--text-main); font-size:14px; margin-bottom:4px; }
         .empty-state-box span { font-size: 12px; }
+
+        /* ===== MEXICANO DINAMIS / FITUR BARU ===== */
+        .segmented-control:has(#btnPasanganMexicano) { flex-wrap: wrap; }
+        #btnPasanganMexicano, #btnPasanganDinamis, #btnPasanganFair, #btnPasanganTetap { flex: 1 1 45%; font-size: 12px; }
+        .dialog-msg { white-space: pre-line; }
+        #awardsModal, #ratingModal, #tvShareModal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        .award-block { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 14px; padding: 12px; margin-bottom: 10px; text-align: left; display:flex; gap:12px; align-items:center; }
+        .award-block img { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold); background:#fff; flex-shrink:0; }
+        .award-label { font-size: 10px; font-weight: 900; letter-spacing: 1px; color: var(--gold); text-transform: uppercase; }
+        .award-name { font-size: 16px; font-weight: 900; color: #fff; }
+        .award-sub { font-size: 11px; color: rgba(255,255,255,0.8); }
+        .small-act { background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-muted); border-radius:8px; padding:4px 8px; cursor:pointer; font-size:11px; font-weight:bold; }
+        /* ===== LAYAR TV / LIVE BOARD ===== */
+        #tvBoard { position: fixed; inset: 0; z-index: 10010; background: radial-gradient(circle at 20% 0%, #1e3a8a 0%, #0b1226 55%, #050816 100%); color: #fff; padding: 2vw; box-sizing: border-box; overflow-y: auto; display: flex; flex-direction: column; gap: 1.5vw; font-family: 'Outfit', sans-serif; }
+        .tv-head { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+        .tv-title { font-size: clamp(22px, 3.6vw, 52px); font-weight: 900; letter-spacing: 1px; text-transform: uppercase; }
+        .tv-sub { font-size: clamp(12px, 1.6vw, 24px); color: #22d3ee; font-weight: 700; }
+        .tv-clock { font-size: clamp(20px, 3vw, 44px); font-weight: 900; font-family:'Rajdhani',sans-serif; }
+        .tv-fs { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color:#fff; border-radius: 10px; padding: 6px 12px; cursor: pointer; }
+        .tv-body { display: grid; grid-template-columns: 1.7fr 1fr; gap: 2vw; flex: 1; min-height: 0; }
+        @media (max-width: 900px) { .tv-body { grid-template-columns: 1fr; } }
+        .tv-sec { font-size: clamp(12px, 1.4vw, 20px); font-weight: 900; letter-spacing: 2px; color: rgba(255,255,255,0.6); margin: 4px 0 10px; }
+        .tv-court { background: rgba(255,255,255,0.07); border: 2px solid rgba(34,211,238,0.45); border-radius: 18px; padding: 1.2vw 1.6vw; margin-bottom: 1.2vw; box-shadow: 0 0 30px rgba(34,211,238,0.15); }
+        body[data-tvsport="padel"] .tv-court { border-color: rgba(236,72,153,0.5); box-shadow: 0 0 30px rgba(236,72,153,0.15); }
+        .tv-court-h { font-size: clamp(11px, 1.3vw, 18px); font-weight: 900; letter-spacing: 2px; color: #22d3ee; margin-bottom: 6px; display:flex; align-items:center; gap:8px; }
+        .tv-row { display:flex; justify-content:space-between; align-items:center; gap: 12px; padding: 4px 0; }
+        .tv-team { font-size: clamp(16px, 2.6vw, 38px); font-weight: 800; overflow:hidden; text-overflow:ellipsis; }
+        .tv-team.a { color: #f9a8d4; } .tv-team.b { color: #93c5fd; }
+        .tv-score { font-size: clamp(34px, 6vw, 90px); font-weight: 700; font-family: 'Rajdhani', sans-serif; min-width: 1.4em; text-align:center; line-height:1; }
+        .tv-score.a { color:#f72585; text-shadow: 0 0 18px rgba(247,37,133,0.6); } .tv-score.b { color:#4cc9f0; text-shadow: 0 0 18px rgba(76,201,240,0.6); }
+        .tv-q { background: rgba(255,255,255,0.06); border-radius: 12px; padding: 0.8vw 1.2vw; margin-bottom: 8px; font-size: clamp(13px, 1.7vw, 24px); font-weight: 700; }
+        .tv-q small { color: #22d3ee; font-weight: 900; letter-spacing: 1px; }
+        .tv-rank { display:flex; align-items:center; gap:10px; padding: 0.6vw 1vw; border-radius: 12px; margin-bottom: 6px; background: rgba(255,255,255,0.06); font-size: clamp(13px, 1.8vw, 26px); font-weight: 700; }
+        .tv-rank .pos { width: 1.6em; font-weight: 900; color: var(--gold); }
+        .tv-rank .nm { flex: 1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .tv-rank .pt { font-weight: 900; color: #fde047; }
+        .tv-empty { color: rgba(255,255,255,0.55); font-size: clamp(14px, 2vw, 28px); padding: 3vw 0; text-align:center; }
     </style>
 </head>
 <body>
@@ -393,6 +431,58 @@
         <div style="display:flex; gap:10px; margin-top:15px;">
             <button class="btn btn-ghost" onclick="document.getElementById('sessionSummaryModal').classList.add('hidden')">Tutup</button>
             <button class="btn btn-success" onclick="shareSessionWhatsApp()"><i class="fab fa-whatsapp"></i> Bagikan</button>
+        </div>
+    </div>
+</div>
+
+<div id="awardsModal" class="hidden" onclick="if(event.target.id === 'awardsModal') closeAwards()">
+    <div id="awardsTicket" class="share-ticket" style="padding:26px;"></div>
+    <div style="display:flex; gap:10px; width:320px; flex-wrap:wrap;">
+        <button class="btn btn-ghost" style="flex:1; background:rgba(255,255,255,0.1); color:white;" onclick="closeAwards()">Tutup</button>
+        <button class="btn btn-primary" style="flex:2;" onclick="downloadAwardsImage()"><i class="fas fa-download"></i> Simpan Gambar</button>
+        <button class="btn btn-success" style="flex-basis:100%;" onclick="shareAwardsWhatsApp()"><i class="fab fa-whatsapp"></i> Bagikan ke WhatsApp</button>
+    </div>
+</div>
+
+<div id="ratingModal" class="hidden" onclick="if(event.target.id === 'ratingModal') closeRating()">
+    <div class="dialog-box" style="width: 92%; max-width: 420px; max-height: 85vh; overflow-y:auto; padding: 20px; text-align:left;">
+        <h3 style="color:var(--primary); margin-top:0; text-align:center;"><i class="fas fa-chart-line"></i> Rating Elo Pemain</h3>
+        <p style="font-size:11px; color:var(--text-muted); text-align:center;">Rating berlanjut antar turnamen (mulai 1000). Diperbarui otomatis saat turnamen diselesaikan. Pemain dikenali lewat nama.</p>
+        <div id="ratingList"></div>
+        <button class="btn btn-ghost" onclick="closeRating()" style="margin-top:15px;">Tutup</button>
+    </div>
+</div>
+
+<div id="tvShareModal" class="hidden" onclick="if(event.target.id === 'tvShareModal') closeTvShare()">
+    <div class="dialog-box" style="width: 92%; max-width: 380px; padding: 20px;">
+        <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-tv"></i> Layar TV / Live Board</h3>
+        <p style="font-size:12px; color:var(--text-muted);">Scan QR ini dari TV / laptop / tablet untuk menampilkan skor lapangan, antrean match, dan klasemen secara real-time.</p>
+        <div id="tvQrContainer" style="display:inline-block; background:#fff; padding:8px; border-radius:10px; line-height:0;"></div>
+        <div style="margin-top:10px; display:flex; gap:8px;">
+            <input id="tvLinkInput" readonly style="flex:1; margin-bottom:0; font-size:11px; text-align:center;">
+            <button class="btn btn-ghost" style="width:auto; padding:0 14px;" onclick="copyTvLink()"><i class="fas fa-copy"></i></button>
+        </div>
+        <button class="btn btn-primary" style="margin-top:12px;" onclick="openTvHere()"><i class="fas fa-expand"></i> Buka di perangkat ini</button>
+        <p style="font-size:10px; color:var(--text-muted); margin:10px 0 0 0;">Catatan: Live Board memakai login anonim Firebase. Pastikan "Anonymous" aktif di Firebase Authentication dan aturan Firestore mengizinkan pembacaan koleksi tournaments.</p>
+        <button class="btn btn-ghost" onclick="closeTvShare()" style="margin-top:10px;">Tutup</button>
+    </div>
+</div>
+
+<div id="tvBoard" class="hidden">
+    <div class="tv-head">
+        <div><div id="tvTitle" class="tv-title">HAPPY HITTERS</div><div id="tvSub" class="tv-sub"></div></div>
+        <div style="text-align:right;"><div id="tvClock" class="tv-clock"></div><button class="tv-fs" onclick="tvFullscreen()"><i class="fas fa-expand"></i></button></div>
+    </div>
+    <div class="tv-body">
+        <div>
+            <div class="tv-sec">SEDANG BERMAIN</div>
+            <div id="tvCourts"></div>
+            <div class="tv-sec" style="margin-top:1.5vw;">ANTREAN BERIKUTNYA</div>
+            <div id="tvQueue"></div>
+        </div>
+        <div>
+            <div class="tv-sec">KLASEMEN</div>
+            <div id="tvRank"></div>
         </div>
     </div>
 </div>
@@ -652,9 +742,12 @@
             <div id="partnerModeSetup">
                 <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">SISTEM PASANGAN (PARTNER)</label>
                 <div class="segmented-control">
-                    <button id="btnPasanganAcak" class="seg-btn active" onclick="setPartnerMode('acak')"><i class="fas fa-random"></i> ACAK</button>
-                    <button id="btnPasanganTetap" class="seg-btn" onclick="setPartnerMode('tetap')"><i class="fas fa-link"></i> TETAP (FIXED)</button>
+                    <button id="btnPasanganMexicano" class="seg-btn" onclick="setPartnerMode('mexicano')"><i class="fas fa-shuffle"></i> MEXICANO</button>
+                    <button id="btnPasanganDinamis" class="seg-btn" onclick="setPartnerMode('dinamis')"><i class="fas fa-bolt"></i> MEXICANO DINAMIS</button>
+                    <button id="btnPasanganFair" class="seg-btn active" onclick="setPartnerMode('fair')"><i class="fas fa-scale-balanced"></i> FAIR</button>
+                    <button id="btnPasanganTetap" class="seg-btn" onclick="setPartnerMode('tetap')"><i class="fas fa-link"></i> TETAP</button>
                 </div>
+                <div id="partnerModeHint" style="font-size:11px; color:var(--text-muted); background:var(--input-bg); border:1px dashed var(--border-color); border-radius:10px; padding:8px 10px; margin-bottom:15px; line-height:1.4;"></div>
 
                 <div id="fixedPartnerSetup" class="hidden" style="margin-bottom:15px; text-align:center;">
                     <button id="btnKelolaPasangan" class="btn btn-ghost owner-only" onclick="openFixedPairsDialog()"><i class="fas fa-users-cog"></i> Kelola Pasangan Tetap</button>
@@ -665,13 +758,13 @@
                 <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">JUMLAH LAPANGAN AKTIF</label>
                 <input type="number" id="numCourts" value="1" min="1" max="10" style="text-align:center; font-weight:900; font-size:16px;" oninput="renderNextUpPreview()">
 
-                <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">RONDE DIRENCANAKAN (OPSIONAL)</label>
-                <input type="number" id="plannedRoundsInp" placeholder="Kosongkan jika tidak dibatasi" min="1" onchange="setPlannedRounds(this.value)">
+                <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">BATASI JUMLAH RONDE (OPSIONAL)</label>
+                <input type="number" id="plannedRoundsInp" placeholder="Kosongkan = mainkan semua jadwal" min="1" onchange="setPlannedRounds(this.value)">
 
                 <div id="nextUpPreview" style="margin-bottom:15px;"></div>
 
                 <button id="btnMulaiMatch" class="btn btn-primary owner-only" style="font-size:16px; padding:16px; margin-top: 15px;" onclick="generateMatch()">
-                    <i class="fas fa-play"></i> MULAI PERTANDINGAN
+                    <i class="fas fa-play"></i> MULAI &amp; BUAT SEMUA JADWAL
                 </button>
             </div>
 
@@ -701,6 +794,7 @@
         <div id="matchArea" class="hidden animate__animated animate__fadeInUp">
             <div id="multiCourtContainer"></div>
         </div>
+        <div id="scheduleArea"></div>
     </div>
 
     <div id="tab-rank" class="content">
@@ -719,6 +813,18 @@
 
         <button id="btnSessionSummary" class="btn btn-ghost hidden" style="margin-bottom:15px; width:100%; border-color:var(--primary); color:var(--primary);" onclick="openSessionSummary()">
             <i class="fas fa-clipboard-list"></i> RINGKASAN SESI HARI INI
+        </button>
+
+        <button id="btnAwards" class="btn btn-warning hidden" style="margin-bottom:15px; width:100%;" onclick="openAwards()">
+            <i class="fas fa-award"></i> PENGHARGAAN AKHIR (MVP, DUO, COMEBACK)
+        </button>
+
+        <button class="btn btn-ghost" style="margin-bottom:15px; width:100%; border-color:var(--primary); color:var(--primary);" onclick="openRating()">
+            <i class="fas fa-chart-line"></i> RATING ELO ANTAR TURNAMEN
+        </button>
+
+        <button class="btn btn-ghost" style="margin-bottom:15px; width:100%; border-color:var(--primary); color:var(--primary);" onclick="openTvShare()">
+            <i class="fas fa-tv"></i> LAYAR TV / LIVE BOARD (QR)
         </button>
 
         <button id="btnNewTournament" class="btn btn-success true-owner-only hidden" style="margin-bottom:15px; padding:16px; width:100%; box-shadow:0 4px 15px rgba(16, 185, 129, 0.4);" onclick="createNewTournament()">
@@ -789,10 +895,10 @@
     </div>
 
     <div class="nav-dock">
-        <button id="nav-home" class="nav-item active" onclick="nav('home')"><i class="fas fa-table-tennis"></i></button>
-        <button id="nav-play" class="nav-item" onclick="nav('play')"><i class="fas fa-play-circle"></i></button>
-        <button id="nav-rank" class="nav-item" onclick="nav('rank')"><i class="fas fa-trophy"></i></button>
-        <button id="nav-social" class="nav-item" onclick="nav('social')"><i class="fas fa-users"></i></button>
+        <button id="nav-home" class="nav-item active" onclick="nav('home')"><i class="fas fa-table-tennis"></i><span>Pemain</span></button>
+        <button id="nav-play" class="nav-item" onclick="nav('play')"><i class="fas fa-play-circle"></i><span>Match</span></button>
+        <button id="nav-rank" class="nav-item" onclick="nav('rank')"><i class="fas fa-trophy"></i><span>Klasemen</span></button>
+        <button id="nav-social" class="nav-item" onclick="nav('social')"><i class="fas fa-users"></i><span>Sosial</span></button>
     </div>
 </div>
 
@@ -835,11 +941,11 @@
         isFinished: false, currentMatches: [], activeTab: 'home',
         viewRequests: [], approvedViewers: [], matchAdmins: [],
         tournamentMode: 'league', bracket: null, sport: null,
-        plannedRounds: null, roundNumber: 0
+        plannedRounds: null, roundNumber: 0, partnerMode: 'fair', schedule: [], scheduleMeta: null, eloRatings: {}, eloBefore: null, eloApplied: false, eloLocked: false, eloDeltas: {}
     };
     
     let tempImg = '', tempGender = 'M';
-    let selectedSport = 'tennis', selectedFormat = 'doubles', currentPartnerMode = 'acak';
+    let selectedSport = 'tennis', selectedFormat = 'doubles', currentPartnerMode = 'fair';
     let currentEditMatchId = null;
     let currentEditCourtMatchId = null;
     let dbUnsubscribe = null;
@@ -891,6 +997,7 @@
         
         if (auth) {
             auth.onAuthStateChanged(user => {
+                if(window._tvMode) return;
                 if (user) {
                     // Saat registrasi berlangsung, profil belum tertulis: jangan dianggap "akun dihapus".
                     if(window._registering) return;
@@ -1312,6 +1419,8 @@
 
     function handleJoinParam() {
         let params = new URLSearchParams(location.search);
+        let tvUid = params.get('tv');
+        if(tvUid) { window._tvMode = true; startTVMode(tvUid); return; }
         let joinUid = params.get('join');
         if(!joinUid) return;
         history.replaceState({}, '', location.pathname); 
@@ -1586,6 +1695,16 @@
                         data.sport = loadedData.sport || null;
                         data.plannedRounds = loadedData.plannedRounds || null;
                         data.roundNumber = loadedData.roundNumber || 0;
+                        data.partnerMode = loadedData.partnerMode || 'fair';
+                        currentPartnerMode = data.partnerMode;
+                        data.schedule = loadedData.schedule || [];
+                        data.scheduleMeta = loadedData.scheduleMeta || null;
+                        data.eloRatings = loadedData.eloRatings || {};
+                        data.eloBefore = loadedData.eloBefore || null;
+                        data.eloApplied = loadedData.eloApplied || false;
+                        data.eloLocked = loadedData.eloLocked || false;
+                        data.eloDeltas = loadedData.eloDeltas || {};
+                        markSynced();
 
                         if (!firstSnap && !doc.metadata.hasPendingWrites && loadedData.lastWriter && loadedData.lastWriter !== DEVICE_ID && Date.now() - _lastRemoteToastAt > 15000) {
                             _lastRemoteToastAt = Date.now();
@@ -1648,7 +1767,27 @@
             });
     }
 
+    // ---- Sinkronisasi antar-perangkat ----
+    // Dulu SEMUA field ditulis ulang setiap save -> 2 HP yang memakai akun sama saling menimpa data.
+    // Sekarang hanya field yang benar-benar berubah (dibanding data server terakhir) yang dikirim.
+    const LOCAL_ONLY_KEYS = ['activeTab'];
+    const SYNC_KEYS = ['title','players','matches','fixedPairs','isFinished','currentMatches','tournamentMode','bracket','sport','plannedRounds','roundNumber','partnerMode','schedule','scheduleMeta','dateArchived','eloRatings','eloBefore','eloApplied','eloLocked','eloDeltas'];
+    let _syncedJson = {};
+    function jsonOf(v) { try { return JSON.stringify(v === undefined ? null : v); } catch(e) { return ''; } }
+    function markSynced() { SYNC_KEYS.forEach(k => { _syncedJson[k] = jsonOf(data[k]); }); }
+
+    // Foto pemain (base64) jangan ikut tersalin ke currentMatches/bracket: dokumen Firestore dibatasi 1 MB.
+    function slimLegacyPlayers() {
+        if (Array.isArray(data.currentMatches)) data.currentMatches.forEach(m => {
+            ['t1','t2'].forEach(k => { if (Array.isArray(m[k])) m[k] = m[k].map(slimP); });
+        });
+        if (data.bracket && Array.isArray(data.bracket.rounds)) data.bracket.rounds.forEach(r => r.forEach(bm => {
+            ['p1','p2'].forEach(k => { if (Array.isArray(bm[k])) bm[k] = bm[k].map(slimP); });
+        }));
+    }
+
     function save(forceFullAccessReset = false) { 
+        slimLegacyPlayers();
         renderAll(); 
         // Selalu bersihkan penanda "edit belum tersimpan", termasuk untuk penonton (yang tidak menulis),
         // supaya listener realtime tidak pernah macet menunggu penyimpanan yang tidak akan terjadi.
@@ -1662,17 +1801,20 @@
         
         if (isOwner || isAdmin) {
             // Daftar akses TIDAK ikut ditulis di sini (diubah lewat update atomik terpisah),
-            // supaya permintaan menonton baru / perubahan admin tidak tertimpa data lokal yang basi.
-            // Kecuali forceFullAccessReset=true (mis. saat "Turnamen Baru"), yang memang sengaja
-            // menghapus semua co-host/penonton lama sebagai bagian dari reset total.
-            let payload = {};
+            // kecuali forceFullAccessReset=true (mis. saat "Turnamen Baru").
+            let payload = {}, sentJson = {};
             Object.keys(data).forEach(k => {
-                if((forceFullAccessReset || !ACCESS_FIELDS.includes(k)) && data[k] !== undefined) payload[k] = data[k];
+                if(data[k] === undefined || LOCAL_ONLY_KEYS.includes(k)) return;
+                if(!forceFullAccessReset && ACCESS_FIELDS.includes(k)) return;
+                let j = jsonOf(data[k]);
+                if(forceFullAccessReset || _syncedJson[k] !== j) { payload[k] = data[k]; sentJson[k] = j; }
             });
+            if(Object.keys(payload).length === 0) return; // tidak ada perubahan nyata
             payload.lastWriter = DEVICE_ID;
 
             _writesInFlight++;
             db.collection("tournaments").doc(currentViewingId).set(payload, { mergeFields: Object.keys(payload) })
+                .then(() => { Object.keys(sentJson).forEach(k => { _syncedJson[k] = sentJson[k]; }); })
                 .catch(err => {
                     console.error("Gagal menyimpan ke server:", err);
                     showToast('Gagal Menyimpan', 'Periksa koneksi internet Anda, perubahan belum tersimpan ke server.', 'warning');
@@ -1826,11 +1968,12 @@
         appConfirm("Buat Turnamen Baru", "Turnamen saat ini akan diarsipkan secara lokal. Lanjutkan?", () => {
             let archives = getSafeArchives();
             data.dateArchived = new Date().toLocaleString('id-ID');
+            let _keepElo = data.eloRatings || {};
             archives.push(data);
             localStorage.setItem('HH_ARCHIVES', JSON.stringify(archives));
             
-            data = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [], tournamentMode: 'league', bracket: null, sport: null, plannedRounds: null, roundNumber: 0 };
-            save(true);
+            data = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [], tournamentMode: 'league', bracket: null, sport: null, plannedRounds: null, roundNumber: 0, partnerMode: 'fair', schedule: [], scheduleMeta: null, eloRatings: {}, eloBefore: null, eloApplied: false, eloLocked: false, eloDeltas: {} };
+            data.eloRatings = _keepElo; save(true);
             appSuccess("Berhasil", "Turnamen baru siap dimulai!");
             nav('home');
             renderTitleSetup();
@@ -1873,7 +2016,10 @@
     function viewArchive(idx) {
         let loadData = () => {
             let archives = getSafeArchives();
+            let _keepElo2 = data.eloRatings || {};
             data = archives[idx];
+            data.eloRatings = _keepElo2;
+            if(data.eloApplied) { data.eloBefore = null; data.eloLocked = true; }
             save();
             document.getElementById('archivesDialog').classList.add('hidden');
             appSuccess("Berhasil", "Data turnamen berhasil dimuat.");
@@ -2099,13 +2245,24 @@
         if(pms) pms.classList.toggle('hidden', f !== 'doubles');
         renderNextUpPreview();
     }
+    const PARTNER_HINTS = {
+        dinamis: '<b>MEXICANO DINAMIS</b> — jadwal TIDAK dibuat sekaligus. Ronde 1 diacak, mulai ronde 2 pasangan &amp; lawan disusun ulang dari klasemen terbaru (peringkat 1 &amp; 4 vs 2 &amp; 3). Ronde baru muncul otomatis setelah ronde sebelumnya selesai. <a onclick="showDinamisInfo()" style="color:var(--primary); font-weight:bold; cursor:pointer;">Selengkapnya</a>',
+        mexicano: '<b>MEXICANO</b> — semua pemain saling berpasangan (pria/wanita bebas) dan pasangan yang sama tidak diulang. Ganda putri boleh melawan ganda putra.',
+        fair: '<b>FAIR</b> — pasangan diacak dan tidak diulang, tetapi ganda putri TIDAK akan dipertemukan dengan ganda putra.',
+        tetap: '<b>TETAP</b> — pasangan ditentukan sendiri lewat "Kelola Pasangan Tetap"; setiap pasangan akan bertemu semua pasangan lain.'
+    };
     function setPartnerMode(mode, playSnd=true) {
+        if(mode === 'acak') mode = 'fair'; // kompatibilitas data lama
+        if(!PARTNER_HINTS[mode]) mode = 'fair';
         if(playSnd) playSfx('pop');
         currentPartnerMode = mode;
-        document.getElementById('btnPasanganAcak').className = mode === 'acak' ? 'seg-btn active' : 'seg-btn';
+        document.getElementById('btnPasanganMexicano').className = mode === 'mexicano' ? 'seg-btn active' : 'seg-btn';
+        document.getElementById('btnPasanganDinamis').className = mode === 'dinamis' ? 'seg-btn active' : 'seg-btn';
+        document.getElementById('btnPasanganFair').className = mode === 'fair' ? 'seg-btn active' : 'seg-btn';
         document.getElementById('btnPasanganTetap').className = mode === 'tetap' ? 'seg-btn active' : 'seg-btn';
-        
+        document.getElementById('partnerModeHint').innerHTML = PARTNER_HINTS[mode];
         document.getElementById('fixedPartnerSetup').classList.toggle('hidden', mode !== 'tetap');
+        if(playSnd) { data.partnerMode = mode; save(); renderNextUpPreview(); }
     }
 
     function setTournamentMode(mode, playSnd=true) {
@@ -2132,18 +2289,25 @@
     function renderNextUpPreview() {
         let container = document.getElementById('nextUpPreview');
         if(!container) return;
-        if(data.tournamentMode !== 'league' || currentPartnerMode === 'tetap') { container.innerHTML = ''; return; }
+        if(data.tournamentMode !== 'league') { container.innerHTML = ''; return; }
         if(data.currentMatches && data.currentMatches.length > 0) { container.innerHTML = ''; return; }
 
-        let numCourtsEl = document.getElementById('numCourts');
-        let numCourts = numCourtsEl ? (parseInt(numCourtsEl.value) || 1) : 1;
-        let reqP = selectedFormat === 'doubles' ? 4 : 2;
-        let activePlayers = data.players.filter(p => p.isPresent !== false);
-        if(activePlayers.length === 0) { container.innerHTML = ''; return; }
-
-        let pool = [...activePlayers].sort((a,b) => a.stats.p - b.stats.p).slice(0, reqP * numCourts);
-        let chips = pool.map(p => `<span class="next-up-chip"><img src="${getAvatar(p)}">${escapeHtml(p.name)}</span>`).join('');
-        container.innerHTML = `<label style="font-size:11px; font-weight:bold; color:var(--text-muted); margin-bottom:6px; display:block;">BERIKUTNYA BERMAIN (PRIORITAS)</label><div>${chips}</div>`;
+        let n = data.players.filter(p => p.isPresent !== false).length;
+        if(n === 0) { container.innerHTML = ''; return; }
+        let est, label;
+        if(selectedFormat === 'doubles' && currentPartnerMode === 'dinamis') {
+            container.innerHTML = `<div style="font-size:12px; color:var(--text-muted); background:var(--input-bg); border-radius:10px; padding:10px 12px; border:1px solid var(--border-color);"><i class="fas fa-bolt" style="color:var(--primary);"></i> Mexicano Dinamis: ronde dibuat satu per satu mengikuti klasemen.${data.plannedRounds ? ' Sesi berhenti setelah <b>' + data.plannedRounds + ' ronde</b>.' : ' Isi "Batasi jumlah ronde" agar sesi berhenti otomatis.'}</div>`;
+            return;
+        }
+        if(selectedFormat === 'singles') { est = n * (n - 1) / 2; label = n + ' pemain'; }
+        else if(currentPartnerMode === 'tetap') {
+            let t = (data.fixedPairs || []).filter(fp => { let a = playerById(fp.p1), b = playerById(fp.p2); return a && a.isPresent !== false && b && b.isPresent !== false; }).length;
+            est = t * (t - 1) / 2; label = t + ' pasangan tetap';
+        } else { est = n * (n - 1) / 4; label = n + ' pemain'; }
+        est = Math.floor(est);
+        container.innerHTML = est > 0
+            ? `<div style="font-size:12px; color:var(--text-muted); background:var(--input-bg); border-radius:10px; padding:10px 12px; border:1px solid var(--border-color);"><i class="fas fa-calendar-check" style="color:var(--primary);"></i> Dengan ${label}, jadwal akan berisi sekitar <b style="color:var(--primary);">${est} match</b> (Match 1 sampai terakhir) yang dibuat sekaligus.</div>`
+            : '';
     }
 
     function renderRoundInfo() {
@@ -2169,7 +2333,14 @@
         } else {
             if(btnInline) btnInline.classList.add('hidden');
             if(btnRank) btnRank.classList.add('hidden');
-            if(data.tournamentMode === 'league' && data.plannedRounds) {
+            let _sch0 = data.schedule || [];
+            if(data.tournamentMode === 'league' && _sch0.length) {
+                let totalR = (data.scheduleMeta && data.scheduleMeta.rounds) || Math.max(..._sch0.map(s => s.round));
+                let doneN = _sch0.filter(s => s.status === 'done').length;
+                bar.classList.remove('hidden');
+                if(data.scheduleMeta && data.scheduleMeta.mode === 'dinamis') txt.innerText = `MEXICANO DINAMIS • RONDE ${data.roundNumber || 0}${data.scheduleMeta.rounds ? ' DARI ' + data.scheduleMeta.rounds : ''} • ${doneN} MATCH SELESAI`;
+                else txt.innerText = `RONDE ${data.roundNumber || 0} DARI ${totalR} • ${doneN}/${_sch0.length} MATCH SELESAI`;
+            } else if(data.tournamentMode === 'league' && data.plannedRounds) {
                 bar.classList.remove('hidden');
                 txt.innerText = `RONDE ${data.roundNumber || 0} DARI ${data.plannedRounds}`;
             } else {
@@ -2195,15 +2366,20 @@
         }
 
         if(btnSummary) btnSummary.classList.toggle('hidden', !(data.matches && data.matches.length > 0));
+        let btnAw = document.getElementById('btnAwards'); if(btnAw) btnAw.classList.toggle('hidden', !(data.matches && data.matches.length > 0));
         let prInp = document.getElementById('plannedRoundsInp');
         if(prInp && document.activeElement !== prInp) prInp.value = data.plannedRounds || '';
         renderNextUpPreview();
 
-        if(data.tournamentMode === 'league' && data.plannedRounds && data.roundNumber >= data.plannedRounds &&
+        let _sch1 = data.schedule || [];
+        let _sessionOver = _sch1.length
+            ? (_sch1.some(s => s.status === 'done') && _sch1.every(s => s.status !== 'pending' && s.status !== 'live'))
+            : (data.plannedRounds && data.roundNumber >= data.plannedRounds);
+        if(data.tournamentMode === 'league' && _sessionOver &&
            (!data.currentMatches || data.currentMatches.length === 0) && !window._sessionOfferShown) {
             window._sessionOfferShown = true;
             setTimeout(() => {
-                appConfirm("Sesi Selesai!", `Target ${data.plannedRounds} ronde hari ini sudah tercapai. Lihat ringkasan sesi sekarang?`, () => openSessionSummary());
+                appConfirm("Sesi Selesai!", 'Semua jadwal pertandingan sudah selesai. Lihat ringkasan sesi sekarang?', () => openSessionSummary());
             }, 500);
         }
     }
@@ -2217,7 +2393,7 @@
     }
 
     function generateBracket() {
-        if(data.isFinished) return appAlert("Perhatian", "Turnamen sudah selesai! Buka kembali turnamen di menu Ranking jika ingin membuat bracket baru.");
+        if(data.isFinished) return appAlert("Perhatian", "Turnamen sudah selesai! Buka kembali turnamen di menu Klasemen jika ingin membuat bracket baru.");
         if(data.currentMatches && data.currentMatches.length > 0) return appAlert("Perhatian", "Selesaikan pertandingan yang sedang berjalan terlebih dahulu.");
         
         if(data.bracket && !data.bracket.championId) {
@@ -2256,6 +2432,7 @@
             if(activePlayers.length < 2) return appAlert("Error", "Minimal 2 pemain HADIR dibutuhkan untuk bracket tunggal (1 VS 1).");
             entrants = activePlayers.map(p => ({ players: [p], teamName: null }));
         }
+        entrants.forEach(e => { e.players = e.players.map(slimP); });
         entrants.sort(() => Math.random() - 0.5);
 
         let bracketSize = 1;
@@ -2301,7 +2478,7 @@
                     id: bm.id, court: i+1,
                     t1: bm.p1, t2: bm.p2, t1Name: bm.p1Name || null, t2Name: bm.p2Name || null,
                     sport: data.bracket.sport, format: data.bracket.format,
-                    partnerMode: 'acak', g1: 0, g2: 0,
+                    partnerMode: 'fair', g1: 0, g2: 0,
                     bracketRound: roundIdx, bracketMatchIndex: i
                 });
             }
@@ -2322,6 +2499,7 @@
         if(winners.length === 1) {
             data.bracket.championId = winners[0].map(p => p.id);
             data.bracket.championName = winnerNames[0] || null;
+            applyEloRatings();
             data.isFinished = true;
             data.currentMatches = [];
             confetti({ particleCount: 250, spread: 120, origin: { y: 0.5 }, colors: ['#FFD700', '#4361ee', '#f72585'] });
@@ -2512,114 +2690,419 @@
     function countPartnership(id1, id2) { return data.matches.filter(m => (m.ids1 && m.ids1.includes(id1) && m.ids1.includes(id2)) || (m.ids2 && m.ids2.includes(id1) && m.ids2.includes(id2))).length; }
     function countOpponent(id1, id2) { return data.matches.filter(m => (m.ids1 && m.ids1.includes(id1) && m.ids2 && m.ids2.includes(id2)) || (m.ids1 && m.ids1.includes(id2) && m.ids2 && m.ids2.includes(id1))).length; }
 
+    // ======================================================================
+    //  JADWAL LENGKAP (MEXICANO / FAIR / TETAP / SINGLES)
+    //  Semua match dibuat sekaligus saat tombol MULAI ditekan (Match 1..N).
+    // ======================================================================
+    function slimP(p) { return p ? { id: p.id, name: p.name, gender: p.gender } : p; }
+    function playerById(id) { return data.players.find(x => x.id === id); }
+    function pairKeyOf(a, b) { return a < b ? a + '|' + b : b + '|' + a; }
+
+    // Satu percobaan penyusunan jadwal ganda: setiap kombinasi pasangan (partner) dipakai MAKSIMAL sekali.
+    function schedPartnerAttempt(ids, courts, canFace) {
+        let unused = [];
+        for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) unused.push([ids[i], ids[j]]);
+        let cnt = {}; ids.forEach(id => cnt[id] = 0);
+        let opp = {};
+        const oppN = (a, b) => opp[pairKeyOf(a, b)] || 0;
+        let rounds = [], guard = 0;
+
+        while (unused.length && guard++ < 2000) {
+            let busy = new Set(), round = [];
+            for (let c = 0; c < courts; c++) {
+                let free = unused.filter(p => !busy.has(p[0]) && !busy.has(p[1]));
+                if (free.length < 2) break;
+                let firsts = free.map(p => ({ p, s: cnt[p[0]] + cnt[p[1]] + Math.random() * 0.9 }))
+                                 .sort((x, y) => x.s - y.s).slice(0, 8);
+                let chosen = null;
+                for (let f of firsts) {
+                    let p1 = f.p, best = null, bestS = 1e9;
+                    for (let p of free) {
+                        if (p === p1 || p[0] === p1[0] || p[0] === p1[1] || p[1] === p1[0] || p[1] === p1[1]) continue;
+                        if (!canFace(p1, p)) continue;
+                        let s = cnt[p[0]] + cnt[p[1]]
+                              + (oppN(p1[0], p[0]) + oppN(p1[0], p[1]) + oppN(p1[1], p[0]) + oppN(p1[1], p[1])) * 0.8
+                              + Math.random() * 0.9;
+                        if (s < bestS) { bestS = s; best = p; }
+                    }
+                    if (best) { chosen = [p1, best]; break; }
+                }
+                if (!chosen) break;
+                let [a, b] = chosen;
+                [a[0], a[1], b[0], b[1]].forEach(id => { cnt[id]++; busy.add(id); });
+                [[a[0], b[0]], [a[0], b[1]], [a[1], b[0]], [a[1], b[1]]].forEach(([x, y]) => { let k = pairKeyOf(x, y); opp[k] = (opp[k] || 0) + 1; });
+                unused = unused.filter(p => p !== a && p !== b);
+                round.push({ t1: [a[0], a[1]], t2: [b[0], b[1]] });
+            }
+            if (!round.length) break;
+            rounds.push(round);
+        }
+        return { rounds, leftover: unused.length };
+    }
+
+    function bestPartnerSchedule(ids, courts, genderOf, enforceGender, attempts) {
+        const canFace = enforceGender
+            ? (p1, p2) => {
+                let f1 = genderOf[p1[0]] === 'F' && genderOf[p1[1]] === 'F', m1 = genderOf[p1[0]] === 'M' && genderOf[p1[1]] === 'M';
+                let f2 = genderOf[p2[0]] === 'F' && genderOf[p2[1]] === 'F', m2 = genderOf[p2[0]] === 'M' && genderOf[p2[1]] === 'M';
+                return !((f1 && m2) || (m1 && f2));
+              }
+            : () => true;
+        let best = null;
+        for (let i = 0; i < (attempts || 40); i++) {
+            let r = schedPartnerAttempt(ids, courts, canFace);
+            if (!best || r.leftover < best.leftover || (r.leftover === best.leftover && r.rounds.length < best.rounds.length)) best = r;
+            if (best.leftover === 0 && i > 8) break;
+        }
+        return best;
+    }
+
+    // Untuk singles & pasangan tetap: setiap unit (pemain / pasangan) bertemu SEMUA unit lain tepat sekali.
+    function schedMatchupAttempt(units, courts) {
+        let unused = [];
+        for (let i = 0; i < units.length; i++) for (let j = i + 1; j < units.length; j++) unused.push([i, j]);
+        let cnt = units.map(() => 0), rounds = [], guard = 0;
+        while (unused.length && guard++ < 2000) {
+            let busy = new Set(), round = [];
+            for (let c = 0; c < courts; c++) {
+                let best = null, bestS = 1e9;
+                unused.forEach(m => {
+                    let ids = units[m[0]].ids.concat(units[m[1]].ids);
+                    if (ids.some(id => busy.has(id))) return;
+                    let s = cnt[m[0]] + cnt[m[1]] + Math.random() * 0.9;
+                    if (s < bestS) { bestS = s; best = m; }
+                });
+                if (!best) break;
+                units[best[0]].ids.concat(units[best[1]].ids).forEach(id => busy.add(id));
+                cnt[best[0]]++; cnt[best[1]]++;
+                unused = unused.filter(m => m !== best);
+                round.push({ t1: units[best[0]].ids, t2: units[best[1]].ids, t1Name: units[best[0]].name || null, t2Name: units[best[1]].name || null });
+            }
+            if (!round.length) break;
+            rounds.push(round);
+        }
+        return { rounds, leftover: unused.length };
+    }
+    function bestMatchupSchedule(units, courts, attempts) {
+        let best = null;
+        for (let i = 0; i < (attempts || 30); i++) {
+            let r = schedMatchupAttempt(units, courts);
+            if (!best || r.leftover < best.leftover || (r.leftover === best.leftover && r.rounds.length < best.rounds.length)) best = r;
+            if (best.leftover === 0 && i > 5) break;
+        }
+        return best;
+    }
+
     function generateMatch() {
-        if(data.isFinished) return appAlert("Perhatian", "Turnamen sudah selesai! Buka kembali turnamen di menu Ranking jika ingin melanjutkan.");
-        if(data.tournamentMode === 'knockout') return appAlert("Perhatian", "Mode turnamen saat ini adalah KNOCKOUT. Gunakan tombol 'Buat Bracket Otomatis' untuk memulai.");
+        if (data.isFinished) return appAlert("Perhatian", "Turnamen sudah selesai! Buka kembali turnamen di menu Klasemen jika ingin melanjutkan.");
+        if (data.tournamentMode === 'knockout') return appAlert("Perhatian", "Mode turnamen saat ini adalah KNOCKOUT. Gunakan tombol 'Buat Bracket Otomatis' untuk memulai.");
+        if (data.currentMatches && data.currentMatches.length > 0) return appAlert("Perhatian", "Masih ada pertandingan yang berjalan. Selesaikan dulu sebelum membuat jadwal baru.");
+        if ((data.schedule || []).some(s => s.status === 'pending')) {
+            return appConfirm("Ganti Jadwal", "Masih ada match yang belum dimainkan pada jadwal saat ini. Membuat jadwal baru akan menggantinya. Lanjutkan?", buildAndStartSchedule);
+        }
+        buildAndStartSchedule();
+    }
+
+    function buildAndStartSchedule() {
         window._sessionOfferShown = false;
-        
-        let numCourts = parseInt(document.getElementById('numCourts').value) || 1;
-        let reqP = selectedFormat === 'doubles' ? 4 : 2;
-        let activePlayers = data.players.filter(p => p.isPresent !== false);
+        let reqCourts = parseInt(document.getElementById('numCourts').value) || 1;
+        let mode = currentPartnerMode;
+        let active = data.players.filter(p => p.isPresent !== false);
+        let result, courts;
+        if (selectedFormat === 'doubles' && mode === 'dinamis') return startDynamicSchedule(reqCourts);
 
-        if (currentPartnerMode === 'tetap') {
-            if (selectedFormat === 'singles') return appAlert("Error", "Mode Pasangan Tetap hanya berlaku untuk permainan 2 VS 2.");
-            let validPairs = (data.fixedPairs || []).filter(fp => {
-                let p1 = data.players.find(x => x.id === fp.p1); let p2 = data.players.find(x => x.id === fp.p2);
-                return p1 && p1.isPresent !== false && p2 && p2.isPresent !== false;
+        if (selectedFormat === 'singles') {
+            if (active.length < 2) return appAlert("Error", "Minimal 2 pemain HADIR untuk permainan 1 VS 1.");
+            let units = active.map(p => ({ ids: [p.id], name: null }));
+            courts = Math.max(1, Math.min(reqCourts, Math.floor(units.length / 2)));
+            result = bestMatchupSchedule(units, courts);
+            mode = 'singles';
+        } else if (mode === 'tetap') {
+            let valid = (data.fixedPairs || []).filter(fp => {
+                let a = playerById(fp.p1), b = playerById(fp.p2);
+                return a && a.isPresent !== false && b && b.isPresent !== false;
             });
-            if(validPairs.length < numCourts * 2) {
-                return appAlert("Error", `Tidak cukup Pasangan Tetap yang Hadir. Dibutuhkan minimal ${numCourts * 2} Pasangan untuk ${numCourts} lapangan.`);
-            }
-
-            validPairs.sort((a,b) => (a.playCount||0) - (b.playCount||0) || Math.random() - 0.5);
-            let selectedPairs = validPairs.slice(0, numCourts * 2);
-            selectedPairs.sort(() => Math.random() - 0.5); 
-            
-            let newMatches = [];
-            for(let i=0; i<numCourts; i++) {
-                let pA = selectedPairs[i*2]; let pB = selectedPairs[i*2 + 1];
-                let t1 = [ data.players.find(x=>x.id===pA.p1), data.players.find(x=>x.id===pA.p2) ];
-                let t2 = [ data.players.find(x=>x.id===pB.p1), data.players.find(x=>x.id===pB.p2) ];
-                newMatches.push(createMatchObj(i+1, t1, t2, pA.teamName || null, pB.teamName || null));
-            }
-            data.currentMatches = newMatches;
+            if (valid.length < 2) return appAlert("Error", "Minimal 2 Pasangan Tetap yang HADIR dibutuhkan. Atur lewat tombol 'Kelola Pasangan Tetap'.");
+            let units = valid.map(fp => ({ ids: [fp.p1, fp.p2], name: fp.teamName || null }));
+            courts = Math.max(1, Math.min(reqCourts, Math.floor(units.length / 2)));
+            result = bestMatchupSchedule(units, courts);
         } else {
-            if(activePlayers.length < reqP * numCourts) return appAlert("Error", `Butuh minimal ${reqP * numCourts} pemain HADIR untuk mengisi ${numCourts} lapangan!`);
-            
-            let pool = [...activePlayers].sort((a, b) => {
-                if (a.stats.p !== b.stats.p) return a.stats.p - b.stats.p;
-                return Math.random() - 0.5;
-            }).slice(0, reqP * numCourts);
-            
-            let newMatches = [];
-            if(reqP === 4) {
-                let bestArrangement = null;
-                let bestScore = 99999;
-
-                for(let attempts = 0; attempts < 200; attempts++) {
-                    pool.sort(() => Math.random() - 0.5);
-                    let valid = true;
-                    let currentScore = 0;
-                    let currentArrangement = [];
-
-                    for(let i=0; i<numCourts; i++) {
-                        let cP = pool.slice(i*reqP, (i+1)*reqP);
-                        let t1 = [cP[0], cP[1]], t2 = [cP[2], cP[3]];
-                        if(!isValidCourtGender(t1, t2)) { valid = false; break; }
-                        
-                        currentScore += countPartnership(t1[0].id, t1[1].id) * 10;
-                        currentScore += countPartnership(t2[0].id, t2[1].id) * 10;
-                        
-                        currentScore += countOpponent(t1[0].id, t2[0].id) * 2;
-                        currentScore += countOpponent(t1[0].id, t2[1].id) * 2;
-                        currentScore += countOpponent(t1[1].id, t2[0].id) * 2;
-                        currentScore += countOpponent(t1[1].id, t2[1].id) * 2;
-
-                        currentArrangement.push({t1, t2});
-                    }
-
-                    if(valid && currentScore < bestScore) {
-                        bestScore = currentScore;
-                        bestArrangement = currentArrangement;
-                        if(bestScore === 0) break;
-                    }
-                }
-
-                if(!bestArrangement) {
-                    bestArrangement = [];
-                    for(let i=0; i<numCourts; i++) {
-                        bestArrangement.push({t1: [pool[i*4], pool[i*4+1]], t2: [pool[i*4+2], pool[i*4+3]]});
-                    }
-                }
-                
-                for(let i=0; i<numCourts; i++) {
-                    newMatches.push(createMatchObj(i+1, bestArrangement[i].t1, bestArrangement[i].t2));
-                }
-            } else {
-                pool.sort(() => Math.random() - 0.5);
-                for(let i=0; i<numCourts; i++) {
-                    let cP = pool.slice(i*reqP, (i+1)*reqP);
-                    newMatches.push(createMatchObj(i+1, [cP[0]], [cP[1]]));
-                }
-            }
-            data.currentMatches = newMatches;
+            if (active.length < 4) return appAlert("Error", "Minimal 4 pemain HADIR dibutuhkan untuk permainan 2 VS 2.");
+            courts = Math.max(1, Math.min(reqCourts, Math.floor(active.length / 4)));
+            let genderOf = {}; active.forEach(p => genderOf[p.id] = p.gender);
+            result = bestPartnerSchedule(active.map(p => p.id), courts, genderOf, mode === 'fair', 40);
         }
 
-        data.roundNumber = (data.roundNumber || 0) + 1;
+        let rounds = result.rounds, truncated = false;
+        if (data.plannedRounds && rounds.length > data.plannedRounds) { rounds = rounds.slice(0, data.plannedRounds); truncated = true; }
+        if (!rounds.length) return appAlert("Error", "Jadwal tidak dapat dibuat dengan pemain yang ada. Cek jumlah pemain HADIR.");
+
+        let stamp = Date.now(), no = 0, items = [];
+        rounds.forEach((rd, ri) => rd.forEach(mt => {
+            no++;
+            items.push({ id: 'SC_' + stamp + '_' + no, no, round: ri + 1, t1: mt.t1, t2: mt.t2, t1Name: mt.t1Name || null, t2Name: mt.t2Name || null, status: 'pending' });
+        }));
+
+        data.schedule = items;
+        data.scheduleMeta = { courts, mode, format: selectedFormat, sport: selectedSport, rounds: rounds.length, total: items.length, leftover: truncated ? 0 : result.leftover, createdAt: stamp };
+        data.currentMatches = [];
+        data.roundNumber = 0;
+        data.partnerMode = currentPartnerMode;
+        fillCourtsFromSchedule();
+
+        let notes = [];
+        if (courts < reqCourts) notes.push(`Lapangan dikurangi jadi ${courts} karena jumlah pemain.`);
+        if (!truncated && result.leftover > 0) notes.push(`${result.leftover} kombinasi pasangan tidak bisa dijadwalkan (terhalang aturan gender / jumlah pemain).`);
+        if (truncated) notes.push(`Jadwal dibatasi ${data.plannedRounds} ronde.`);
+        showToast('Jadwal Dibuat', `${items.length} match dalam ${rounds.length} ronde.` + (notes.length ? ' ' + notes.join(' ') : ''), notes.length ? 'warning' : 'success');
+
         playSfx('whistle');
         save(); renderMatches(); renderRoundInfo();
+    }
+
+    function pendingSorted(sched) {
+        return (sched || []).filter(s => s.status === 'pending').sort((a, b) => (a.pp || 0) - (b.pp || 0) || a.no - b.no);
+    }
+
+    function activateScheduleItem(item, court) {
+        let meta = data.scheduleMeta;
+        item.status = 'live'; item.court = court;
+        data.currentMatches.push({
+            id: 'MC_' + item.id, court: court,
+            t1: item.t1.map(id => slimP(playerById(id))), t2: item.t2.map(id => slimP(playerById(id))),
+            t1Name: item.t1Name || null, t2Name: item.t2Name || null,
+            sport: meta.sport, format: meta.format,
+            partnerMode: meta.mode === 'singles' ? 'fair' : meta.mode,
+            g1: 0, g2: 0, scheduleId: item.id, matchNo: item.no, round: item.round
+        });
+        data.roundNumber = Math.max(data.roundNumber || 0, item.round);
+    }
+
+    function startDynamicSchedule(reqCourts) {
+        let active = data.players.filter(p => p.isPresent !== false);
+        if (active.length < 4) return appAlert("Error", "Minimal 4 pemain HADIR dibutuhkan untuk Mexicano Dinamis (2 VS 2).");
+        let courts = Math.max(1, Math.min(reqCourts, Math.floor(active.length / 4)));
+        data.schedule = [];
+        data.scheduleMeta = { courts, mode: 'dinamis', format: 'doubles', sport: selectedSport, rounds: data.plannedRounds || null, total: 0, leftover: 0, createdAt: Date.now() };
+        data.currentMatches = [];
+        data.roundNumber = 0;
+        data.partnerMode = 'dinamis';
+        fillCourtsFromSchedule();
+        if (!data.schedule.length) return appAlert("Error", "Ronde pertama tidak dapat dibuat. Cek jumlah pemain HADIR.");
+        showToast('Mexicano Dinamis', 'Ronde 1 dibuat acak. Ronde berikutnya otomatis disusun dari klasemen setelah semua match ronde ini selesai.' + (courts < reqCourts ? ' Lapangan dikurangi jadi ' + courts + ' karena jumlah pemain.' : ''), 'success');
+        playSfx('whistle');
+        save(); renderMatches(); renderRoundInfo();
+    }
+
+    function partnerCountSched(a, b) {
+        return (data.schedule || []).filter(s => s.status !== 'skipped' &&
+            ((s.t1.includes(a) && s.t1.includes(b)) || (s.t2.includes(a) && s.t2.includes(b)))).length;
+    }
+
+    // Membuat 1 ronde baru berdasarkan klasemen terkini (Mexicano Dinamis).
+    function generateDynamicRound() {
+        let meta = data.scheduleMeta;
+        if (!meta || meta.mode !== 'dinamis') return false;
+        let active = data.players.filter(p => p.isPresent !== false);
+        if (active.length < 4) return false;
+        let sch = data.schedule || [];
+        let roundNo = sch.reduce((m, s) => Math.max(m, s.round), 0) + 1;
+        if (meta.rounds && roundNo > meta.rounds) return false;
+        let courts = Math.max(1, Math.min(meta.courts || 1, Math.floor(active.length / 4)));
+
+        let appear = {};
+        active.forEach(p => appear[p.id] = 0);
+        sch.forEach(s => { if (s.status === 'skipped') return; s.t1.concat(s.t2).forEach(id => { if (id in appear) appear[id]++; }); });
+        let pool = [...active].sort(() => Math.random() - 0.5).sort((a, b) => appear[a.id] - appear[b.id]);
+        let selected = pool.slice(0, courts * 4);
+        selected = selected.sort(() => Math.random() - 0.5).sort((a, b) => b.stats.pts - a.stats.pts || b.stats.gd - a.stats.gd);
+
+        let stamp = Date.now(), no = sch.reduce((m, s) => Math.max(m, s.no), 0);
+        for (let c = 0; c < courts; c++) {
+            let g = selected.slice(c * 4, c * 4 + 4).map(p => p.id);
+            if (g.length < 4) break;
+            let options = [
+                [[g[0], g[3]], [g[1], g[2]]],
+                [[g[0], g[2]], [g[1], g[3]]],
+                [[g[0], g[1]], [g[2], g[3]]]
+            ];
+            let best = null, bestCost = 1e9;
+            options.forEach((o, i) => {
+                let cost = partnerCountSched(o[0][0], o[0][1]) * 10 + partnerCountSched(o[1][0], o[1][1]) * 10 + i * 0.1;
+                if (cost < bestCost) { bestCost = cost; best = o; }
+            });
+            no++;
+            sch.push({ id: 'SC_' + stamp + '_' + no, no, round: roundNo, t1: best[0], t2: best[1], t1Name: null, t2Name: null, status: 'pending' });
+        }
+        data.schedule = sch;
+        meta.total = sch.length;
+        return true;
+    }
+
+    // Isi lapangan yang kosong dengan match berikutnya dari antrean jadwal.
+    function fillCourtsFromSchedule(excludeIds) {
+        let meta = data.scheduleMeta;
+        if (!meta) return;
+        excludeIds = excludeIds || [];
+        if (!data.schedule) data.schedule = [];
+        if (!data.currentMatches) data.currentMatches = [];
+        if (meta.mode === 'dinamis' && !data.currentMatches.length && !data.schedule.some(s => s.status === 'pending' || s.status === 'live')) generateDynamicRound();
+        if (!data.schedule.length) return;
+        data.schedule.forEach(s => {
+            if (s.status === 'pending' && s.t1.concat(s.t2).some(id => !playerById(id))) s.status = 'skipped';
+        });
+        let busy = new Set();
+        data.currentMatches.forEach(m => m.t1.concat(m.t2).forEach(p => busy.add(p.id)));
+        let usedCourts = new Set(data.currentMatches.map(m => m.court));
+        for (let c = 1; c <= (meta.courts || 1); c++) {
+            if (usedCourts.has(c)) continue;
+            let item = pendingSorted(data.schedule).find(s => !excludeIds.includes(s.id) && s.t1.concat(s.t2).every(id => !busy.has(id)));
+            if (!item) continue;
+            item.t1.concat(item.t2).forEach(id => busy.add(id));
+            activateScheduleItem(item, c);
+        }
+        data.currentMatches.sort((a, b) => a.court - b.court);
+    }
+
+    function toggleSkipSchedule(id) {
+        let s = (data.schedule || []).find(x => x.id === id);
+        if (!s) return;
+        if (s.status === 'pending') s.status = 'skipped';
+        else if (s.status === 'skipped') s.status = 'pending';
+        else return;
+        fillCourtsFromSchedule();
+        save(); renderMatches(); renderRoundInfo();
+    }
+
+    // Tunda match yang sedang berjalan (mis. pemain belum datang) dan lanjut ke match berikutnya.
+    function postponeCourtMatch(matchId) {
+        appConfirm("Tunda Match", "Match ini ditunda (misal pemain belum datang) dan dipindah ke antrean paling belakang. Lapangan langsung diisi match berikutnya yang pemainnya siap. Skor yang sudah diisi akan di-reset.", () => {
+            let i = data.currentMatches.findIndex(x => x.id === matchId);
+            if (i === -1) return;
+            let m = data.currentMatches[i];
+            let it = (data.schedule || []).find(x => x.id === m.scheduleId);
+            if (!it) return appAlert("Info", "Match ini tidak berasal dari jadwal sehingga tidak bisa ditunda.");
+            data.currentMatches.splice(i, 1);
+            let maxPP = (data.schedule || []).reduce((mx, s) => Math.max(mx, s.pp || 0), 0);
+            it.status = 'pending'; it.pp = maxPP + 1; delete it.court;
+            fillCourtsFromSchedule([it.id]);
+            save(); renderMatches(); renderRoundInfo();
+            showToast('Match Ditunda', `Match ${it.no} dipindah ke antrean belakang. Mainkan kapan saja lewat tombol ▶ di jadwal.`, 'warning');
+        });
+    }
+
+    // Mainkan match tertentu dari jadwal sekarang juga (lewati urutan).
+    function playScheduleNow(id) {
+        let s = (data.schedule || []).find(x => x.id === id);
+        if (!s || (s.status !== 'pending' && s.status !== 'skipped')) return;
+        let meta = data.scheduleMeta; if (!meta) return;
+        if (!data.currentMatches) data.currentMatches = [];
+        let playing = {};
+        data.currentMatches.forEach(m => m.t1.concat(m.t2).forEach(p => playing[p.id] = m.court));
+        let clash = s.t1.concat(s.t2).find(pid => playing[pid]);
+        if (clash) { let p = playerById(clash); return appAlert("Tidak Bisa Dimainkan", `${p ? p.name : 'Seorang pemain'} sedang bermain di Lapangan ${playing[clash]}. Selesaikan atau tunda match itu dulu.`); }
+        if (s.t1.concat(s.t2).some(pid => !playerById(pid))) return appAlert("Error", "Ada pemain dalam match ini yang sudah dihapus dari daftar.");
+        let used = new Set(data.currentMatches.map(m => m.court)), court = null;
+        for (let c = 1; c <= (meta.courts || 1); c++) { if (!used.has(c)) { court = c; break; } }
+        if (!court) return appAlert("Lapangan Penuh", "Semua lapangan sedang dipakai. Selesaikan atau tunda salah satu match dulu, lalu pilih match ini lagi.");
+        activateScheduleItem(s, court);
+        data.currentMatches.sort((a, b) => a.court - b.court);
+        save(); renderMatches(); renderRoundInfo();
+        showToast('Match Dimulai', `Match ${s.no} dimainkan di Lapangan ${court}.`, 'success');
+    }
+
+    // Utamakan seluruh match pada ronde tertentu (dimainkan lebih dulu saat lapangan kosong).
+    function prioritizeRound(r) {
+        let sch = data.schedule || [];
+        let minPP = sch.filter(s => s.status === 'pending').reduce((m, s) => Math.min(m, s.pp || 0), 0);
+        let n = 0;
+        sch.forEach(s => { if (s.round === r && s.status === 'pending') { s.pp = minPP - 1; n++; } });
+        if (!n) return;
+        fillCourtsFromSchedule();
+        save(); renderMatches(); renderRoundInfo();
+        showToast('Ronde Diutamakan', `Match Ronde ${r} akan dimainkan lebih dulu begitu lapangan kosong.`, 'success');
+    }
+
+    function playNextInQueue() {
+        fillCourtsFromSchedule();
+        save(); renderMatches(); renderRoundInfo();
+        if (!(data.currentMatches || []).length) showToast('Belum Bisa', 'Belum ada match di antrean yang semua pemainnya siap.', 'warning');
+    }
+
+    function clearSchedule() {
+        appConfirm("Hapus Jadwal", "Seluruh antrean jadwal akan dihapus (riwayat & klasemen tidak berubah). Match yang sedang berjalan tetap bisa diselesaikan. Lanjutkan?", () => {
+            data.schedule = []; data.scheduleMeta = null;
+            save(); renderMatches(); renderRoundInfo();
+        });
+    }
+
+    function renderSchedule() {
+        let box = document.getElementById('scheduleArea');
+        if (!box) return;
+        let sch = data.schedule || [];
+        if (!sch.length || data.tournamentMode !== 'league') { box.innerHTML = ''; return; }
+        const nameOf = id => { let p = playerById(id); return p ? p.name : '(dihapus)'; };
+        const teamStr = (ids, custom) => escapeHtml(custom || ids.map(nameOf).join(' & '));
+        let done = sch.filter(s => s.status === 'done').length;
+        let pct = Math.round(done / sch.length * 100);
+        let isDyn = data.scheduleMeta && data.scheduleMeta.mode === 'dinamis';
+
+        let byRound = {};
+        sch.forEach(s => { (byRound[s.round] = byRound[s.round] || []).push(s); });
+        let rows = Object.keys(byRound).map(r => {
+            let hasPending = byRound[r].some(s => s.status === 'pending');
+            let head = `<div style="display:flex; justify-content:space-between; align-items:center; margin:14px 0 6px;"><span style="font-size:11px; font-weight:900; color:var(--text-muted); letter-spacing:1px;">RONDE ${r}</span>${hasPending ? `<button class="small-act admin-only" onclick="prioritizeRound(${r})" title="Mainkan ronde ini lebih dulu"><i class="fas fa-angles-up"></i> Utamakan ronde</button>` : ''}</div>`;
+            let list = byRound[r].map(s => {
+                let chip, bg = 'var(--input-bg)', extra = '';
+                if (s.status === 'done') {
+                    chip = `<b style="color:var(--success);">${s.s1} - ${s.s2}</b>`;
+                    if ((data.matches || []).some(h => h.id === 'HIST_MC_' + s.id)) {
+                        extra = `<button class="admin-only" onclick="openEditScore('HIST_MC_${s.id}')" title="Edit skor (jika salah input)" style="background:none; border:none; color:var(--primary); cursor:pointer; padding:4px 6px;"><i class="fas fa-pen"></i></button>`;
+                    }
+                }
+                else if (s.status === 'live') { chip = `<b style="color:var(--primary);">● Lap ${s.court}</b>`; bg = 'rgba(67,97,238,0.12)'; }
+                else if (s.status === 'skipped') { chip = `<span style="color:var(--warning); font-weight:bold;">Dilewati</span>`; }
+                else { chip = (s.pp > 0) ? `<span style="color:var(--warning); font-weight:bold;">⏸ Ditunda</span>` : `<span style="color:var(--text-muted); font-weight:bold;">Menunggu</span>`; }
+                if (s.status === 'pending' || s.status === 'skipped') {
+                    extra = `<button class="admin-only" onclick="playScheduleNow('${s.id}')" title="Mainkan sekarang" style="background:none; border:none; color:var(--success); cursor:pointer; padding:4px 6px;"><i class="fas fa-play"></i></button>` +
+                            `<button class="admin-only" onclick="toggleSkipSchedule('${s.id}')" title="${s.status === 'pending' ? 'Lewati match ini' : 'Masukkan lagi ke antrean'}" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:4px 6px;"><i class="fas ${s.status === 'pending' ? 'fa-forward' : 'fa-rotate-left'}"></i></button>`;
+                }
+                return `<div style="display:flex; align-items:center; gap:8px; background:${bg}; border:1px solid var(--border-color); border-radius:10px; padding:8px 10px; margin-bottom:6px; opacity:${s.status === 'skipped' ? 0.55 : 1};">
+                    <span style="background:var(--primary); color:#fff; font-size:10px; font-weight:900; padding:3px 8px; border-radius:8px; white-space:nowrap;">MATCH ${s.no}</span>
+                    <div style="flex:1; font-size:12px; font-weight:bold; line-height:1.3; min-width:0;">
+                        <span style="color:var(--accent);">${teamStr(s.t1, s.t1Name)}</span>
+                        <span style="color:var(--text-muted); font-weight:normal;"> vs </span>
+                        <span style="color:var(--primary);">${teamStr(s.t2, s.t2Name)}</span>
+                    </div>
+                    <div style="font-size:12px; white-space:nowrap;">${chip}</div>${extra}
+                </div>`;
+            }).join('');
+            return head + list;
+        }).join('');
+
+        box.innerHTML = `<div class="card" style="padding:16px; margin-top:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                <h4 style="margin:0; color:var(--primary); font-weight:900;"><i class="fas ${isDyn ? 'fa-bolt' : 'fa-list-ol'}"></i> ${isDyn ? 'JADWAL MEXICANO DINAMIS' : 'JADWAL PERTANDINGAN'}</h4>
+                <button class="btn btn-ghost owner-only" onclick="clearSchedule()" style="width:auto; padding:4px 10px; font-size:11px; color:#ef4444; border-color:rgba(239,68,68,0.3);"><i class="fas fa-trash"></i> Hapus</button>
+            </div>
+            ${isDyn ? '<div style="font-size:11px; color:var(--text-muted); margin-top:6px;">Ronde berikutnya dibuat otomatis dari klasemen terbaru setelah semua match ronde ini selesai.</div>' : ''}
+            <div style="font-size:11px; color:var(--text-muted); margin:8px 0 6px; font-weight:bold;">${done} dari ${sch.length} match selesai (${pct}%)</div>
+            <div style="height:6px; background:var(--input-bg); border-radius:6px; overflow:hidden;"><div style="width:${pct}%; height:100%; background:var(--success);"></div></div>
+            <div style="max-height:460px; overflow-y:auto; overflow-x:hidden; padding-right:2px;">${rows}</div>
+        </div>`;
     }
 
     function createMatchObj(courtNum, t1, t2, t1Name=null, t2Name=null) {
         return {
             id: 'MC_'+Date.now()+'_'+courtNum, court: courtNum,
-            t1, t2, t1Name, t2Name, sport: selectedSport, format: selectedFormat,
+            t1: t1.map(slimP), t2: t2.map(slimP), t1Name, t2Name, sport: selectedSport, format: selectedFormat,
             partnerMode: currentPartnerMode,
             g1:0, g2:0
         };
     }
 
     function renderMatches() {
+        renderSchedule();
         if(data.tournamentMode === 'knockout' && data.bracket && data.bracket.championId) {
             document.getElementById('setupArea').style.display = 'none';
             document.getElementById('matchArea').classList.remove('hidden');
@@ -2631,6 +3114,13 @@
                     <div style="font-size:22px; font-weight:900; margin:15px 0; color:var(--gold); text-shadow:0 2px 6px rgba(0,0,0,0.2);">${champNames}</div>
                     <button class="btn btn-primary" style="margin-top:10px;" onclick="openBracketView()"><i class="fas fa-sitemap"></i> Lihat Bagan Bracket</button>
                 </div>`;
+            return;
+        }
+        if(data.tournamentMode === 'league' && (!data.currentMatches || data.currentMatches.length === 0) && (data.schedule || []).some(s => s.status === 'pending')) {
+            document.getElementById('setupArea').style.display = 'none';
+            let wa = document.getElementById('waitingHostArea'); if(wa) wa.classList.add('hidden');
+            document.getElementById('multiCourtContainer').innerHTML = `<div class="card" style="text-align:center; padding:25px 20px;"><i class="fas fa-pause-circle" style="font-size:32px; color:var(--warning); margin-bottom:8px;"></i><h4 style="margin:0 0 6px 0;">Belum ada match berjalan</h4><p style="font-size:12px; color:var(--text-muted); margin:0 0 12px 0;">Masih ada match di antrean. Pilih match lewat tombol ▶ di jadwal, atau mulai match berikutnya yang pemainnya siap.</p><button class="btn btn-primary admin-only" onclick="playNextInQueue()"><i class="fas fa-forward"></i> Mulai Match Berikutnya</button></div>`;
+            document.getElementById('matchArea').classList.remove('hidden');
             return;
         }
         if(!data.currentMatches || data.currentMatches.length === 0) {
@@ -2667,7 +3157,7 @@
 
         return `
         <div id="courtCard_${m.id}" class="card match-card ${sportClass}" style="margin-bottom: 25px; border: 2px solid var(--border-color); position:relative;">
-            <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:var(${sportColorVar}); color:#04202b; padding:4px 15px; border-radius:20px; font-weight:900; font-size:13px; box-shadow:0 4px 10px rgba(0,0,0,0.25);">LAPANGAN ${m.court}</div>
+            <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:var(${sportColorVar}); color:#04202b; padding:4px 15px; border-radius:20px; font-weight:900; font-size:13px; box-shadow:0 4px 10px rgba(0,0,0,0.25);">LAPANGAN ${m.court}${m.matchNo ? ' • MATCH ' + m.matchNo : ''}</div>
 
             <div style="display:flex; justify-content:center; margin-top:10px;">
                 <span class="live-badge"><span class="live-dot"></span>LIVE</span>
@@ -2679,6 +3169,7 @@
 
             <div style="margin-top:12px;">
                 <h4 style="margin:0 0 10px 0; color:var(--primary); text-align:center;"><i class="fas fa-stopwatch"></i> SCOREBOARD</h4>
+                ${m.scheduleId ? `<button class="btn btn-ghost admin-only" style="margin-bottom:10px; padding:8px; font-size:12px; color:var(--warning); border-color:rgba(245,158,11,0.4);" onclick="postponeCourtMatch('${m.id}')"><i class="fas fa-pause"></i> Tunda match (pemain belum datang)</button>` : ''}
 
                 <div class="live-scoreboard">
                     <div class="score-row">
@@ -2780,15 +3271,19 @@
             nt1.push(data.players.find(x => x.id === t1_1));
             nt2.push(data.players.find(x => x.id === t2_1));
             
-            if(!isValidCourtGender(nt1, nt2)) {
+            if(m.partnerMode !== 'mexicano' && m.partnerMode !== 'dinamis' && !isValidCourtGender(nt1, nt2)) {
                 appAlert("Peringatan Aturan Gender", "Susunan manual ini mempertemukan Ganda Putri (2 Wanita) vs Ganda Putra (2 Pria). Perubahan tetap disimpan.");
             }
         } else {
             if(t1_0 === t2_0) return appAlert("Error", "Pemain tidak boleh sama!");
         }
 
-        m.t1 = nt1;
-        m.t2 = nt2;
+        m.t1 = nt1.map(slimP);
+        m.t2 = nt2.map(slimP);
+        if(m.scheduleId) {
+            let sItem = (data.schedule || []).find(x => x.id === m.scheduleId);
+            if(sItem) { sItem.t1 = nt1.map(p => p.id); sItem.t2 = nt2.map(p => p.id); }
+        }
 
         document.getElementById('editMatchPlayersModal').classList.add('hidden');
         save();
@@ -2811,6 +3306,10 @@
         let t = team === 1 ? 'g1' : 'g2';
         m[t] += change;
         if(m[t] < 0) m[t] = 0;
+        if(change > 0) {
+            if(m.g1 < m.g2) m.d1 = Math.max(m.d1 || 0, m.g2 - m.g1);
+            if(m.g2 < m.g1) m.d2 = Math.max(m.d2 || 0, m.g1 - m.g2);
+        }
         
         saveDebounced(); updateCourtScoreUI(matchId);
     }
@@ -2826,61 +3325,90 @@
             });
             return;
         }
-        appConfirm("Batal Match", `Yakin ingin membatalkan pertandingan di Lapangan ${crt}?`, () => {
-            data.currentMatches.splice(idx, 1); save(); renderMatches();
+        appConfirm("Batal Match", `Yakin ingin membatalkan pertandingan di Lapangan ${crt}? Match akan ditandai "Dilewati" dan diganti match berikutnya (jika ada jadwal).`, () => {
+            let i2 = data.currentMatches.findIndex(x => x.id === matchId);
+            if(i2 === -1) return;
+            let sid = data.currentMatches[i2].scheduleId;
+            data.currentMatches.splice(i2, 1);
+            if(sid) {
+                let sItem = (data.schedule || []).find(x => x.id === sid);
+                if(sItem) sItem.status = 'skipped';
+                fillCourtsFromSchedule();
+            }
+            save(); renderMatches(); renderRoundInfo();
         });
     }
 
     function submitCourtConfirm(matchId) {
-        let idx = data.currentMatches.findIndex(x => x.id === matchId);
-        if(idx === -1) return;
-        let m = data.currentMatches[idx];
-        if(m.g1 === 0 && m.g2 === 0) {
+        let m0 = data.currentMatches.find(x => x.id === matchId);
+        if(!m0) return;
+        if(m0.g1 === 0 && m0.g2 === 0) {
             return appAlert("Peringatan", "Skor masih 0-0! Silakan catat skor pemenang terlebih dahulu.");
         }
+        // PERBAIKAN: index dicari ULANG setelah konfirmasi. Dulu index disimpan sebelum dialog,
+        // sehingga jika data berubah (sinkron dari HP lain / jadwal berikutnya masuk) match yang salah bisa terhapus.
+        const stale = () => appAlert("Info", "Match ini sudah diselesaikan atau dibatalkan dari perangkat lain.");
         if(data.tournamentMode === 'knockout') {
-            if(m.g1 === m.g2) return appAlert("Peringatan", "Skor imbang tidak diperbolehkan di mode KNOCKOUT. Harus ada pemenang untuk melanjutkan ke babak berikutnya.");
-            appConfirm("Simpan Hasil", `Simpan hasil akhir Lapangan ${m.court} dan lanjutkan bracket?`, () => {
-                submitKnockoutMatch(m, idx);
+            if(m0.g1 === m0.g2) return appAlert("Peringatan", "Skor imbang tidak diperbolehkan di mode KNOCKOUT. Harus ada pemenang untuk melanjutkan ke babak berikutnya.");
+            appConfirm("Simpan Hasil", `Simpan hasil akhir Lapangan ${m0.court} dan lanjutkan bracket?`, () => {
+                let idx = data.currentMatches.findIndex(x => x.id === matchId);
+                if(idx === -1) return stale();
+                submitKnockoutMatch(data.currentMatches[idx], idx);
             });
             return;
         }
-        appConfirm("Simpan Hasil", `Simpan hasil akhir Lapangan ${m.court} ke klasemen?`, () => {
+        appConfirm("Simpan Hasil", `Simpan hasil akhir Lapangan ${m0.court} ke klasemen?`, () => {
+            let idx = data.currentMatches.findIndex(x => x.id === matchId);
+            if(idx === -1) return stale();
+            let m = data.currentMatches[idx];
             let s1 = m.g1; let s2 = m.g2;
-            const upd = (arr, ms, os) => {
-                arr.forEach(pid => {
-                    let p = data.players.find(x=>x.id===pid.id);
-                    if(p) {
-                        p.stats.p++; p.stats.gd += (ms-os);
-                        if(ms>os) { p.stats.w++; p.stats.pts+=3; }
-                        else if(ms==os) { p.stats.d++; p.stats.pts+=1; }
-                        else p.stats.l++;
-                    }
-                });
-            };
-            upd(m.t1, s1, s2); upd(m.t2, s2, s1);
+            let histId = 'HIST_' + m.id;
 
-            if(m.partnerMode === 'tetap' && m.format === 'doubles') {
-                let fp1 = data.fixedPairs.find(f => (f.p1===m.t1[0].id && f.p2===m.t1[1].id) || (f.p1===m.t1[1].id && f.p2===m.t1[0].id));
-                if(fp1) fp1.playCount = (fp1.playCount||0) + 1;
-                let fp2 = data.fixedPairs.find(f => (f.p1===m.t2[0].id && f.p2===m.t2[1].id) || (f.p1===m.t2[1].id && f.p2===m.t2[0].id));
-                if(fp2) fp2.playCount = (fp2.playCount||0) + 1;
+            // Id riwayat bersifat tetap per match: kalau 2 HP menyelesaikan match yang sama, tidak tercatat dobel.
+            if(!data.matches.some(h => h.id === histId)) {
+                const upd = (arr, ms, os) => {
+                    arr.forEach(pid => {
+                        let p = data.players.find(x=>x.id===pid.id);
+                        if(p) {
+                            p.stats.p++; p.stats.gd += (ms-os);
+                            if(ms>os) { p.stats.w++; p.stats.pts+=3; }
+                            else if(ms==os) { p.stats.d++; p.stats.pts+=1; }
+                            else p.stats.l++;
+                        }
+                    });
+                };
+                upd(m.t1, s1, s2); upd(m.t2, s2, s1);
+
+                if(m.partnerMode === 'tetap' && m.format === 'doubles') {
+                    let fp1 = data.fixedPairs.find(f => (f.p1===m.t1[0].id && f.p2===m.t1[1].id) || (f.p1===m.t1[1].id && f.p2===m.t1[0].id));
+                    if(fp1) fp1.playCount = (fp1.playCount||0) + 1;
+                    let fp2 = data.fixedPairs.find(f => (f.p1===m.t2[0].id && f.p2===m.t2[1].id) || (f.p1===m.t2[1].id && f.p2===m.t2[0].id));
+                    if(fp2) fp2.playCount = (fp2.playCount||0) + 1;
+                }
+
+                data.matches.unshift({
+                    id: histId,
+                    sport: m.sport, format: m.format, logic: m.partnerMode === 'tetap' ? 'fixed' : (m.partnerMode === 'dinamis' ? 'dinamis' : (m.partnerMode === 'mexicano' ? 'mexicano' : 'fair')),
+                    matchNo: m.matchNo || null, scheduleId: m.scheduleId || null, comeback: comebackOf(m, s1, s2),
+                    t1: m.t1Name || m.t1.map(x=>x.name).join(' & '), t2: m.t2Name || m.t2.map(x=>x.name).join(' & '), 
+                    ids1: m.t1.map(x=>x.id), ids2: m.t2.map(x=>x.id), court: m.court,
+                    s1, s2, time: new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}),
+                    dateStr: new Date().toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'})
+                });
             }
-            
-            data.matches.unshift({
-                id: 'HIST_' + Date.now() + '_' + Math.floor(Math.random()*1000),
-                sport: m.sport, format: m.format, logic: m.partnerMode === 'tetap' ? 'fixed' : (m.padelLogic || 'standard'),
-                t1: m.t1Name || m.t1.map(x=>x.name).join(' & '), t2: m.t2Name || m.t2.map(x=>x.name).join(' & '), 
-                ids1: m.t1.map(x=>x.id), ids2: m.t2.map(x=>x.id), court: m.court,
-                s1, s2, time: new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}),
-                dateStr: new Date().toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'})
-            });
-            
+
+            if(m.scheduleId) {
+                let sItem = (data.schedule || []).find(x => x.id === m.scheduleId);
+                if(sItem) { sItem.status = 'done'; sItem.s1 = s1; sItem.s2 = s2; }
+            }
+
             confetti({ particleCount: 100, origin: { y: 0.6 }, spread: 70, colors: ['#4361ee', '#f72585', '#10b981'] });
             
             data.currentMatches.splice(idx, 1); 
+            fillCourtsFromSchedule(); // otomatis majukan match berikutnya ke lapangan yang kosong
             save(); 
             renderMatches();
+            renderRoundInfo();
         });
     }
 
@@ -2904,8 +3432,8 @@
 
         let label = roundLabel(m.bracketRound, data.bracket.totalRounds);
         data.matches.unshift({
-            id: 'HIST_' + Date.now() + '_' + Math.floor(Math.random()*1000),
-            sport: m.sport, format: m.format, logic: 'knockout',
+            id: 'HIST_' + m.id,
+            sport: m.sport, format: m.format, logic: 'knockout', comeback: comebackOf(m, s1, s2),
             roundLabel: label,
             t1: m.t1Name || m.t1.map(x=>x.name).join(' & '), t2: m.t2Name || m.t2.map(x=>x.name).join(' & '),
             ids1: m.t1.map(x=>x.id), ids2: m.t2.map(x=>x.id), court: m.court,
@@ -3036,6 +3564,10 @@
         };
         apply(m.ids1, m.s1, m.s2); 
         apply(m.ids2, m.s2, m.s1);
+        if(m.comeback && ((m.comeback.team === 1 && !(m.s1 > m.s2)) || (m.comeback.team === 2 && !(m.s2 > m.s1)))) m.comeback = null;
+        let _sid = m.scheduleId || String(m.id || '').replace(/^HIST_MC_/, '');
+        let _it = (data.schedule || []).find(x => x.id === _sid);
+        if(_it) { _it.s1 = m.s1; _it.s2 = m.s2; _it.t1 = m.ids1.slice(); _it.t2 = m.ids2.slice(); }
         
         document.getElementById('editScoreDialog').classList.add('hidden');
         save(); 
@@ -3044,14 +3576,17 @@
 
     function finishConfirm() { 
         if(data.players.length < 1) return;
-        appConfirm("Selesai Turnamen", "Selesaikan Turnamen dan Kunci Klasemen?", () => { data.isFinished = true; save(); });
+        appConfirm("Selesai Turnamen", "Selesaikan Turnamen dan Kunci Klasemen? Rating Elo pemain akan diperbarui.", () => {
+            data.isFinished = true; applyEloRatings(); save();
+            setTimeout(() => { if((data.matches || []).length) appConfirm("Turnamen Selesai 🎉", "Lihat penghargaan akhir (MVP, Duo Terbaik, Raja Comeback)?", () => openAwards()); }, 400);
+        });
     }
 
     function resetConfirm() {
         appConfirm("RESET DATA", "PERINGATAN: Semua data pemain, judul, dan riwayat pertandingan aktif akan dihapus. Yakin?", () => {
-            let defaultData = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [], tournamentMode: 'league', bracket: null, sport: null, plannedRounds: null, roundNumber: 0 };
+            let defaultData = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [], tournamentMode: 'league', bracket: null, sport: null, plannedRounds: null, roundNumber: 0, partnerMode: 'fair', schedule: [], scheduleMeta: null, eloRatings: {}, eloBefore: null, eloApplied: false, eloLocked: false, eloDeltas: {} };
             if(db && auth.currentUser) {
-                db.collection("tournaments").doc(auth.currentUser.uid).set(defaultData).then(() => location.reload());
+                db.collection("tournaments").doc(auth.currentUser.uid).set(Object.assign(defaultData, { eloRatings: data.eloRatings || {} })).then(() => location.reload());
             } else {
                 appAlert("Error", "Anda tidak sedang login, tidak ada data untuk direset.");
             }
@@ -3153,7 +3688,7 @@
             <div class="card p-item" style="padding:12px 15px; justify-content:space-between; margin-bottom:0; opacity: ${pStatus ? '1' : '0.6'};">
                 <div class="p-item" style="flex:1;">
                     <img src="${getAvatar(p)}" class="p-img">
-                    <div><b style="font-size:15px;">${escapeHtml(p.name)}</b><br><small style="color:var(--text-muted); font-weight:bold;">${p.gender==='M'?'Pria':'Wanita'}</small></div>
+                    <div><b style="font-size:15px;">${escapeHtml(p.name)}</b><br><small style="color:var(--text-muted); font-weight:bold;">${p.gender==='M'?'Pria':'Wanita'}</small>${eloBadge(p)}</div>
                 </div>
                 <div class="owner-only" style="display:flex; gap:8px;">
                     <button onclick="togglePresent('${p.id}')" class="btn ${stClass}" style="padding:6px 10px; font-size:11px; width:auto; border-radius:8px;">${stText}</button>
@@ -3200,7 +3735,7 @@
             let sportClass = m.sport === 'padel' ? 'sport-padel' : 'sport-tennis';
             let icon = m.sport === 'padel' ? '<i class="fas fa-table-tennis-paddle-ball"></i>' : '🎾';
             let typeStr = m.format === 'singles' ? '(1v1)' : '(2v2)';
-            let logicStr = m.logic === 'fixed' ? ' • Fixed Partner' : '';
+            let logicStr = (m.matchNo ? ' • Match ' + m.matchNo : '') + (m.logic === 'fixed' ? ' • Fixed Partner' : (m.logic === 'dinamis' ? ' • Mex. Dinamis' : m.logic === 'mexicano' ? ' • Mexicano' : (m.logic === 'fair' ? ' • Fair' : '')));
             return `
             <div class="card" style="padding:15px; font-size:13px; margin-bottom:0; position:relative; border-left:3px solid var(--${m.sport === 'padel' ? 'padel-glow' : 'tennis-glow'});">
                 <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:8px;">
@@ -3223,9 +3758,237 @@
         renderRoundInfo();
     }
 
+    function showDinamisInfo() {
+        appAlert("Apa itu Mexicano Dinamis?",
+            "• Jadwal tidak dibuat sekaligus. Ronde 1 diacak.\n" +
+            "• Mulai ronde 2, pasangan & lawan disusun ulang dari klasemen terbaru: di tiap lapangan, 4 pemain peringkat berdekatan dibagi 1&4 vs 2&3 agar pertandingan seimbang.\n" +
+            "• Pasangan yang sama dihindari bila memungkinkan; pemain yang istirahat digilir.\n" +
+            "• Ronde berikutnya muncul otomatis setelah semua match ronde ini selesai.\n" +
+            "• Atur 'Batasi jumlah ronde' agar sesi berhenti otomatis.");
+    }
+
+    // ======================= COMEBACK / PENGHARGAAN =======================
+    function comebackOf(m, s1, s2) {
+        if(s1 > s2 && (m.d1 || 0) >= 2) return { team: 1, deficit: m.d1 };
+        if(s2 > s1 && (m.d2 || 0) >= 2) return { team: 2, deficit: m.d2 };
+        return null;
+    }
+
+    function computeAwards() {
+        let ps = data.players.filter(p => p.stats.p > 0);
+        let mvp = ps.slice().sort((a, b) => b.stats.pts - a.stats.pts || b.stats.gd - a.stats.gd || b.stats.w - a.stats.w)[0] || null;
+
+        let duo = {};
+        (data.matches || []).forEach(m => {
+            if(m.format !== 'doubles' || !m.ids1 || !m.ids2 || m.ids1.length < 2 || m.ids2.length < 2) return;
+            [[m.ids1, m.s1, m.s2], [m.ids2, m.s2, m.s1]].forEach(([ids, ms, os]) => {
+                let k = pairKeyOf(ids[0], ids[1]);
+                let d = duo[k] || (duo[k] = { ids: [ids[0], ids[1]], g: 0, w: 0, gd: 0 });
+                d.g++; d.gd += (ms - os); if(ms > os) d.w++;
+            });
+        });
+        let duos = Object.values(duo).filter(d => playerById(d.ids[0]) && playerById(d.ids[1]));
+        let minG = duos.some(d => d.g >= 2) ? 2 : 1;
+        duos = duos.filter(d => d.g >= minG).sort((a, b) => (b.w / b.g) - (a.w / a.g) || b.w - a.w || b.gd - a.gd);
+
+        let cb = {};
+        (data.matches || []).forEach(m => {
+            if(!m.comeback) return;
+            let ids = m.comeback.team === 1 ? m.ids1 : m.ids2;
+            (ids || []).forEach(id => { let c = cb[id] || (cb[id] = { n: 0, max: 0 }); c.n++; c.max = Math.max(c.max, m.comeback.deficit); });
+        });
+        let kingId = Object.keys(cb).filter(id => playerById(id)).sort((a, b) => cb[b].n - cb[a].n || cb[b].max - cb[a].max)[0];
+        return { mvp, duo: duos[0] || null, king: kingId ? { p: playerById(kingId), n: cb[kingId].n, max: cb[kingId].max } : null };
+    }
+
+    function openAwards() {
+        playSfx('pop');
+        let a = computeAwards();
+        const blk = (label, avatar, name, sub) => `<div class="award-block"><img src="${avatar}"><div><div class="award-label">${label}</div><div class="award-name">${name}</div><div class="award-sub">${sub}</div></div></div>`;
+        let html = `<div class="ticket-header">🏆 PENGHARGAAN AKHIR</div><div style="font-size:14px; font-weight:bold; margin-bottom:16px; text-transform:uppercase; color:#fff;">${escapeHtml(data.title || 'Happy Hitters')}</div>`;
+        html += a.mvp ? blk('⭐ MVP', getAvatar(a.mvp), escapeHtml(a.mvp.name), `${a.mvp.stats.pts} poin • ${a.mvp.stats.w}W ${a.mvp.stats.d}D ${a.mvp.stats.l}L`) : blk('⭐ MVP', DEF_M, '-', 'Belum ada data');
+        if(a.duo) {
+            let p1 = playerById(a.duo.ids[0]), p2 = playerById(a.duo.ids[1]);
+            html += blk('🤝 DUO TERBAIK', getAvatar(p1), escapeHtml(p1.name + ' & ' + p2.name), `Win rate ${Math.round(a.duo.w / a.duo.g * 100)}% (${a.duo.w}/${a.duo.g} menang bersama)`);
+        } else html += blk('🤝 DUO TERBAIK', DEF_M, '-', 'Butuh pertandingan ganda');
+        html += a.king ? blk('🔥 RAJA COMEBACK', getAvatar(a.king.p), escapeHtml(a.king.p.name), `${a.king.n}x bangkit dari tertinggal (maks. ${a.king.max} poin)`) : blk('🔥 RAJA COMEBACK', DEF_M, '-', 'Belum ada comeback tercatat');
+        html += `<div style="margin-top:14px; font-size:10px; opacity:0.6; border-top:1px dashed rgba(255,255,255,0.3); padding-top:10px;">Generated by Happy Hitters App</div>`;
+        document.getElementById('awardsTicket').innerHTML = html;
+        document.getElementById('awardsModal').classList.remove('hidden');
+        if(typeof confetti === 'function') confetti({ particleCount: 120, spread: 90, origin: { y: 0.4 }, colors: ['#FFD700', '#22d3ee', '#ec4899'] });
+    }
+    function closeAwards() { document.getElementById('awardsModal').classList.add('hidden'); }
+    function downloadAwardsImage() {
+        html2canvas(document.getElementById('awardsTicket'), { backgroundColor: null, scale: 2 }).then(canvas => {
+            let link = document.createElement('a');
+            link.download = `HappyHitters_Awards_${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    }
+    function shareAwardsWhatsApp() {
+        let a = computeAwards(), lines = [`🏆 *Penghargaan ${data.title || 'Happy Hitters'}*`];
+        if(a.mvp) lines.push(`⭐ MVP: ${a.mvp.name} (${a.mvp.stats.pts} poin)`);
+        if(a.duo) lines.push(`🤝 Duo Terbaik: ${playerById(a.duo.ids[0]).name} & ${playerById(a.duo.ids[1]).name} (${Math.round(a.duo.w / a.duo.g * 100)}% win rate)`);
+        if(a.king) lines.push(`🔥 Raja Comeback: ${a.king.p.name} (${a.king.n}x comeback)`);
+        lines.push('', 'Dibuat dengan Happy Hitters Tournament App 🎾');
+        window.open('https://wa.me/?text=' + encodeURIComponent(lines.join('\n')), '_blank');
+    }
+
+    // ======================= RATING ELO ANTAR TURNAMEN =======================
+    function applyEloRatings() {
+        if(data.eloLocked) return;
+        let R = JSON.parse(JSON.stringify(data.eloBefore || data.eloRatings || {}));
+        if(!data.eloBefore) data.eloBefore = JSON.parse(JSON.stringify(R));
+        let deltas = {};
+        const key = n => String(n).toLowerCase();
+        const get = p => { let k = key(p.name); if(!R[k]) R[k] = { name: p.name, elo: 1000, games: 0, w: 0, d: 0, l: 0 }; return R[k]; };
+        const avg = arr => arr.reduce((s, x) => s + x.elo, 0) / arr.length;
+        (data.matches || []).slice().reverse().forEach(m => {
+            let a = (m.ids1 || []).map(playerById).filter(Boolean), b = (m.ids2 || []).map(playerById).filter(Boolean);
+            if(!a.length || !b.length) return;
+            let ra = a.map(get), rb = b.map(get);
+            let ea = 1 / (1 + Math.pow(10, (avg(rb) - avg(ra)) / 400));
+            let sa = m.s1 > m.s2 ? 1 : (m.s1 === m.s2 ? 0.5 : 0);
+            let K = 24 * (1 + Math.min(0.5, Math.abs(m.s1 - m.s2) * 0.05));
+            let dA = K * (sa - ea);
+            const apply = (rs, ps, d, res) => rs.forEach((r, i) => {
+                r.elo += d; r.games++;
+                if(res === 1) r.w++; else if(res === 0.5) r.d++; else r.l++;
+                let k = key(ps[i].name); deltas[k] = (deltas[k] || 0) + d;
+            });
+            apply(ra, a, dA, sa); apply(rb, b, -dA, 1 - sa);
+        });
+        data.eloRatings = R; data.eloDeltas = deltas; data.eloApplied = true;
+    }
+    function eloBadge(p) {
+        let r = (data.eloRatings || {})[String(p.name).toLowerCase()];
+        return r ? ` <span style="font-size:10px; color:var(--primary); font-weight:900;">⭐ ${Math.round(r.elo)}</span>` : '';
+    }
+    function openRating() {
+        playSfx('pop');
+        let R = data.eloRatings || {}, D = data.eloDeltas || {};
+        let list = Object.keys(R).map(k => Object.assign({ key: k }, R[k])).sort((a, b) => b.elo - a.elo);
+        let html = list.length === 0 ? emptyStateHtml('fa-chart-line', 'Belum ada rating', 'Rating terbentuk saat turnamen pertama diselesaikan') : list.map((r, i) => {
+            let d = D[r.key] || 0;
+            let dTxt = data.eloApplied && d ? `<span style="font-size:11px; font-weight:bold; color:${d > 0 ? 'var(--success)' : '#ef4444'};">${d > 0 ? '▲' : '▼'} ${Math.abs(Math.round(d))}</span>` : '';
+            return `<div style="display:flex; align-items:center; gap:10px; padding:10px; background:var(--input-bg); border:1px solid var(--border-color); border-radius:10px; margin-bottom:6px;">
+                <b style="width:24px; color:var(--text-muted);">${i + 1}</b>
+                <div style="flex:1;"><b>${escapeHtml(r.name)}</b><br><small style="color:var(--text-muted);">${r.games} match • ${r.w}W ${r.d}D ${r.l}L</small></div>
+                <div style="text-align:right;"><b style="font-size:18px; color:var(--primary);">${Math.round(r.elo)}</b><br>${dTxt}</div>
+            </div>`;
+        }).join('');
+        document.getElementById('ratingList').innerHTML = html;
+        document.getElementById('ratingModal').classList.remove('hidden');
+    }
+    function closeRating() { document.getElementById('ratingModal').classList.add('hidden'); }
+
+    // ======================= LAYAR TV / LIVE BOARD =======================
+    function renderQRInto(container, url, width) {
+        if(!container) return;
+        container.innerHTML = '';
+        if(typeof QRCode === 'undefined') { container.innerHTML = '<small style="color:#666; padding:20px; display:block;">QR tidak tersedia offline</small>'; return; }
+        let canvas = document.createElement('canvas');
+        QRCode.toCanvas(canvas, url, { width: width || 170, margin: 1, color: { dark: '#111827', light: '#ffffff' } }, err => { if(!err) container.appendChild(canvas); });
+    }
+    function tvUrl() { return location.origin + location.pathname + '?tv=' + (currentViewingId || (auth.currentUser && auth.currentUser.uid) || ''); }
+    function openTvShare() {
+        if(!auth.currentUser) return;
+        playSfx('pop');
+        let url = tvUrl();
+        document.getElementById('tvLinkInput').value = url;
+        renderQRInto(document.getElementById('tvQrContainer'), url, 200);
+        document.getElementById('tvShareModal').classList.remove('hidden');
+    }
+    function closeTvShare() { document.getElementById('tvShareModal').classList.add('hidden'); }
+    function copyTvLink() {
+        let inp = document.getElementById('tvLinkInput');
+        inp.select(); inp.setSelectionRange(0, 99999);
+        try { navigator.clipboard.writeText(inp.value); } catch(e) { document.execCommand('copy'); }
+        showToast('Disalin', 'Tautan Live Board disalin.', 'success');
+    }
+    function openTvHere() { window.open(tvUrl(), '_blank'); }
+    function tvFullscreen() { try { document.documentElement.requestFullscreen(); } catch(e) {} }
+    function tvTick() { let el = document.getElementById('tvClock'); if(el) el.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }); }
+    function tvMsg(t) { let el = document.getElementById('tvCourts'); if(el) el.innerHTML = `<div class="tv-empty">${escapeHtml(t)}</div>`; }
+
+    function startTVMode(uid) {
+        ['welcomeScreen', 'appSkeleton'].forEach(id => { let e = document.getElementById(id); if(e) e.classList.add('hidden'); });
+        document.getElementById('tvBoard').classList.remove('hidden');
+        tvMsg('Menghubungkan ke pertandingan...');
+        setInterval(tvTick, 1000); tvTick();
+        try { if(navigator.wakeLock) navigator.wakeLock.request('screen').catch(() => {}); } catch(e) {}
+        if(!auth) return tvMsg('Firebase belum dikonfigurasi.');
+        let started = false;
+        auth.onAuthStateChanged(u => {
+            if(u) {
+                if(started) return; started = true;
+                db.collection('tournaments').doc(uid).onSnapshot(doc => {
+                    if(!doc.exists) return tvMsg('Pertandingan tidak ditemukan.');
+                    renderTV(doc.data());
+                }, err => { console.error(err); tvMsg('Tidak bisa memuat Live Board (akses ditolak / koneksi bermasalah).'); });
+            } else {
+                auth.signInAnonymously().catch(e => { console.error(e); tvMsg('Login anonim gagal. Aktifkan "Anonymous" di Firebase Authentication.'); });
+            }
+        });
+    }
+
+    function renderTV(d) {
+        document.body.setAttribute('data-tvsport', d.sport || 'tennis');
+        document.getElementById('tvTitle').innerText = d.title || 'HAPPY HITTERS';
+        let players = d.players || [];
+        let nm = id => { let p = players.find(x => x.id === id); return p ? p.name : '?'; };
+        let sub = (d.sport === 'padel' ? 'PADEL' : 'TENNIS');
+        let sch = d.schedule || [];
+        if(d.tournamentMode === 'knockout' && d.bracket) {
+            sub += d.bracket.championId ? ' • BABAK SELESAI' : ' • KNOCKOUT ' + roundLabel(d.bracket.rounds.length - 1, d.bracket.totalRounds);
+        } else {
+            if(d.scheduleMeta && d.scheduleMeta.mode === 'dinamis') sub += ' • MEXICANO DINAMIS';
+            if(d.roundNumber) sub += ' • RONDE ' + d.roundNumber + (d.scheduleMeta && d.scheduleMeta.rounds ? '/' + d.scheduleMeta.rounds : '');
+        }
+        if(d.isFinished) sub += ' • 🏁 SELESAI';
+        document.getElementById('tvSub').innerText = sub;
+
+        let cms = d.currentMatches || [];
+        document.getElementById('tvCourts').innerHTML = cms.length ? cms.map(m => `
+            <div class="tv-court">
+                <div class="tv-court-h"><span class="live-dot"></span> LAPANGAN ${m.court}${m.matchNo ? ' • MATCH ' + m.matchNo : ''}</div>
+                <div class="tv-row"><span class="tv-team a">${escapeHtml(m.t1Name || m.t1.map(x => x.name).join(' & '))}</span><span class="tv-score a">${m.g1}</span></div>
+                <div class="tv-row"><span class="tv-team b">${escapeHtml(m.t2Name || m.t2.map(x => x.name).join(' & '))}</span><span class="tv-score b">${m.g2}</span></div>
+            </div>`).join('') : `<div class="tv-empty">${d.isFinished ? '🏆 Turnamen selesai' : 'Belum ada match berjalan'}</div>`;
+
+        let q = pendingSorted(sch).slice(0, 6);
+        document.getElementById('tvQueue').innerHTML = q.length ? q.map(s => `<div class="tv-q"><small>MATCH ${s.no} • R${s.round}${s.pp > 0 ? ' • ⏸ DITUNDA' : ''}</small><br>${escapeHtml(s.t1Name || s.t1.map(nm).join(' & '))} <span style="opacity:.6;">vs</span> ${escapeHtml(s.t2Name || s.t2.map(nm).join(' & '))}</div>`).join('') : '<div class="tv-empty" style="padding:1vw 0;">Tidak ada antrean</div>';
+
+        let sorted = players.slice().sort((a, b) => b.stats.pts - a.stats.pts || b.stats.gd - a.stats.gd).slice(0, 10);
+        document.getElementById('tvRank').innerHTML = sorted.length ? sorted.map((p, i) => `<div class="tv-rank"><span class="pos">${i + 1}</span><span class="nm">${escapeHtml(p.name)}</span><span class="pt">${p.stats.pts}</span></div>`).join('') : '<div class="tv-empty">Belum ada pemain</div>';
+    }
+
     function toggleTools() { document.getElementById('toolsPanel').classList.toggle('hidden'); }
     function exportData() { let a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data)); a.download = "HappyHitters_SaveGame.json"; a.click(); }
-    function importData(el) { let r = new FileReader(); r.onload = e => { data = JSON.parse(e.target.result); save(); appSuccess('Berhasil', 'Data berhasil direstore!'); location.reload(); }; r.readAsText(el.files[0]); }
+    function importData(el) {
+        if(!el.files || !el.files[0]) return;
+        let r = new FileReader();
+        r.onload = e => {
+            let parsed;
+            try { parsed = JSON.parse(e.target.result); } catch(err) { return appAlert("Error", "File backup tidak valid / rusak."); }
+            if(!parsed || !Array.isArray(parsed.players)) return appAlert("Error", "File ini bukan backup Happy Hitters yang valid.");
+            if(!db || !auth.currentUser) return appAlert("Error", "Anda harus login untuk merestore data.");
+            let payload = Object.assign({
+                title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [],
+                tournamentMode: 'league', bracket: null, sport: null, plannedRounds: null, roundNumber: 0,
+                partnerMode: 'fair', schedule: [], scheduleMeta: null, eloRatings: {}, eloBefore: null, eloApplied: false, eloLocked: false, eloDeltas: {}
+            }, parsed);
+            ACCESS_FIELDS.forEach(k => delete payload[k]);
+            delete payload.activeTab;
+            payload.lastWriter = DEVICE_ID;
+            db.collection('tournaments').doc(auth.currentUser.uid).set(payload, { mergeFields: Object.keys(payload) })
+                .then(() => location.reload())
+                .catch(err => { console.error(err); appAlert("Gagal", "Restore gagal disimpan ke server. Periksa koneksi internet."); });
+        };
+        r.readAsText(el.files[0]);
+        el.value = '';
+    }
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
