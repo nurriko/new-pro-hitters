@@ -454,6 +454,9 @@
         <h4 style="margin:15px 0 5px 0; text-align:left; color:var(--warning); font-size:14px;">Permintaan Menonton (<span id="countViewReq">0</span>)</h4>
         <div id="viewReqList" style="text-align:left; font-size:13px; margin-bottom:15px; max-height:150px; overflow-y:auto;"></div>
         
+        <h4 style="margin:10px 0 5px 0; text-align:left; color:var(--primary); font-size:14px;">Permintaan Jadi Admin (<span id="countAdminReq">0</span>)</h4>
+        <div id="adminReqList" style="text-align:left; font-size:13px; margin-bottom:15px; max-height:150px; overflow-y:auto;"></div>
+
         <h4 style="margin:10px 0 5px 0; text-align:left; color:var(--success); font-size:14px;">Penonton Disetujui</h4>
         <div id="approvedViewersList" style="text-align:left; font-size:13px; margin-bottom:15px; max-height:150px; overflow-y:auto;"></div>
 
@@ -1421,21 +1424,26 @@
             let id = friendIds[i];
             if(!d || !d.exists) return;
             let uName = d.data().username;
+            // t === null  -> dokumen tidak bisa dibaca (aturan Firestore menolak sebelum disetujui): status tidak diketahui,
+            //                tetap tampilkan tombol request. t.exists === false -> teman memang belum punya turnamen.
             let tData = (t && t.exists) ? t.data() : null;
+            let unreadable = !t;
             let actionBtn = '';
-            
-            if(tData && tData.title && !tData.isFinished) {
+            const reqBtns = `<button class="btn btn-primary" style="padding:6px 10px; width:auto; font-size:12px;" onclick="reqJoinMatch('${id}')" title="Request Tonton"><i class="fas fa-door-open"></i></button>
+                             <button class="btn btn-warning" style="padding:6px 10px; width:auto; font-size:12px;" onclick="reqAdminMatch('${id}')" title="Minta jadi Admin"><i class="fas fa-shield-alt"></i></button>`;
+            const openBtn = `<button class="btn btn-success" style="padding:6px 10px; width:auto; font-size:12px;" onclick="viewFriendMatch('${id}')" title="Tonton Match"><i class="fas fa-eye"></i></button>`;
+
+            if (unreadable) {
+                actionBtn = (getJoinedList().includes(id) ? openBtn : '') + reqBtns;
+            } else if (tData && !tData.isFinished && (tData.title || (tData.players || []).length)) {
                 let isViewReq = tData.viewRequests && tData.viewRequests.includes(me);
+                let isAdmReq = tData.adminRequests && tData.adminRequests.includes(me);
                 let isAppr = tData.approvedViewers && tData.approvedViewers.includes(me);
                 let isAdm = tData.matchAdmins && tData.matchAdmins.includes(me);
-                
-                if(isAppr || isAdm) {
-                    actionBtn = `<button class="btn btn-success" style="padding:6px 10px; width:auto; font-size:12px;" onclick="viewFriendMatch('${id}')" title="Tonton Match"><i class="fas fa-eye"></i></button>`;
-                } else if(isViewReq) {
-                    actionBtn = `<span style="font-size:11px; color:var(--warning); font-weight:bold;">Menunggu...</span>`;
-                } else {
-                    actionBtn = `<button class="btn btn-primary" style="padding:6px 10px; width:auto; font-size:12px;" onclick="reqJoinMatch('${id}')" title="Request Join"><i class="fas fa-door-open"></i></button>`;
-                }
+                if (isAdm) actionBtn = openBtn + '<span style="font-size:11px; color:var(--primary); font-weight:bold;"><i class="fas fa-shield-alt"></i> Admin</span>';
+                else if (isAppr) actionBtn = openBtn + (isAdmReq ? '<span style="font-size:11px; color:var(--warning); font-weight:bold;">Admin: menunggu...</span>' : `<button class="btn btn-warning" style="padding:6px 10px; width:auto; font-size:12px;" onclick="reqAdminMatch('${id}')" title="Minta jadi Admin"><i class="fas fa-shield-alt"></i></button>`);
+                else if (isViewReq || isAdmReq) actionBtn = `<span style="font-size:11px; color:var(--warning); font-weight:bold;">Menunggu...</span>`;
+                else actionBtn = reqBtns;
             } else {
                 actionBtn = `<span style="font-size:11px; color:var(--text-muted);">Tidak ada match aktif</span>`;
             }
@@ -1474,8 +1482,23 @@
 
     function reqJoinMatch(uid) {
         db.collection('tournaments').doc(uid).set({ viewRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) }, {merge: true}).then(() => {
+            addJoinedList(uid);
             appSuccess("Terkirim", "Request untuk menonton pertandingan telah dikirim ke pembuat match.");
             renderSocialTab();
+        }).catch(e => {
+            console.error('reqJoinMatch gagal:', e);
+            appAlert("Gagal", "Tidak bisa mengirim permintaan." + (e && e.code ? "\n\nKode: " + e.code + (e.code === 'permission-denied' ? " (aturan Firestore menolak. Cek Rules di Firebase Console.)" : "") : ""));
+        });
+    }
+
+    function reqAdminMatch(uid) {
+        db.collection('tournaments').doc(uid).set({ viewRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid), adminRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) }, {merge: true}).then(() => {
+            addJoinedList(uid);
+            appSuccess("Terkirim", "Permintaan jadi Admin (isi skor) sudah dikirim ke pembuat match. Anda juga otomatis meminta izin menonton.");
+            renderSocialTab();
+        }).catch(e => {
+            console.error('reqAdminMatch gagal:', e);
+            appAlert("Gagal", "Tidak bisa mengirim permintaan." + (e && e.code ? "\n\nKode: " + e.code + (e.code === 'permission-denied' ? " (aturan Firestore menolak. Cek Rules di Firebase Console.)" : "") : ""));
         });
     }
 
@@ -1572,8 +1595,10 @@
 
         let html = '';
         for(let [uid, d, ownerDoc] of results) {
-            if(!d || !d.exists) continue;
-            let t = d.data();
+            // d === null -> tidak terbaca karena belum disetujui (aturan Firestore): tampilkan sebagai menunggu persetujuan
+            if(d && !d.exists) continue;
+            if(!d && !(ownerDoc && ownerDoc.exists)) continue;
+            let t = d ? d.data() : {};
             let ownerName = (ownerDoc && ownerDoc.exists) ? ownerDoc.data().username : 'Unknown';
             let isAppr = t.approvedViewers && t.approvedViewers.includes(auth.currentUser.uid);
             let isAdm = t.matchAdmins && t.matchAdmins.includes(auth.currentUser.uid);
@@ -1581,11 +1606,12 @@
 
             let statusBtn = '';
             if(isAppr || isAdm) statusBtn = `<button class="btn btn-success" style="padding:6px 10px; width:auto; font-size:12px;" onclick="viewFriendMatch('${uid}')"><i class="fas fa-eye"></i> Tonton</button>`;
+            else if(!d) statusBtn = `<div style="display:flex; gap:6px; align-items:center;"><span style="font-size:11px; color:var(--warning); font-weight:bold;">Menunggu persetujuan</span><button class="btn btn-ghost" style="padding:6px 10px; width:auto; font-size:12px;" onclick="viewFriendMatch('${uid}')" title="Coba buka"><i class="fas fa-eye"></i></button></div>`;
             else if(isPending) statusBtn = `<span style="font-size:11px; color:var(--warning); font-weight:bold;">Menunggu...</span>`;
             else statusBtn = `<span style="font-size:11px; color:var(--text-muted);">Tidak ada akses</span>`;
 
             html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
-                <div><b style="font-size:13px;">${escapeHtml(t.title || 'Tanpa Judul')}</b><br><small style="color:var(--text-muted);">oleh ${escapeHtml(ownerName)}</small></div>
+                <div><b style="font-size:13px;">${escapeHtml(t.title || (d ? 'Tanpa Judul' : 'Pertandingan ' + ownerName))}</b><br><small style="color:var(--text-muted);">oleh ${escapeHtml(ownerName)}</small></div>
                 ${statusBtn}
             </div>`;
         }
@@ -1596,8 +1622,10 @@
         if(!data.viewRequests) data.viewRequests = [];
         if(!data.approvedViewers) data.approvedViewers = [];
         if(!data.matchAdmins) data.matchAdmins = [];
+        if(!data.adminRequests) data.adminRequests = [];
         
         document.getElementById('countViewReq').innerText = data.viewRequests.length;
+        document.getElementById('countAdminReq').innerText = data.adminRequests.length;
         renderJoinQR();
         
         const getUser = async (id) => {
@@ -1616,6 +1644,19 @@
                 </div>
             </div>`;
         }
+        let arHtml = '';
+        for(let id of data.adminRequests) {
+            let un = await getUser(id);
+            let isFriend = myUserData.friends && myUserData.friends.includes(id);
+            arHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
+                <b>${un}</b>
+                <div>
+                    ${isFriend ? `<button class="btn btn-success" style="padding:4px 8px; width:auto; display:inline-block; font-size:12px;" onclick="actAdminReq('${id}', true)">Jadikan Admin</button>` : `<span style="font-size:10px; color:var(--text-muted); font-style:italic;">Belum berteman</span>`}
+                    <button class="btn btn-danger" style="padding:4px 8px; width:auto; display:inline-block; font-size:12px;" onclick="actAdminReq('${id}', false)">Tolak</button>
+                </div>
+            </div>`;
+        }
+        document.getElementById('adminReqList').innerHTML = arHtml || '<span style="color:var(--text-muted);">Tidak ada permintaan.</span>';
         document.getElementById('viewReqList').innerHTML = vHtml || '<span style="color:var(--text-muted);">Tidak ada permintaan.</span>';
         
         let aHtml = '';
@@ -1686,6 +1727,21 @@
         if(accept) {
             if(!data.approvedViewers.includes(id)) data.approvedViewers.push(id);
             upd.approvedViewers = FV.arrayUnion(id);
+        }
+        updateAccess(upd); openAccessManager();
+    }
+
+    function actAdminReq(id, accept) {
+        const FV = firebase.firestore.FieldValue;
+        data.adminRequests = (data.adminRequests || []).filter(x => x !== id);
+        let upd = { adminRequests: FV.arrayRemove(id) };
+        if(accept) {
+            data.viewRequests = data.viewRequests.filter(x => x !== id);
+            if(!data.approvedViewers.includes(id)) data.approvedViewers.push(id);
+            if(!data.matchAdmins.includes(id)) data.matchAdmins.push(id);
+            upd.viewRequests = FV.arrayRemove(id);
+            upd.approvedViewers = FV.arrayUnion(id);
+            upd.matchAdmins = FV.arrayUnion(id);
         }
         updateAccess(upd); openAccessManager();
     }
@@ -1762,6 +1818,7 @@
                     data.viewRequests = loadedData.viewRequests || [];
                     data.approvedViewers = loadedData.approvedViewers || [];
                     data.matchAdmins = loadedData.matchAdmins || [];
+                    data.adminRequests = loadedData.adminRequests || [];
 
                     // Melihat turnamen orang lain: wajib sudah disetujui / co-host. Kalau akses dicabut, kembali ke turnamen sendiri.
                     if (auth.currentUser && !isMine) {
@@ -1816,6 +1873,15 @@
                                 } catch(e) { console.warn(e); }
                             });
                         }
+                        if (window._prevAdminReqs) {
+                            data.adminRequests.filter(x => !window._prevAdminReqs.includes(x)).forEach(async reqUid => {
+                                try {
+                                    let d = await db.collection('users').doc(reqUid).get();
+                                    showToast('Permintaan Admin', `<b>${escapeHtml(d.exists ? d.data().username : 'Seseorang')}</b> meminta jadi Admin pertandingan Anda. Cek ikon Kunci!`, 'warning');
+                                } catch(e) { console.warn(e); }
+                            });
+                        }
+                        window._prevAdminReqs = [...data.adminRequests];
                         prevViewReqs = [...data.viewRequests];
                     }
                 } else {
@@ -2792,7 +2858,7 @@
     function pairKeyOf(a, b) { return a < b ? a + '|' + b : b + '|' + a; }
 
     // Satu percobaan penyusunan jadwal ganda: setiap kombinasi pasangan (partner) dipakai MAKSIMAL sekali.
-    function schedPartnerAttempt(ids, courts, canFace) {
+    function schedPartnerAttempt(ids, courts, canFace, fillLeftover) {
         let unused = [];
         for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) unused.push([ids[i], ids[j]]);
         let cnt = {}; ids.forEach(id => cnt[id] = 0);
@@ -2830,7 +2896,53 @@
             if (!round.length) break;
             rounds.push(round);
         }
-        return { rounds, leftover: unused.length };
+
+        // FASE PELENGKAP (Mexicano): jumlah kombinasi pasangan sering ganjil (mis. 6 pemain = 15 pasangan)
+        // atau sisa pasangan saling bentrok pemain, sehingga greedy berhenti dengan pasangan yang belum pernah dimainkan.
+        // Sisa tersebut tetap dijadwalkan: lawannya diambil dari pasangan yang paling sedikit dipakai
+        // (pasangan lawan itu terpaksa mengulang partner, tapi SEMUA orang tetap pernah berpasangan).
+        let repeated = 0;
+        if (fillLeftover && unused.length) {
+            let use = {};
+            rounds.forEach(rd => rd.forEach(m => [m.t1, m.t2].forEach(t => { let k = pairKeyOf(t[0], t[1]); use[k] = (use[k] || 0) + 1; })));
+            let allPairs = [];
+            for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) allPairs.push([ids[i], ids[j]]);
+            let remKeys = new Set(unused.map(p => pairKeyOf(p[0], p[1])));
+            let extra = [], stuck = 0;
+            let order = unused.slice().sort(() => Math.random() - 0.5);
+            order.forEach(a => {
+                let ka = pairKeyOf(a[0], a[1]);
+                if (!remKeys.has(ka)) return; // sudah terpakai sebagai lawan
+                let best = null, bestS = 1e9;
+                allPairs.forEach(p => {
+                    if (p[0] === a[0] || p[0] === a[1] || p[1] === a[0] || p[1] === a[1]) return;
+                    if (!canFace(a, p)) return;
+                    let kp = pairKeyOf(p[0], p[1]);
+                    let s = remKeys.has(kp) ? -100 : (use[kp] || 0) * 10;
+                    s += (oppN(a[0], p[0]) + oppN(a[0], p[1]) + oppN(a[1], p[0]) + oppN(a[1], p[1])) * 0.8 + Math.random() * 0.9;
+                    if (s < bestS) { bestS = s; best = p; }
+                });
+                if (!best) { stuck++; remKeys.delete(ka); return; }
+                let kb = pairKeyOf(best[0], best[1]);
+                remKeys.delete(ka);
+                if (remKeys.has(kb)) remKeys.delete(kb); else { use[kb] = (use[kb] || 0) + 1; repeated++; }
+                [[a[0], best[0]], [a[0], best[1]], [a[1], best[0]], [a[1], best[1]]].forEach(([x, y]) => { let k = pairKeyOf(x, y); opp[k] = (opp[k] || 0) + 1; });
+                extra.push({ t1: [a[0], a[1]], t2: [best[0], best[1]] });
+            });
+            // tempatkan ke ronde yang masih punya lapangan kosong, kalau tidak buat ronde baru
+            extra.forEach(m => {
+                let pl = m.t1.concat(m.t2);
+                let host = rounds.find(rd => rd.length < courts && !rd.some(x => x.t1.concat(x.t2).some(id => pl.includes(id))));
+                if (host) host.push(m);
+                else {
+                    let last = rounds[rounds.length - 1];
+                    if (last && last.length < courts && extra.indexOf(m) > 0 && last._extra && !last.some(x => x.t1.concat(x.t2).some(id => pl.includes(id)))) last.push(m);
+                    else { let nr = [m]; nr._extra = true; rounds.push(nr); }
+                }
+            });
+            unused = new Array(stuck); // yang benar-benar tak bisa dijadwalkan (aturan gender)
+        }
+        return { rounds, leftover: unused.length, repeated };
     }
 
     function bestPartnerSchedule(ids, courts, genderOf, enforceGender, attempts) {
@@ -2843,8 +2955,8 @@
             : () => true;
         let best = null;
         for (let i = 0; i < (attempts || 40); i++) {
-            let r = schedPartnerAttempt(ids, courts, canFace);
-            if (!best || r.leftover < best.leftover || (r.leftover === best.leftover && r.rounds.length < best.rounds.length)) best = r;
+            let r = schedPartnerAttempt(ids, courts, canFace, !enforceGender);
+            if (!best || r.leftover < best.leftover || (r.leftover === best.leftover && (r.repeated < best.repeated || (r.repeated === best.repeated && r.rounds.length < best.rounds.length)))) best = r;
             if (best.leftover === 0 && i > 8) break;
         }
         return best;
@@ -2945,6 +3057,7 @@
 
         let notes = [];
         if (courts < reqCourts) notes.push(`Lapangan dikurangi jadi ${courts} karena jumlah pemain.`);
+        if (!truncated && result.repeated > 0) notes.push(`${result.repeated} match tambahan memakai pasangan lawan yang sudah pernah jadi partner (jumlah kombinasi ganjil, jadi tidak bisa pas).`);
         if (!truncated && result.leftover > 0) notes.push(`${result.leftover} kombinasi pasangan tidak bisa dijadwalkan (terhalang aturan gender / jumlah pemain).`);
         if (truncated) notes.push(`Jadwal dibatasi ${data.plannedRounds} ronde.`);
         showToast('Jadwal Dibuat', `${items.length} match dalam ${rounds.length} ronde.` + (notes.length ? ' ' + notes.join(' ') : ''), notes.length ? 'warning' : 'success');
