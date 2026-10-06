@@ -2027,6 +2027,22 @@
         }
         dialog.style.display = 'flex';
     }
+    function appChoice(title, msg, buttons) {
+        const dialog = document.getElementById('customDialog');
+        document.getElementById('dialogTitle').innerText = title;
+        document.getElementById('dialogMsg').innerText = msg;
+        document.getElementById('dialogIcon').className = 'fas dialog-icon fa-flag-checkered success';
+        const acts = document.getElementById('dialogActions'); acts.innerHTML = '';
+        acts.style.flexDirection = 'column';
+        buttons.forEach(b => {
+            const btn = document.createElement('button');
+            btn.className = 'btn ' + (b.cls || 'btn-ghost');
+            btn.innerHTML = b.label;
+            btn.onclick = () => { playSfx('pop'); dialog.style.display = 'none'; acts.style.flexDirection = 'row'; if (b.fn) b.fn(); };
+            acts.appendChild(btn);
+        });
+        dialog.style.display = 'flex';
+    }
     function appAlert(title, msg) { showAppDialog('alert', title, msg); }
     function appSuccess(title, msg) { showAppDialog('success', title, msg); }
     function appConfirm(title, msg, onConfirm) { showAppDialog('confirm', title, msg, onConfirm); }
@@ -2538,9 +2554,35 @@
            (!data.currentMatches || data.currentMatches.length === 0) && !window._sessionOfferShown) {
             window._sessionOfferShown = true;
             setTimeout(() => {
-                appConfirm("Sesi Selesai!", 'Semua jadwal pertandingan sudah selesai. Lihat ringkasan sesi sekarang?', () => openSessionSummary());
+                showSessionEndChoice();
             }, 500);
         }
+    }
+
+    function isSessionOver() {
+        let sc = data.schedule || [];
+        return data.tournamentMode === 'league' && !data.isFinished && sc.length > 0 &&
+               sc.some(x => x.status === 'done') && sc.every(x => x.status !== 'pending' && x.status !== 'live') &&
+               (!data.currentMatches || data.currentMatches.length === 0);
+    }
+
+    function showSessionEndChoice() {
+        if (document.body.classList.contains('not-owner')) {
+            return appAlert("Sesi Selesai!", "Semua jadwal pertandingan sudah selesai. Pembuat turnamen / co-host yang menentukan lanjut atau selesai.");
+        }
+        appChoice("Sesi Selesai!", "Semua match pada jadwal ini sudah selesai. Mau lanjut main lagi atau akhiri turnamen?", [
+            { label: '<i class="fas fa-shuffle"></i> Lanjut Game Berikutnya (Diacak Ulang)', cls: 'btn-primary', fn: () => continueNextGame() },
+            { label: '<i class="fas fa-flag-checkered"></i> Selesaikan Turnamen', cls: 'btn-danger', fn: () => finishTournamentNow() },
+            { label: '<i class="fas fa-chart-bar"></i> Lihat Ringkasan Dulu', cls: 'btn-ghost', fn: () => openSessionSummary() }
+        ]);
+    }
+
+    // Skor/klasemen tetap menumpuk; hanya jadwal baru yang diacak ulang dengan pengaturan yang sama.
+    function continueNextGame() {
+        if (data.isFinished) return;
+        window._sessionOfferShown = false;
+        data.schedule = []; data.scheduleMeta = null; data.currentMatches = [];
+        generateMatch();
     }
 
     function roundLabel(idx, total) {
@@ -2945,6 +2987,146 @@
         return { rounds, leftover: unused.length, repeated };
     }
 
+    // ======================================================================
+    //  MEXICANO SEIMBANG: semua pemain bermain SAMA BANYAK dan semua kombinasi partner minimal sekali.
+    //  g = jumlah main per pemain = bilangan terkecil >= (n-1) yang membuat (g*n) habis dibagi 4.
+    //  Jika g > n-1, kelebihannya (g-(n-1)) dipakai sebagai partner ulang yang dibagi merata ke semua pemain.
+    //  Contoh: 6 pemain -> g=6, 9 match (9 ronde 1 lapangan), 3 pasangan (saling lepas) bermain bersama 2x.
+    // ======================================================================
+    function mexGamesPerPlayer(n) { let g = n - 1; while ((g * n) % 4 !== 0) g++; return g; }
+
+    function mexicanoBalancedAttempt(ids, courts) {
+        const n = ids.length, g = mexGamesPerPlayer(n), M = g * n / 4, d = g - (n - 1);
+
+        // 1) partner ulang: graf d-reguler sederhana (tiap pemain mengulang tepat d partner)
+        let extras = [];
+        if (d > 0) {
+            let ok = false;
+            for (let t = 0; t < 300 && !ok; t++) {
+                let need = {}; ids.forEach(i => need[i] = d);
+                let es = [], seen = new Set(), fail = false;
+                while (true) {
+                    let open = ids.filter(i => need[i] > 0);
+                    if (!open.length) break;
+                    open.sort((a, b) => (need[b] - need[a]) + (Math.random() - 0.5));
+                    let a = open[0];
+                    let cands = open.filter(b => b !== a && !seen.has(pairKeyOf(a, b)));
+                    if (!cands.length) { fail = true; break; }
+                    let b = cands[Math.floor(Math.random() * cands.length)];
+                    seen.add(pairKeyOf(a, b)); es.push([a, b]); need[a]--; need[b]--;
+                }
+                if (!fail) { extras = es; ok = true; }
+            }
+            if (!ok) return null;
+        }
+
+        // 2) kumpulan pasangan: semua kombinasi + partner ulang
+        let pool = [];
+        for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) pool.push([ids[i], ids[j]]);
+        extras.forEach(e => pool.push(e.slice()));
+        if (pool.length !== 2 * M) return null;
+        const disjoint = (a, b) => a[0] !== b[0] && a[0] !== b[1] && a[1] !== b[0] && a[1] !== b[1];
+
+        // 2b) cara utama: susun ronde demi ronde langsung dari kumpulan pasangan (lapangan terisi penuh, istirahat merata)
+        {
+            let pl2 = pool.map(x => x.slice()), rounds2 = [], played2 = {}, streak2 = {}, opp2 = {}, streakPen2 = 0, fail2 = false, g2 = 0;
+            ids.forEach(i => { played2[i] = 0; streak2[i] = 0; });
+            const o2 = (x, y) => opp2[pairKeyOf(x, y)] || 0;
+            while (pl2.length && !fail2 && g2++ < 5000) {
+                let busy = new Set(), round = [];
+                for (let c = 0; c < courts; c++) {
+                    let free = pl2.filter(x => !busy.has(x[0]) && !busy.has(x[1]));
+                    if (free.length < 2) break;
+                    let firsts = free.map(x => ({ x, sc: played2[x[0]] * 3 + played2[x[1]] * 3 + streak2[x[0]] + streak2[x[1]] + Math.random() * 2 }))
+                                     .sort((u, v) => u.sc - v.sc).slice(0, 8);
+                    let chosen = null;
+                    for (let f of firsts) {
+                        let a = f.x, bb = null, bs = 1e9;
+                        for (let b of free) {
+                            if (b === a || !disjoint(a, b)) continue;
+                            let sc = (o2(a[0], b[0]) + o2(a[0], b[1]) + o2(a[1], b[0]) + o2(a[1], b[1])) * 1.5 + (played2[b[0]] + played2[b[1]]) * 3 + (streak2[b[0]] + streak2[b[1]]) + Math.random() * 2;
+                            if (sc < bs) { bs = sc; bb = b; }
+                        }
+                        if (bb) { chosen = [a, bb]; break; }
+                    }
+                    if (!chosen) break;
+                    let [a, b] = chosen;
+                    [a[0], a[1], b[0], b[1]].forEach(id => { busy.add(id); played2[id]++; });
+                    [[a[0], b[0]], [a[0], b[1]], [a[1], b[0]], [a[1], b[1]]].forEach(([x, y]) => { let k = pairKeyOf(x, y); opp2[k] = (opp2[k] || 0) + 1; });
+                    pl2 = pl2.filter(x => x !== a && x !== b);
+                    round.push({ t1: [a[0], a[1]], t2: [b[0], b[1]] });
+                }
+                if (!round.length) { fail2 = true; break; }
+                ids.forEach(id => { if (busy.has(id)) { streak2[id]++; if (streak2[id] > 3) streakPen2 += 5; } else streak2[id] = 0; });
+                rounds2.push(round);
+            }
+            if (!fail2 && !pl2.length) {
+                let sq = 0; Object.values(opp2).forEach(v => sq += v * v);
+                return { rounds: rounds2, leftover: 0, repeated: extras.length, gamesEach: g, score: rounds2.length * 100 + sq + streakPen2 };
+            }
+        }
+
+        // 3) pasangkan 2 pasangan menjadi 1 match (lawan diusahakan merata)
+        let opp = {};
+        const oppN = (x, y) => opp[pairKeyOf(x, y)] || 0;
+        let matches = [];
+        while (pool.length) {
+            let a;
+            if (pool.length <= 16) {
+                let bestC = 1e9, pick = [];
+                pool.forEach(x => { let c = pool.filter(y => y !== x && disjoint(x, y)).length; if (c < bestC) { bestC = c; pick = [x]; } else if (c === bestC) pick.push(x); });
+                a = pick[Math.floor(Math.random() * pick.length)];
+            } else a = pool[Math.floor(Math.random() * pool.length)];
+            let best = null, bestS = 1e9;
+            pool.forEach(b => {
+                if (b === a || !disjoint(a, b)) return;
+                let sc = (oppN(a[0], b[0]) + oppN(a[0], b[1]) + oppN(a[1], b[0]) + oppN(a[1], b[1])) + Math.random() * 0.9;
+                if (sc < bestS) { bestS = sc; best = b; }
+            });
+            if (!best) return null;
+            pool = pool.filter(x => x !== a && x !== best);
+            [[a[0], best[0]], [a[0], best[1]], [a[1], best[0]], [a[1], best[1]]].forEach(([x, y]) => { let k = pairKeyOf(x, y); opp[k] = (opp[k] || 0) + 1; });
+            matches.push({ t1: [a[0], a[1]], t2: [best[0], best[1]] });
+        }
+
+        // 4) susun ronde: prioritaskan pemain yang paling sedikit sudah bermain (istirahat merata)
+        let played = {}; ids.forEach(i => played[i] = 0);
+        let streak = {}; ids.forEach(i => streak[i] = 0);
+        let rounds = [], remaining = matches.slice(), streakPen = 0, guard = 0;
+        while (remaining.length && guard++ < 5000) {
+            // beberapa percobaan acak per ronde: pilih yang mengisi lapangan paling penuh
+            let bestRound = null, bestRS = 1e9;
+            for (let tr = 0; tr < 14; tr++) {
+                let bz = new Set(), rd = [], rs = 0, pool2 = remaining.slice();
+                for (let c = 0; c < courts; c++) {
+                    let bm = null, bms = 1e9;
+                    pool2.forEach(m => {
+                        let pl = m.t1.concat(m.t2);
+                        if (pl.some(id => bz.has(id))) return;
+                        let sc = pl.reduce((sum, id) => sum + played[id] * 3 + streak[id], 0) + Math.random() * (tr === 0 ? 0.9 : 6);
+                        if (sc < bms) { bms = sc; bm = m; }
+                    });
+                    if (!bm) break;
+                    bm.t1.concat(bm.t2).forEach(id => bz.add(id));
+                    pool2 = pool2.filter(m => m !== bm);
+                    rd.push(bm); rs += bms;
+                }
+                let total = rd.length ? (-rd.length * 1000 + rs) : 1e9;
+                if (total < bestRS) { bestRS = total; bestRound = rd; }
+            }
+            let round = bestRound || [], busy = new Set();
+            round.forEach(m => m.t1.concat(m.t2).forEach(id => { busy.add(id); played[id]++; }));
+            remaining = remaining.filter(m => round.indexOf(m) === -1);
+            if (!round.length) return null;
+            ids.forEach(id => { if (busy.has(id)) { streak[id]++; if (streak[id] > 3) streakPen += 5; } else streak[id] = 0; });
+            rounds.push(round);
+        }
+        if (remaining.length) return null;
+
+        let oppSq = 0; Object.values(opp).forEach(v => oppSq += v * v);
+        return { rounds, leftover: 0, repeated: extras.length, gamesEach: g, score: rounds.length * 100 + oppSq + streakPen };
+    }
+
     function bestPartnerSchedule(ids, courts, genderOf, enforceGender, attempts) {
         const canFace = enforceGender
             ? (p1, p2) => {
@@ -2953,6 +3135,14 @@
                 return !((f1 && m2) || (m1 && f2));
               }
             : () => true;
+        if (!enforceGender) {
+            let mb = null;
+            for (let i = 0; i < 60; i++) {
+                let r = mexicanoBalancedAttempt(ids, courts);
+                if (r && (!mb || r.score < mb.score)) mb = r;
+            }
+            if (mb) return mb;   // gagal total (sangat jarang) -> pakai cara lama di bawah
+        }
         let best = null;
         for (let i = 0; i < (attempts || 40); i++) {
             let r = schedPartnerAttempt(ids, courts, canFace, !enforceGender);
@@ -3057,7 +3247,7 @@
 
         let notes = [];
         if (courts < reqCourts) notes.push(`Lapangan dikurangi jadi ${courts} karena jumlah pemain.`);
-        if (!truncated && result.repeated > 0) notes.push(`${result.repeated} match tambahan memakai pasangan lawan yang sudah pernah jadi partner (jumlah kombinasi ganjil, jadi tidak bisa pas).`);
+        if (!truncated && result.repeated > 0) notes.push(result.gamesEach ? `${result.repeated} pasangan mengulang partner agar semua pemain main sama banyak (${result.gamesEach}x per pemain).` : `${result.repeated} match tambahan memakai pasangan lawan yang sudah pernah jadi partner.`);
         if (!truncated && result.leftover > 0) notes.push(`${result.leftover} kombinasi pasangan tidak bisa dijadwalkan (terhalang aturan gender / jumlah pemain).`);
         if (truncated) notes.push(`Jadwal dibatasi ${data.plannedRounds} ronde.`);
         showToast('Jadwal Dibuat', `${items.length} match dalam ${rounds.length} ronde.` + (notes.length ? ' ' + notes.join(' ') : ''), notes.length ? 'warning' : 'success');
@@ -3363,6 +3553,11 @@
                 <h4 style="margin:0; color:var(--primary); font-weight:900;"><i class="fas ${isDyn ? 'fa-bolt' : 'fa-list-ol'}"></i> ${isDyn ? 'JADWAL MEXICANO DINAMIS' : 'JADWAL PERTANDINGAN'}</h4>
                 <button class="btn btn-ghost owner-only" onclick="clearSchedule()" style="width:auto; padding:4px 10px; font-size:11px; color:#ef4444; border-color:rgba(239,68,68,0.3);"><i class="fas fa-trash"></i> Hapus</button>
             </div>
+            ${isSessionOver() ? `<div class="owner-only" style="margin-top:12px; padding:12px; border-radius:12px; border:1px solid var(--success); background:rgba(34,197,94,0.08);">
+                <div style="font-weight:900; color:var(--success); font-size:13px; margin-bottom:8px;"><i class="fas fa-flag-checkered"></i> SEMUA MATCH SELESAI</div>
+                <button class="btn btn-primary" style="margin-bottom:8px; padding:10px; font-size:13px;" onclick="continueNextGame()"><i class="fas fa-shuffle"></i> Lanjut Game Berikutnya (Diacak Ulang)</button>
+                <button class="btn btn-danger" style="padding:10px; font-size:13px;" onclick="finishConfirm()"><i class="fas fa-flag-checkered"></i> Selesaikan Turnamen</button>
+            </div>` : ''}
             ${isDyn ? '<div style="font-size:11px; color:var(--text-muted); margin-top:6px;">Ronde berikutnya dibuat otomatis dari klasemen terbaru setelah semua match ronde ini selesai.</div>' : ''}
             <div style="font-size:11px; color:var(--text-muted); margin:8px 0 6px; font-weight:bold;">Total ${done} dari ${sch.length} match selesai (${pct}%)</div>
             <div style="height:6px; background:var(--input-bg); border-radius:6px; overflow:hidden; margin-bottom:12px;"><div style="width:${pct}%; height:100%; background:var(--success);"></div></div>
@@ -3867,10 +4062,13 @@
 
     function finishConfirm() { 
         if(data.players.length < 1) return;
-        appConfirm("Selesai Turnamen", "Selesaikan Turnamen dan Kunci Klasemen? Rating Elo pemain akan diperbarui.", () => {
-            data.isFinished = true; applyEloRatings(); save();
-            setTimeout(() => { if((data.matches || []).length) appConfirm("Turnamen Selesai 🎉", "Lihat penghargaan akhir (MVP, Duo Terbaik, Raja Comeback)?", () => openAwards()); }, 400);
-        });
+        appConfirm("Selesai Turnamen", "Selesaikan Turnamen dan Kunci Klasemen? Rating Elo pemain akan diperbarui.", () => finishTournamentNow());
+    }
+
+    function finishTournamentNow() {
+        data.isFinished = true; applyEloRatings(); save();
+        renderMatches(); renderRoundInfo();
+        setTimeout(() => { if((data.matches || []).length) appConfirm("Turnamen Selesai 🎉", "Lihat penghargaan akhir (MVP, Duo Terbaik, Raja Comeback)?", () => openAwards()); }, 400);
     }
 
     function resetConfirm() {
