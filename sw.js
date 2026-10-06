@@ -1,6 +1,6 @@
 // Naikkan angka versi ini setiap kali ada perubahan pada file yang di-precache di bawah,
 // supaya Service Worker lama otomatis dibersihkan dan pengguna mendapat versi terbaru.
-const CACHE_NAME = 'happy-hitters-v25';
+const CACHE_NAME = 'happy-hitters-v26';
 
 const ASSETS_TO_CACHE = [
   './',
