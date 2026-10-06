@@ -326,6 +326,40 @@
         .sched-chip { flex:0 0 auto; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-muted); border-radius:20px; padding:4px 12px; font-size:11px; font-weight:800; cursor:pointer; font-family:inherit; }
         .sched-chip.cur { border-color:var(--primary); color:var(--primary); }
         .sched-arrow { width:32px; height:32px; border-radius:50%; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-main); cursor:pointer; flex-shrink:0; }
+
+        /* ===== JADWAL: PEMILIH RONDE + PANEL BESAR ===== */
+        .rsel { display:flex; gap:8px; overflow-x:auto; padding:2px 0 10px; scrollbar-width:none; }
+        .rsel::-webkit-scrollbar { display:none; }
+        .rsel-btn { flex:0 0 auto; min-width:74px; border:1.5px solid var(--border-color); background:var(--input-bg); color:var(--text-main); border-radius:14px; padding:8px 12px; cursor:pointer; font-family:inherit; text-align:center; line-height:1.2; }
+        .rsel-btn b { display:block; font-size:14px; font-weight:900; }
+        .rsel-btn small { font-size:10px; font-weight:800; color:var(--text-muted); }
+        .rsel-btn.cur { border-color:var(--primary); background:var(--primary); color:#fff; box-shadow:0 4px 14px rgba(67,97,238,0.35); }
+        .rsel-btn.cur small { color:rgba(255,255,255,0.85); }
+        .rsel-btn.alldone:not(.cur) { border-color:var(--success); }
+        .rsel-btn.alldone:not(.cur) small { color:var(--success); }
+        .rpanel { border:2px solid var(--primary); border-radius:18px; padding:14px; background:linear-gradient(180deg, rgba(67,97,238,0.08), transparent); }
+        .rpanel-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
+        .rpanel-title { font-size:20px; font-weight:900; color:var(--primary); }
+        .rpanel-sub { font-size:11px; font-weight:800; color:var(--text-muted); }
+        .rgrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap:12px; }
+        .mcard { background:var(--card-bg, var(--input-bg)); border:1.5px solid var(--border-color); border-radius:16px; padding:14px; box-sizing:border-box; display:flex; flex-direction:column; gap:10px; min-width:0; }
+        .mcard.live { border-color:var(--primary); box-shadow:0 0 16px rgba(67,97,238,0.3); }
+        .mcard.done { border-color:var(--success); }
+        .mcard.skipped { opacity:0.55; }
+        .mcard-top { display:flex; justify-content:space-between; align-items:center; gap:6px; }
+        .mcard-no { background:var(--primary); color:#fff; font-size:11px; font-weight:900; padding:4px 10px; border-radius:10px; white-space:nowrap; }
+        .mcard-st { font-size:11px; font-weight:900; white-space:nowrap; }
+        .mcard-team { display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--input-bg); border-radius:12px; padding:10px 12px; min-width:0; }
+        .mcard-team span.n { font-size:15px; font-weight:800; line-height:1.25; overflow-wrap:anywhere; min-width:0; }
+        .mcard-team span.sc { font-size:22px; font-weight:900; color:var(--success); }
+        .mcard-vs { text-align:center; font-size:10px; font-weight:900; color:var(--text-muted); letter-spacing:2px; margin:-4px 0; }
+        .mcard-acts { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+        .mcard-acts .full { grid-column:1 / -1; }
+        .mcard-acts button { border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-main); border-radius:10px; padding:9px 8px; font-size:12px; font-weight:800; cursor:pointer; font-family:inherit; }
+        .mcard-acts button.go { background:var(--success); border-color:var(--success); color:#fff; }
+        .mcard-acts button.pri { background:var(--primary); border-color:var(--primary); color:#fff; }
+        .rnav { width:36px; height:36px; border-radius:50%; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-main); cursor:pointer; flex-shrink:0; }
+        .rnav:disabled { opacity:0.3; cursor:default; }
     </style>
 </head>
 <body>
@@ -2886,8 +2920,10 @@
             t1Name: item.t1Name || null, t2Name: item.t2Name || null,
             sport: meta.sport, format: meta.format,
             partnerMode: meta.mode === 'singles' ? 'fair' : meta.mode,
-            g1: 0, g2: 0, scheduleId: item.id, matchNo: item.no, round: item.round
+            g1: (item.draft && item.draft.g1) || 0, g2: (item.draft && item.draft.g2) || 0, d1: (item.draft && item.draft.d1) || 0, d2: (item.draft && item.draft.d2) || 0,
+            scheduleId: item.id, matchNo: item.no, round: item.round
         });
+        delete item.draft;
         data.roundNumber = Math.max(data.roundNumber || 0, item.round);
     }
 
@@ -2953,7 +2989,7 @@
     }
 
     // Isi lapangan yang kosong dengan match berikutnya dari antrean jadwal.
-    function fillCourtsFromSchedule(excludeIds) {
+    function fillCourtsFromSchedule(excludeIds, force) {
         let meta = data.scheduleMeta;
         if (!meta) return;
         excludeIds = excludeIds || [];
@@ -2961,6 +2997,7 @@
         if (!data.currentMatches) data.currentMatches = [];
         if (meta.mode === 'dinamis' && !data.currentMatches.length && !data.schedule.some(s => s.status === 'pending' || s.status === 'live')) generateDynamicRound();
         if (!data.schedule.length) return;
+        if (meta.manualPick && !force) return;   // mode pilih manual: lapangan tidak diisi otomatis
         data.schedule.forEach(s => {
             if (s.status === 'pending' && s.t1.concat(s.t2).some(id => !playerById(id))) s.status = 'skipped';
         });
@@ -3004,40 +3041,75 @@
         });
     }
 
-    // Mainkan match tertentu dari jadwal sekarang juga (lewati urutan).
-    function playScheduleNow(id) {
+    // Kembalikan semua match yang sedang berjalan ke antrean (skor sementara disimpan agar bisa dilanjutkan).
+    function returnLiveToQueue() {
+        let keep = [];
+        (data.currentMatches || []).forEach(m => {
+            let it = m.scheduleId ? (data.schedule || []).find(x => x.id === m.scheduleId) : null;
+            if (!it) { keep.push(m); return; }
+            it.status = 'pending'; delete it.court;
+            if (m.g1 || m.g2) it.draft = { g1: m.g1, g2: m.g2, d1: m.d1 || 0, d2: m.d2 || 0 };
+        });
+        data.currentMatches = keep;
+    }
+
+    // Mainkan match pilihan. Default: match yang sedang tampil DIGANTIKAN (hanya 1 yang tampil).
+    // add=true: tambahkan ke lapangan lain tanpa mengganti match yang sedang berjalan.
+    function playScheduleNow(id, add) {
         let s = (data.schedule || []).find(x => x.id === id);
         if (!s || (s.status !== 'pending' && s.status !== 'skipped')) return;
         let meta = data.scheduleMeta; if (!meta) return;
         if (!data.currentMatches) data.currentMatches = [];
-        let playing = {};
-        data.currentMatches.forEach(m => m.t1.concat(m.t2).forEach(p => playing[p.id] = m.court));
-        let clash = s.t1.concat(s.t2).find(pid => playing[pid]);
-        if (clash) { let p = playerById(clash); return appAlert("Tidak Bisa Dimainkan", `${p ? p.name : 'Seorang pemain'} sedang bermain di Lapangan ${playing[clash]}. Selesaikan atau tunda match itu dulu.`); }
         if (s.t1.concat(s.t2).some(pid => !playerById(pid))) return appAlert("Error", "Ada pemain dalam match ini yang sudah dihapus dari daftar.");
-        let used = new Set(data.currentMatches.map(m => m.court)), court = null;
-        for (let c = 1; c <= (meta.courts || 1); c++) { if (!used.has(c)) { court = c; break; } }
-        if (!court) return appAlert("Lapangan Penuh", "Semua lapangan sedang dipakai. Selesaikan atau tunda salah satu match dulu, lalu pilih match ini lagi.");
-        activateScheduleItem(s, court);
-        data.currentMatches.sort((a, b) => a.court - b.court);
-        save(); renderMatches(); renderRoundInfo();
-        showToast('Match Dimulai', `Match ${s.no} dimainkan di Lapangan ${court}.`, 'success');
+
+        const go = () => {
+            let replaced = 0;
+            if (!add) { replaced = data.currentMatches.filter(m => m.scheduleId).length; returnLiveToQueue(); }
+            let used = new Set(data.currentMatches.map(m => m.court)), court = null;
+            for (let c = 1; c <= (meta.courts || 1); c++) { if (!used.has(c)) { court = c; break; } }
+            if (!court) court = Math.max(meta.courts || 1, ...Array.from(used)) + 1;
+            meta.manualPick = true;
+            activateScheduleItem(s, court);
+            data.currentMatches.sort((a, b) => a.court - b.court);
+            window._schedRound = s.round;
+            save(); renderMatches(); renderRoundInfo();
+            goToLiveMatch('MC_' + s.id);
+            showToast('Match Dipilih', replaced ? `Match ${s.no} (Ronde ${s.round}) menggantikan match sebelumnya. Skor yang sudah diisi tersimpan.` : `Match ${s.no} siap diinput skornya.`, 'success');
+        };
+
+        if (add) {
+            let playing = {};
+            data.currentMatches.forEach(m => m.t1.concat(m.t2).forEach(p => playing[p.id] = m.court));
+            let clash = s.t1.concat(s.t2).filter(pid => playing[pid]).map(pid => playerById(pid).name);
+            if (clash.length) return appConfirm("Pemain Sedang Main", `${clash.join(', ')} masih tercatat bermain di match lain. Tetap tambahkan match ini?`, go);
+        }
+        go();
     }
 
-    // Utamakan seluruh match pada ronde tertentu (dimainkan lebih dulu saat lapangan kosong).
+    // Mainkan satu ronde: tampilan match yang sedang berjalan diganti dengan match dari ronde itu.
     function prioritizeRound(r) {
-        let sch = data.schedule || [];
-        let minPP = sch.filter(s => s.status === 'pending').reduce((m, s) => Math.min(m, s.pp || 0), 0);
-        let n = 0;
-        sch.forEach(s => { if (s.round === r && s.status === 'pending') { s.pp = minPP - 1; n++; } });
-        if (!n) return;
-        fillCourtsFromSchedule();
+        let sch = data.schedule || [], meta = data.scheduleMeta; if (!meta) return;
+        if (!sch.some(s => s.round === r && s.status === 'pending')) return;
+        returnLiveToQueue();
+        let busy = new Set(), n = 0;
+        sch.filter(s => s.round === r && s.status === 'pending').sort((a, b) => a.no - b.no).forEach(s => {
+            if (n >= (meta.courts || 1)) return;
+            let ids = s.t1.concat(s.t2);
+            if (ids.some(id => busy.has(id) || !playerById(id))) return;
+            ids.forEach(id => busy.add(id));
+            let used = new Set(data.currentMatches.map(m => m.court)), court = 1;
+            while (used.has(court)) court++;
+            activateScheduleItem(s, court); n++;
+        });
+        meta.manualPick = true;
+        data.currentMatches.sort((a, b) => a.court - b.court);
+        window._schedRound = r;
         save(); renderMatches(); renderRoundInfo();
-        showToast('Ronde Diutamakan', `Match Ronde ${r} akan dimainkan lebih dulu begitu lapangan kosong.`, 'success');
+        showToast('Ronde ' + r + ' Dimainkan', 'Tampilan match diganti dengan match Ronde ' + r + '. Skor match sebelumnya yang sudah diisi tersimpan.', 'success');
     }
 
     function playNextInQueue() {
-        fillCourtsFromSchedule();
+        fillCourtsFromSchedule([], true);
         save(); renderMatches(); renderRoundInfo();
         if (!(data.currentMatches || []).length) showToast('Belum Bisa', 'Belum ada match di antrean yang semua pemainnya siap.', 'warning');
     }
@@ -3049,66 +3121,81 @@
         });
     }
 
-    function schedScrollBy(dir) {
-        let t = document.getElementById('schedTrack'); if (!t) return;
-        let c = t.querySelector('.sched-card'); let w = c ? c.offsetWidth + 10 : 280;
-        t.scrollBy({ left: dir * w, behavior: 'smooth' });
+    // ---- Jadwal per ronde: pilih ronde -> panel besar di atas, ronde lain tidak ditumpuk ----
+    window._schedRound = null;   // ronde yang dipilih manual (null = otomatis ikut ronde berjalan)
+
+    function schedAutoRound(rounds) {
+        let sch = data.schedule || [];
+        let live = sch.find(s => s.status === 'live');
+        if (live) return live.round;
+        let pend = sch.filter(s => s.status === 'pending').sort((a, b) => a.round - b.round || a.no - b.no)[0];
+        if (pend) return pend.round;
+        return rounds[rounds.length - 1];
     }
-    function schedGoRound(r) {
-        let t = document.getElementById('schedTrack'); if (!t) return;
-        let c = t.querySelector('.sched-card[data-round="' + r + '"]');
-        if (c) t.scrollTo({ left: c.offsetLeft - t.offsetLeft - (t.clientWidth - c.offsetWidth) / 2, behavior: 'smooth' });
+    function schedPickRound(r) { window._schedRound = r; renderSchedule(); }
+    function schedStep(dir) {
+        let rounds = [...new Set((data.schedule || []).map(s => s.round))].sort((a, b) => a - b);
+        let cur = (window._schedRound != null && rounds.includes(window._schedRound)) ? window._schedRound : schedAutoRound(rounds);
+        let i = rounds.indexOf(cur) + dir;
+        if (i >= 0 && i < rounds.length) schedPickRound(rounds[i]);
     }
-    function schedScrollToCurrent(instant) {
-        let t = document.getElementById('schedTrack'); if (!t) return;
-        let c = t.querySelector('.sched-card.live') || t.querySelector('.sched-card.pending');
-        if (c) t.scrollTo({ left: c.offsetLeft - t.offsetLeft - (t.clientWidth - c.offsetWidth) / 2, behavior: instant ? 'auto' : 'smooth' });
+    let _schedTouchX = null;
+    function schedTouchStart(e) { _schedTouchX = e.touches[0].clientX; }
+    function schedTouchEnd(e) {
+        if (_schedTouchX === null) return;
+        let dx = e.changedTouches[0].clientX - _schedTouchX; _schedTouchX = null;
+        if (Math.abs(dx) > 70) schedStep(dx < 0 ? 1 : -1);
     }
 
     function renderSchedule() {
         let box = document.getElementById('scheduleArea');
         if (!box) return;
         let sch = data.schedule || [];
-        if (!sch.length || data.tournamentMode !== 'league') { box.innerHTML = ''; window._schedScroll = null; return; }
+        if (!sch.length || data.tournamentMode !== 'league') { box.innerHTML = ''; window._schedRound = null; return; }
         const nameOf = id => { let p = playerById(id); return p ? p.name : '(dihapus)'; };
         const teamStr = (ids, custom) => escapeHtml(custom || ids.map(nameOf).join(' & '));
         let done = sch.filter(s => s.status === 'done').length;
         let pct = Math.round(done / sch.length * 100);
         let isDyn = data.scheduleMeta && data.scheduleMeta.mode === 'dinamis';
 
-        let oldTrack = document.getElementById('schedTrack');
-        let keepLeft = oldTrack ? oldTrack.scrollLeft : null;
-
         let rounds = [...new Set(sch.map(s => s.round))].sort((a, b) => a - b);
-        let curRound = data.roundNumber || rounds[0];
-        let chips = rounds.map(r => `<button class="sched-chip ${r === curRound ? 'cur' : ''}" onclick="schedGoRound(${r})">Ronde ${r}</button>`).join('');
-        let anyPending = {};
-        sch.forEach(s => { if (s.status === 'pending') anyPending[s.round] = true; });
+        let sel = (window._schedRound != null && rounds.includes(window._schedRound)) ? window._schedRound : schedAutoRound(rounds);
+        let idx = rounds.indexOf(sel);
 
-        let cards = sch.slice().sort((a, b) => a.round - b.round || a.no - b.no).map(s => {
-            let chip, extra = '';
-            if (s.status === 'done') chip = `<b style="color:var(--success);">${s.s1} - ${s.s2}</b>`;
-            else if (s.status === 'live') chip = `<b style="color:var(--primary);">● Lapangan ${s.court}</b>`;
-            else if (s.status === 'skipped') chip = `<span style="color:var(--warning); font-weight:bold;">Dilewati</span>`;
-            else chip = (s.pp > 0) ? `<span style="color:var(--warning); font-weight:bold;">⏸ Ditunda</span>` : `<span style="color:var(--text-muted); font-weight:bold;">Menunggu</span>`;
+        let rbtns = rounds.map(r => {
+            let ms = sch.filter(s => s.round === r && s.status !== 'skipped');
+            let d = ms.filter(s => s.status === 'done').length;
+            let isLive = ms.some(s => s.status === 'live');
+            return `<button class="rsel-btn ${r === sel ? 'cur' : ''} ${ms.length && d === ms.length ? 'alldone' : ''}" onclick="schedPickRound(${r})"><b>Ronde ${r}</b><small>${isLive ? '● ' : ''}${d}/${ms.length} selesai</small></button>`;
+        }).join('');
 
-            if (s.status === 'done' && (data.matches || []).some(h => h.id === 'HIST_MC_' + s.id)) {
-                extra = `<button class="small-act admin-only" onclick="openEditScore('HIST_MC_${s.id}')"><i class="fas fa-pen"></i> Edit skor</button>`;
-            } else if (s.status === 'pending' || s.status === 'skipped') {
-                extra = `<button class="small-act admin-only" style="color:var(--success);" onclick="playScheduleNow('${s.id}')"><i class="fas fa-play"></i> Mainkan</button>` +
-                        `<button class="small-act admin-only" onclick="toggleSkipSchedule('${s.id}')"><i class="fas ${s.status === 'pending' ? 'fa-forward' : 'fa-rotate-left'}"></i> ${s.status === 'pending' ? 'Lewati' : 'Antrekan'}</button>` +
-                        (s.status === 'pending' ? `<button class="small-act admin-only" onclick="prioritizeRound(${s.round})" title="Mainkan ronde ini lebih dulu"><i class="fas fa-angles-up"></i> Ronde</button>` : '');
+        let ms = sch.filter(s => s.round === sel).sort((a, b) => a.no - b.no);
+        let hasPending = ms.some(s => s.status === 'pending');
+        let msDone = ms.filter(s => s.status === 'done').length;
+
+        let cards = ms.map(s => {
+            let st, acts = '', scA = '', scB = '';
+            if (s.status === 'done') { st = `<span class="mcard-st" style="color:var(--success);">✔ SELESAI</span>`; scA = `<span class="sc">${s.s1}</span>`; scB = `<span class="sc">${s.s2}</span>`; }
+            else if (s.status === 'live') st = `<span class="mcard-st" style="color:var(--primary);">● LAPANGAN ${s.court}</span>`;
+            else if (s.status === 'skipped') st = `<span class="mcard-st" style="color:var(--warning);">DILEWATI</span>`;
+            else if (s.draft) st = `<span class="mcard-st" style="color:var(--warning);">⏸ LANJUT ${s.draft.g1}-${s.draft.g2}</span>`;
+            else st = (s.pp > 0) ? `<span class="mcard-st" style="color:var(--warning);">⏸ DITUNDA</span>` : `<span class="mcard-st" style="color:var(--text-muted);">MENUNGGU</span>`;
+
+            if (s.status === 'done') {
+                if ((data.matches || []).some(h => h.id === 'HIST_MC_' + s.id)) acts = `<button class="full admin-only" onclick="openEditScore('HIST_MC_${s.id}')"><i class="fas fa-pen"></i> Edit skor</button>`;
+            } else if (s.status === 'live') {
+                acts = `<button class="full pri admin-only" onclick="goToLiveMatch('MC_${s.id}')"><i class="fas fa-pen-to-square"></i> Input skor</button>`;
+            } else {
+                acts = `<button class="full go admin-only" onclick="playScheduleNow('${s.id}')"><i class="fas fa-play"></i> Mainkan &amp; input skor</button>` +
+                       (((data.scheduleMeta && data.scheduleMeta.courts) || 1) > 1 && (data.currentMatches || []).length ? `<button class="full admin-only" onclick="playScheduleNow('${s.id}', true)"><i class="fas fa-plus"></i> Tambah di lapangan lain</button>` : '') +
+                       `<button class="full admin-only" onclick="toggleSkipSchedule('${s.id}')"><i class="fas ${s.status === 'pending' ? 'fa-forward' : 'fa-rotate-left'}"></i> ${s.status === 'pending' ? 'Lewati match ini' : 'Masukkan ke antrean'}</button>`;
             }
-            return `<div class="sched-card ${s.status}" data-round="${s.round}">
-                <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
-                    <span style="background:var(--primary); color:#fff; font-size:10px; font-weight:900; padding:3px 8px; border-radius:8px; white-space:nowrap;">MATCH ${s.no}</span>
-                    <span style="font-size:10px; font-weight:900; color:var(--text-muted); letter-spacing:1px;">RONDE ${s.round}</span>
-                </div>
-                <div class="sched-team" style="color:var(--accent);">${teamStr(s.t1, s.t1Name)}</div>
-                <div style="font-size:10px; color:var(--text-muted); text-align:center;">VS</div>
-                <div class="sched-team" style="color:var(--primary);">${teamStr(s.t2, s.t2Name)}</div>
-                <div style="font-size:13px; text-align:center; margin-top:2px;">${chip}</div>
-                ${extra ? `<div style="display:flex; flex-wrap:wrap; gap:6px; justify-content:center;">${extra}</div>` : ''}
+            return `<div class="mcard ${s.status}">
+                <div class="mcard-top"><span class="mcard-no">MATCH ${s.no}</span>${st}</div>
+                <div class="mcard-team" style="color:var(--accent);"><span class="n">${teamStr(s.t1, s.t1Name)}</span>${scA}</div>
+                <div class="mcard-vs">VS</div>
+                <div class="mcard-team" style="color:var(--primary);"><span class="n">${teamStr(s.t2, s.t2Name)}</span>${scB}</div>
+                ${acts ? `<div class="mcard-acts">${acts}</div>` : ''}
             </div>`;
         }).join('');
 
@@ -3118,21 +3205,23 @@
                 <button class="btn btn-ghost owner-only" onclick="clearSchedule()" style="width:auto; padding:4px 10px; font-size:11px; color:#ef4444; border-color:rgba(239,68,68,0.3);"><i class="fas fa-trash"></i> Hapus</button>
             </div>
             ${isDyn ? '<div style="font-size:11px; color:var(--text-muted); margin-top:6px;">Ronde berikutnya dibuat otomatis dari klasemen terbaru setelah semua match ronde ini selesai.</div>' : ''}
-            <div style="font-size:11px; color:var(--text-muted); margin:8px 0 6px; font-weight:bold;">${done} dari ${sch.length} match selesai (${pct}%) • geser kanan/kiri untuk melihat match</div>
-            <div style="height:6px; background:var(--input-bg); border-radius:6px; overflow:hidden; margin-bottom:10px;"><div style="width:${pct}%; height:100%; background:var(--success);"></div></div>
-            <div class="sched-chips">${chips}</div>
-            <div style="display:flex; align-items:center; gap:6px;">
-                <button class="sched-arrow" onclick="schedScrollBy(-1)"><i class="fas fa-chevron-left"></i></button>
-                <div style="flex:1; min-width:0;"><div id="schedTrack" class="sched-track">${cards}</div></div>
-                <button class="sched-arrow" onclick="schedScrollBy(1)"><i class="fas fa-chevron-right"></i></button>
+            <div style="font-size:11px; color:var(--text-muted); margin:8px 0 6px; font-weight:bold;">Total ${done} dari ${sch.length} match selesai (${pct}%)</div>
+            <div style="height:6px; background:var(--input-bg); border-radius:6px; overflow:hidden; margin-bottom:12px;"><div style="width:${pct}%; height:100%; background:var(--success);"></div></div>
+            <div style="font-size:11px; font-weight:800; color:var(--text-muted); margin-bottom:6px;">PILIH RONDE</div>
+            <div class="rsel">${rbtns}</div>
+            <div class="rpanel" ontouchstart="schedTouchStart(event)" ontouchend="schedTouchEnd(event)">
+                <div class="rpanel-head">
+                    <button class="rnav" onclick="schedStep(-1)" ${idx <= 0 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>
+                    <div style="text-align:center; flex:1;">
+                        <div class="rpanel-title">RONDE ${sel}</div>
+                        <div class="rpanel-sub">${msDone} dari ${ms.length} match selesai • geser kiri/kanan untuk ganti ronde</div>
+                    </div>
+                    <button class="rnav" onclick="schedStep(1)" ${idx >= rounds.length - 1 ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>
+                </div>
+                ${hasPending ? `<button class="btn btn-primary admin-only" style="margin-bottom:12px; padding:10px; font-size:13px;" onclick="prioritizeRound(${sel})"><i class="fas fa-play"></i> Mainkan Ronde ${sel} (ganti tampilan)</button>` : ''}
+                <div class="rgrid">${cards}</div>
             </div>
         </div>`;
-
-        let nt = document.getElementById('schedTrack');
-        if (nt) {
-            if (keepLeft !== null) nt.scrollLeft = keepLeft;
-            else schedScrollToCurrent(true);
-        }
     }
 
     function createMatchObj(courtNum, t1, t2, t1Name=null, t2Name=null) {
@@ -3162,7 +3251,7 @@
         if(data.tournamentMode === 'league' && (!data.currentMatches || data.currentMatches.length === 0) && (data.schedule || []).some(s => s.status === 'pending')) {
             document.getElementById('setupArea').style.display = 'none';
             let wa = document.getElementById('waitingHostArea'); if(wa) wa.classList.add('hidden');
-            document.getElementById('multiCourtContainer').innerHTML = `<div class="card" style="text-align:center; padding:25px 20px;"><i class="fas fa-pause-circle" style="font-size:32px; color:var(--warning); margin-bottom:8px;"></i><h4 style="margin:0 0 6px 0;">Belum ada match berjalan</h4><p style="font-size:12px; color:var(--text-muted); margin:0 0 12px 0;">Masih ada match di antrean. Pilih match lewat tombol ▶ di jadwal, atau mulai match berikutnya yang pemainnya siap.</p><button class="btn btn-primary admin-only" onclick="playNextInQueue()"><i class="fas fa-forward"></i> Mulai Match Berikutnya</button></div>`;
+            document.getElementById('multiCourtContainer').innerHTML = `<div class="card" style="text-align:center; padding:25px 20px;"><i class="fas fa-pause-circle" style="font-size:32px; color:var(--warning); margin-bottom:8px;"></i><h4 style="margin:0 0 6px 0;">Belum ada match berjalan</h4><p style="font-size:12px; color:var(--text-muted); margin:0 0 12px 0;">Masih ada match di antrean. Pilih match mana saja lewat tombol Mainkan di jadwal, atau mulai match berikutnya yang pemainnya siap.</p><button class="btn btn-primary admin-only" onclick="playNextInQueue()"><i class="fas fa-forward"></i> Mulai Match Berikutnya</button></div>`;
             document.getElementById('matchArea').classList.remove('hidden');
             return;
         }
