@@ -29,6 +29,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-functions-compat.js"></script>
 
     <style>
         :root {
@@ -1184,11 +1185,31 @@
                     });
                 })
                 .catch(err => {
-                    window._registering = false;
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                    let msg = (err && err.code === 'auth/email-already-in-use') ? 'Username sudah dipakai. Coba username lain.' : (err && err.message ? err.message : 'Terjadi kesalahan.');
-                    appAlert("Registrasi Gagal", msg);
+                    const fail = (e) => {
+                        window._registering = false;
+                        btn.innerText = originalText;
+                        btn.disabled = false;
+                        let msg = (e && e.code === 'auth/email-already-in-use') ? 'Username sudah dipakai. Coba username lain.' : (e && e.message ? e.message : 'Terjadi kesalahan.');
+                        appAlert("Registrasi Gagal", msg);
+                    };
+                    if(!(err && err.code === 'auth/email-already-in-use')) return fail(err);
+                    // Akun Auth lama mungkin masih ada padahal profilnya sudah dihapus admin.
+                    // Jika password sama, aktifkan kembali dengan membuat profil baru.
+                    window._registering = true;
+                    auth.signInWithEmailAndPassword(loginEmail, pass).then(cred =>
+                        db.collection('users').doc(cred.user.uid).get().then(d => {
+                            if(d.exists) { return auth.signOut().then(() => fail(err)); }
+                            return db.collection('users').doc(cred.user.uid).set({
+                                username: userInp, email: loginEmail, role: 'user', friends: [], friendRequests: [],
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            }).then(() => {
+                                window._registering = false;
+                                btn.innerText = originalText; btn.disabled = false;
+                                appSuccess('Berhasil', 'Username ini sebelumnya dihapus admin. Akun berhasil didaftarkan ulang.');
+                                handleSignedInUser(cred.user);
+                            });
+                        })
+                    ).catch(() => fail(err));
                 });
         } else {
             auth.signInWithEmailAndPassword(loginEmail, pass)
@@ -1238,7 +1259,22 @@
     }
 
     function deleteUserByAdmin(uid) {
-        appConfirm("Hapus User", "Yakin ingin menghapus user ini?", () => { db.collection('users').doc(uid).delete().then(() => loadAdminUsers()); });
+        appConfirm("Hapus User", "Yakin ingin menghapus user ini? Akun login dan data pertandingannya ikut dihapus.", async () => {
+            let authDeleted = false;
+            try {
+                if(firebase.functions) {
+                    await firebase.functions().httpsCallable('adminDeleteUser')({ uid: uid });
+                    authDeleted = true;
+                }
+            } catch(e) { console.warn('Cloud Function adminDeleteUser tidak tersedia / gagal:', e); }
+            if(!authDeleted) {
+                // Cadangan: hanya profil & data Firestore yang bisa dihapus dari aplikasi (akun Authentication butuh server).
+                try { await db.collection('users').doc(uid).delete(); } catch(e) { return appAlert("Gagal", "Tidak bisa menghapus profil user: " + e.message); }
+                try { await db.collection('tournaments').doc(uid).delete(); } catch(e) {}
+                appAlert("Sebagian Terhapus", "Profil user dihapus, tetapi akun login-nya (Firebase Authentication) belum bisa dihapus dari aplikasi. Deploy Cloud Function 'adminDeleteUser' (lihat folder functions) atau hapus manual di Firebase Console. Sementara itu, user lama masih bisa mendaftar ulang dengan username & password yang sama.");
+            }
+            loadAdminUsers();
+        });
     }
 
     function showToast(title, msg, type='primary') {
@@ -1479,7 +1515,16 @@
         if(!auth.currentUser || joinUid === auth.currentUser.uid) return;
         let tDoc;
         try { tDoc = await db.collection('tournaments').doc(joinUid).get(); }
-        catch(e) { return appAlert("Gagal", "Tidak bisa memuat pertandingan. Periksa koneksi internet Anda."); }
+        catch(e) {
+            console.error('processJoin gagal membaca turnamen:', e);
+            if(e && e.code === 'permission-denied') {
+                // Aturan Firestore tidak mengizinkan membaca data pertandingan sebelum disetujui:
+                // tetap bisa mengirim permintaan menonton tanpa membaca datanya.
+                return appConfirm("Gabung Pertandingan", "Kirim permintaan untuk menonton pertandingan ini? Anda akan bisa melihatnya setelah disetujui oleh pembuatnya.", () => sendJoinRequest(joinUid));
+            }
+            let offline = !navigator.onLine || (e && (e.code === 'unavailable' || e.code === 'deadline-exceeded'));
+            return appAlert("Gagal", (offline ? "Tidak bisa terhubung ke server. Periksa koneksi internet Anda." : "Tidak bisa memuat pertandingan.") + (e && e.code ? "\n\nKode: " + e.code : ""));
+        }
 
         if(!tDoc.exists) return appAlert("Tidak Ditemukan", "Tautan/QR pertandingan ini tidak valid atau turnamennya sudah tidak ada.");
         let tData = tDoc.data();
@@ -1499,10 +1544,18 @@
         }
 
         appConfirm("Gabung Pertandingan", `Kirim permintaan untuk menonton turnamen "${tData.title || 'ini'}"? Anda tidak perlu berteman untuk menonton, cukup disetujui oleh pembuatnya.`, () => {
-            db.collection('tournaments').doc(joinUid).set({ viewRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) }, {merge: true}).then(() => {
-                appSuccess("Terkirim", "Permintaan menonton telah dikirim. Cek tab Sosial > 'Pertandingan Diikuti' untuk memantau status persetujuan.");
-                renderJoinedTournaments();
-            }).catch(() => appAlert("Gagal", "Tidak bisa mengirim permintaan. Periksa koneksi internet Anda."));
+            sendJoinRequest(joinUid);
+        });
+    }
+
+    function sendJoinRequest(joinUid) {
+        db.collection('tournaments').doc(joinUid).set({ viewRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) }, {merge: true}).then(() => {
+            addJoinedList(joinUid);
+            appSuccess("Terkirim", "Permintaan menonton telah dikirim. Cek tab Sosial > 'Pertandingan Diikuti' untuk memantau status persetujuan.");
+            renderJoinedTournaments();
+        }).catch(e => {
+            console.error('sendJoinRequest gagal:', e);
+            appAlert("Gagal", "Tidak bisa mengirim permintaan." + (e && e.code ? "\n\nKode: " + e.code + (e.code === 'permission-denied' ? " (aturan Firestore menolak. Cek Rules di Firebase Console.)" : "") : ""));
         });
     }
 
@@ -1601,14 +1654,7 @@
         let url = location.origin + location.pathname + '?join=' + auth.currentUser.uid;
         let inp = document.getElementById('joinLinkInput');
         if(inp) inp.value = url;
-        let container = document.getElementById('qrCodeContainer');
-        if(!container) return;
-        container.innerHTML = '';
-        if(typeof QRCode === 'undefined') { container.innerHTML = '<small style="color:var(--text-muted); padding:20px; display:block;">QR tidak tersedia offline</small>'; return; }
-        let canvas = document.createElement('canvas');
-        QRCode.toCanvas(canvas, url, { width: 170, margin: 1, color: { dark: '#111827', light: '#ffffff' } }, (err) => {
-            if(!err) container.appendChild(canvas);
-        });
+        renderQRInto(document.getElementById('qrCodeContainer'), url, 170);
     }
 
     function copyJoinLink() {
@@ -4016,12 +4062,32 @@
     function closeRating() { document.getElementById('ratingModal').classList.add('hidden'); }
 
     // ======================= LAYAR TV / LIVE BOARD =======================
+    // Gambar QR: pakai library lokal; jika gagal/hilang, pakai layanan QR online; jika offline, tampilkan tautan.
     function renderQRInto(container, url, width) {
         if(!container) return;
+        width = width || 170;
         container.innerHTML = '';
-        if(typeof QRCode === 'undefined') { container.innerHTML = '<small style="color:#666; padding:20px; display:block;">QR tidak tersedia offline</small>'; return; }
-        let canvas = document.createElement('canvas');
-        QRCode.toCanvas(canvas, url, { width: width || 170, margin: 1, color: { dark: '#111827', light: '#ffffff' } }, err => { if(!err) container.appendChild(canvas); });
+        const linkFallback = () => {
+            container.style.lineHeight = '1.3';
+            container.innerHTML = '<div style="max-width:220px; padding:10px; color:#111827; font-size:12px; word-break:break-all; text-align:center;"><b>QR belum bisa dimuat.</b><br>Bagikan tautan ini:<br><span style="font-size:11px;">' + escapeHtml(url) + '</span></div>';
+        };
+        const onlineFallback = () => {
+            let img = new Image();
+            img.width = width; img.height = width; img.alt = 'QR Code';
+            img.style.display = 'block';
+            img.onerror = linkFallback;
+            img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=' + (width * 2) + 'x' + (width * 2) + '&margin=1&data=' + encodeURIComponent(url);
+            container.appendChild(img);
+        };
+        if(typeof QRCode === 'undefined' || typeof QRCode.toCanvas !== 'function') return onlineFallback();
+        try {
+            let canvas = document.createElement('canvas');
+            QRCode.toCanvas(canvas, url, { width: width, margin: 1, color: { dark: '#111827', light: '#ffffff' } }, err => {
+                if(err) return onlineFallback();
+                canvas.style.display = 'block';
+                container.appendChild(canvas);
+            });
+        } catch(e) { console.error('QR gagal:', e); onlineFallback(); }
     }
     function tvUrl() { return location.origin + location.pathname + '?tv=' + (currentViewingId || (auth.currentUser && auth.currentUser.uid) || ''); }
     function openTvShare() {
