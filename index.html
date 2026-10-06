@@ -1424,28 +1424,36 @@
             let id = friendIds[i];
             if(!d || !d.exists) return;
             let uName = d.data().username;
-            // t === null  -> dokumen tidak bisa dibaca (aturan Firestore menolak sebelum disetujui): status tidak diketahui,
-            //                tetap tampilkan tombol request. t.exists === false -> teman memang belum punya turnamen.
+            // Status "match aktif" dibaca dari profil teman (users/{id}.activeMatch) yang selalu bisa dibaca,
+            // sedangkan dokumen turnamen hanya terbaca kalau kita sudah disetujui / jadi admin.
+            const act = !!(d.data().activeMatch && d.data().activeMatch.live);
             let tData = (t && t.exists) ? t.data() : null;
-            let unreadable = !t;
+            const hasAccess = !!(tData && ((tData.approvedViewers || []).includes(me) || (tData.matchAdmins || []).includes(me)));
+            const isAdm = !!(tData && (tData.matchAdmins || []).includes(me));
             let actionBtn = '';
-            const reqBtns = `<button class="btn btn-primary" style="padding:6px 10px; width:auto; font-size:12px;" onclick="reqJoinMatch('${id}')" title="Request Tonton"><i class="fas fa-door-open"></i></button>
-                             <button class="btn btn-warning" style="padding:6px 10px; width:auto; font-size:12px;" onclick="reqAdminMatch('${id}')" title="Minta jadi Admin"><i class="fas fa-shield-alt"></i></button>`;
             const openBtn = `<button class="btn btn-success" style="padding:6px 10px; width:auto; font-size:12px;" onclick="viewFriendMatch('${id}')" title="Tonton Match"><i class="fas fa-eye"></i></button>`;
+            const waitTxt = t => `<span style="font-size:11px; color:var(--warning); font-weight:bold;">${t}</span>`;
 
-            if (unreadable) {
-                actionBtn = (getJoinedList().includes(id) ? openBtn : '') + reqBtns;
-            } else if (tData && !tData.isFinished && (tData.title || (tData.players || []).length)) {
-                let isViewReq = tData.viewRequests && tData.viewRequests.includes(me);
-                let isAdmReq = tData.adminRequests && tData.adminRequests.includes(me);
-                let isAppr = tData.approvedViewers && tData.approvedViewers.includes(me);
-                let isAdm = tData.matchAdmins && tData.matchAdmins.includes(me);
-                if (isAdm) actionBtn = openBtn + '<span style="font-size:11px; color:var(--primary); font-weight:bold;"><i class="fas fa-shield-alt"></i> Admin</span>';
-                else if (isAppr) actionBtn = openBtn + (isAdmReq ? '<span style="font-size:11px; color:var(--warning); font-weight:bold;">Admin: menunggu...</span>' : `<button class="btn btn-warning" style="padding:6px 10px; width:auto; font-size:12px;" onclick="reqAdminMatch('${id}')" title="Minta jadi Admin"><i class="fas fa-shield-alt"></i></button>`);
-                else if (isViewReq || isAdmReq) actionBtn = `<span style="font-size:11px; color:var(--warning); font-weight:bold;">Menunggu...</span>`;
-                else actionBtn = reqBtns;
-            } else {
+            if (!act) {
+                clearPendingReq(id);
                 actionBtn = `<span style="font-size:11px; color:var(--text-muted);">Tidak ada match aktif</span>`;
+            } else if (hasAccess) {
+                clearPendingReq(id);
+                if (isAdm) actionBtn = openBtn + '<span style="font-size:11px; color:var(--primary); font-weight:bold;"><i class="fas fa-shield-alt"></i> Admin</span>';
+                else if ((tData.adminRequests || []).includes(me)) actionBtn = openBtn + waitTxt('Admin: menunggu...');
+                else actionBtn = openBtn + `<button class="btn btn-warning" style="padding:6px 10px; width:auto; font-size:12px;" onclick="reqAdminMatch('${id}', false)" title="Minta jadi Admin"><i class="fas fa-shield-alt"></i></button>`;
+            } else {
+                // Belum / tidak lagi punya akses (termasuk kalau dicabut host): pilihan request muncul kembali.
+                let pend = getPendingReq()[id] || {};
+                let pv = tData ? (tData.viewRequests || []).includes(me) : !!pend.view;
+                let pa = tData ? (tData.adminRequests || []).includes(me) : !!pend.admin;
+                if (pv || pa) {
+                    actionBtn = waitTxt(pa ? 'Menunggu persetujuan Admin...' : 'Menunggu persetujuan...') +
+                        `<button class="btn btn-ghost" style="padding:6px 10px; width:auto; font-size:12px;" onclick="${pa ? `reqAdminMatch('${id}', true)` : `reqJoinMatch('${id}')`}" title="Kirim ulang permintaan"><i class="fas fa-rotate-right"></i></button>`;
+                } else {
+                    actionBtn = `<button class="btn btn-primary" style="padding:6px 10px; width:auto; font-size:12px;" onclick="reqJoinMatch('${id}')" title="Request Tonton"><i class="fas fa-door-open"></i></button>
+                                 <button class="btn btn-warning" style="padding:6px 10px; width:auto; font-size:12px;" onclick="reqAdminMatch('${id}', true)" title="Minta jadi Admin"><i class="fas fa-shield-alt"></i></button>`;
+                }
             }
 
             actionBtn = `<div style="display:flex; gap:5px; align-items:center;">
@@ -1483,6 +1491,7 @@
     function reqJoinMatch(uid) {
         db.collection('tournaments').doc(uid).set({ viewRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) }, {merge: true}).then(() => {
             addJoinedList(uid);
+            setPendingReq(uid, { view: true });
             appSuccess("Terkirim", "Request untuk menonton pertandingan telah dikirim ke pembuat match.");
             renderSocialTab();
         }).catch(e => {
@@ -1491,9 +1500,18 @@
         });
     }
 
-    function reqAdminMatch(uid) {
-        db.collection('tournaments').doc(uid).set({ viewRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid), adminRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) }, {merge: true}).then(() => {
+    function getPendingReq() { try { return JSON.parse(localStorage.getItem('HH_PENDING_REQ') || '{}'); } catch(e) { return {}; } }
+    function setPendingReq(uid, kind) { let o = getPendingReq(); o[uid] = Object.assign(o[uid] || {}, kind); localStorage.setItem('HH_PENDING_REQ', JSON.stringify(o)); }
+    function clearPendingReq(uid) { let o = getPendingReq(); if (o[uid]) { delete o[uid]; localStorage.setItem('HH_PENDING_REQ', JSON.stringify(o)); } }
+
+    function reqAdminMatch(uid, alsoView) {
+        if (alsoView === undefined) alsoView = true;
+        const FVa = firebase.firestore.FieldValue, me = auth.currentUser.uid;
+        let payload = { adminRequests: FVa.arrayUnion(me) };
+        if (alsoView) payload.viewRequests = FVa.arrayUnion(me);   // sudah jadi penonton -> cukup minta admin saja
+        db.collection('tournaments').doc(uid).set(payload, {merge: true}).then(() => {
             addJoinedList(uid);
+            setPendingReq(uid, alsoView ? { view: true, admin: true } : { admin: true });
             appSuccess("Terkirim", "Permintaan jadi Admin (isi skor) sudah dikirim ke pembuat match. Anda juga otomatis meminta izin menonton.");
             renderSocialTab();
         }).catch(e => {
@@ -1883,6 +1901,7 @@
                         }
                         window._prevAdminReqs = [...data.adminRequests];
                         prevViewReqs = [...data.viewRequests];
+                        publishActiveStatus();
                     }
                 } else {
                     if(isMine) {
@@ -1945,6 +1964,25 @@
         }));
     }
 
+    // Status "ada match berjalan" ditaruh di profil sendiri agar teman bisa melihatnya (dokumen turnamen tertutup untuk non-peserta).
+    let _lastActiveJson = null;
+    function publishActiveStatus() {
+        if(!auth.currentUser || currentViewingId !== auth.currentUser.uid) return;
+        let sc = data.schedule || [];
+        let live = !data.isFinished && !!data.title && (
+            (data.currentMatches && data.currentMatches.length > 0) ||
+            sc.some(x => x.status === 'pending' || x.status === 'live') ||
+            (data.tournamentMode === 'knockout' && data.bracket && !data.bracket.championId)
+        );
+        let st = { live: !!live, title: live ? (data.title || '') : '' };
+        let j = JSON.stringify(st);
+        if(j === _lastActiveJson) return;
+        _lastActiveJson = j;
+        st.updatedAt = Date.now();
+        db.collection('users').doc(auth.currentUser.uid).update({ activeMatch: st })
+            .catch(err => { _lastActiveJson = null; console.warn('publishActiveStatus gagal:', err); });
+    }
+
     function save(forceFullAccessReset = false) { 
         slimLegacyPlayers();
         renderAll(); 
@@ -1957,6 +1995,7 @@
         
         let isOwner = currentViewingId === auth.currentUser.uid;
         let isAdmin = data.matchAdmins && data.matchAdmins.includes(auth.currentUser.uid);
+        if (isOwner) publishActiveStatus();
         
         if (isOwner || isAdmin) {
             // Daftar akses TIDAK ikut ditulis di sini (diubah lewat update atomik terpisah),
@@ -1998,7 +2037,13 @@
             data.activeTab = id; 
             localStorage.setItem("HH_ACTIVE_TAB", id);
         }
+        if (id === 'social' && typeof renderSocialTab === 'function' && auth.currentUser) renderSocialTab();
     }
+    // Selama tab Sosial terbuka, status teman (match aktif / akses dicabut) disegarkan berkala.
+    setInterval(() => {
+        let t = document.getElementById('tab-social');
+        if (t && t.classList.contains('active') && !document.hidden && auth.currentUser && myUserData) renderSocialTab();
+    }, 20000);
     
     function showAppDialog(type, title, msg, onConfirm, onCancel) {
         const dialog = document.getElementById('customDialog');
