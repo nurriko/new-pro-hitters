@@ -500,7 +500,8 @@
         <h3 style="color:var(--primary); margin-top:0; text-align:center;"><i class="fas fa-chart-line"></i> Rating Elo Pemain</h3>
         <p style="font-size:11px; color:var(--text-muted); text-align:center;">Rating berlanjut antar turnamen (mulai 1000). Diperbarui otomatis saat turnamen diselesaikan. Pemain dikenali lewat nama.</p>
         <div id="ratingList"></div>
-        <button class="btn btn-ghost" onclick="closeRating()" style="margin-top:15px;">Tutup</button>
+        <button class="btn btn-ghost true-owner-only" onclick="resetEloConfirm()" style="margin-top:15px; color:#ef4444; border-color:rgba(239,68,68,0.35);"><i class="fas fa-rotate-left"></i> Reset Rating Elo (mulai dari awal)</button>
+        <button class="btn btn-ghost" onclick="closeRating()" style="margin-top:10px;">Tutup</button>
     </div>
 </div>
 
@@ -4414,6 +4415,24 @@
         }).join('');
         document.getElementById('ratingList').innerHTML = html;
         document.getElementById('ratingModal').classList.remove('hidden');
+    }
+    // Hapus semua rating Elo: semua pemain kembali ke rating awal (1000) dan tidak punya riwayat W/D/L.
+    function resetEloConfirm() {
+        const doReset = (recompute) => {
+            data.eloRatings = {}; data.eloDeltas = {}; data.eloBefore = null; data.eloApplied = false; data.eloLocked = false;
+            if (recompute) applyEloRatings();
+            save(); openRating();
+            showToast('Rating Direset', recompute ? 'Rating dimulai ulang dari hasil turnamen ini saja.' : 'Semua pemain kembali ke rating awal 1000.', 'success');
+        };
+        if (data.isFinished && (data.matches || []).length) {
+            appChoice("Reset Rating Elo", "Seluruh rating & riwayat W/D/L dihapus dan tidak bisa dikembalikan. Turnamen ini sudah selesai, mau dihitung ulang dari hasilnya?", [
+                { label: '<i class="fas fa-rotate-left"></i> Reset & hitung ulang dari turnamen ini', cls: 'btn-primary', fn: () => doReset(true) },
+                { label: '<i class="fas fa-trash"></i> Reset total (semua mulai dari 1000)', cls: 'btn-danger', fn: () => doReset(false) },
+                { label: 'Batal', cls: 'btn-ghost' }
+            ]);
+        } else {
+            appConfirm("Reset Rating Elo", "Seluruh rating & riwayat W/D/L semua pemain akan dihapus dan kembali ke 1000. Tidak bisa dikembalikan. Lanjutkan?", () => doReset(false));
+        }
     }
     function closeRating() { document.getElementById('ratingModal').classList.add('hidden'); }
 
