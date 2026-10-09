@@ -1593,12 +1593,28 @@
     function sendJoinRequest(joinUid) {
         db.collection('tournaments').doc(joinUid).set({ viewRequests: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) }, {merge: true}).then(() => {
             addJoinedList(joinUid);
+            setPendingReq(joinUid, { view: true });
             appSuccess("Terkirim", "Permintaan menonton telah dikirim. Cek tab Sosial > 'Pertandingan Diikuti' untuk memantau status persetujuan.");
             renderJoinedTournaments();
         }).catch(e => {
             console.error('sendJoinRequest gagal:', e);
             appAlert("Gagal", "Tidak bisa mengirim permintaan." + (e && e.code ? "\n\nKode: " + e.code + (e.code === 'permission-denied' ? " (aturan Firestore menolak. Cek Rules di Firebase Console.)" : "") : ""));
         });
+    }
+
+    function pruneJoined(uid) {
+        let list = getJoinedList().filter(x => x !== uid);
+        try { localStorage.setItem('HH_JOINED_TOURNAMENTS', JSON.stringify(list)); } catch(e) {}
+        clearPendingReq(uid);
+    }
+    function removeJoined(uid) {
+        playSfx('pop');
+        // tarik kembali permintaan kita (diizinkan Rules: hanya mengubah viewRequests/adminRequests), kalau gagal tidak masalah
+        const FVr = firebase.firestore.FieldValue, me = auth.currentUser.uid;
+        db.collection('tournaments').doc(uid).update({ viewRequests: FVr.arrayRemove(me), adminRequests: FVr.arrayRemove(me) }).catch(() => {});
+        pruneJoined(uid);
+        renderJoinedTournaments();
+        if (typeof renderSocialTab === 'function') renderSocialTab();
     }
 
     async function renderJoinedTournaments() {
@@ -1612,29 +1628,39 @@
         let results = await Promise.all(list.map(async uid => [uid, await safeGet('tournaments', uid), await safeGet('users', uid)]));
         if(token !== _joinedRenderToken) return;
 
-        let html = '';
+        let html = '', pruned = false;
+        const me = auth.currentUser.uid;
+        const xBtn = uid => `<button class="btn btn-ghost" style="padding:6px 9px; width:auto; font-size:12px;" onclick="removeJoined('${uid}')" title="Hapus dari daftar"><i class="fas fa-xmark"></i></button>`;
+        const wait = t => `<span style="font-size:11px; color:var(--warning); font-weight:bold;">${t}</span>`;
         for(let [uid, d, ownerDoc] of results) {
-            // d === null -> tidak terbaca karena belum disetujui (aturan Firestore): tampilkan sebagai menunggu persetujuan
-            if(d && !d.exists) continue;
-            if(!d && !(ownerDoc && ownerDoc.exists)) continue;
-            let t = d ? d.data() : {};
-            let ownerName = (ownerDoc && ownerDoc.exists) ? ownerDoc.data().username : 'Unknown';
-            let isAppr = t.approvedViewers && t.approvedViewers.includes(auth.currentUser.uid);
-            let isAdm = t.matchAdmins && t.matchAdmins.includes(auth.currentUser.uid);
-            let isPending = t.viewRequests && t.viewRequests.includes(auth.currentUser.uid);
+            // Turnamen / akun pemilik sudah tidak ada -> buang otomatis dari daftar, jangan menggantung.
+            if((d && !d.exists) || !(ownerDoc && ownerDoc.exists)) { pruneJoined(uid); pruned = true; continue; }
+            let t = d ? d.data() : {};   // d === null -> tidak terbaca (belum disetujui / sudah dicabut)
+            let ownerName = ownerDoc.data().username || 'Unknown';
+            // Status "ada match berjalan" dibaca dari profil pemilik (selalu terbaca), bukan dari dokumen turnamen yang tertutup.
+            let act = !!(ownerDoc.data().activeMatch && ownerDoc.data().activeMatch.live);
+            let hasAccess = !!(d && ((t.approvedViewers || []).includes(me) || (t.matchAdmins || []).includes(me)));
 
             let statusBtn = '';
-            if(isAppr || isAdm) statusBtn = `<button class="btn btn-success" style="padding:6px 10px; width:auto; font-size:12px;" onclick="viewFriendMatch('${uid}')"><i class="fas fa-eye"></i> Tonton</button>`;
-            else if(!d) statusBtn = `<div style="display:flex; gap:6px; align-items:center;"><span style="font-size:11px; color:var(--warning); font-weight:bold;">Menunggu persetujuan</span><button class="btn btn-ghost" style="padding:6px 10px; width:auto; font-size:12px;" onclick="viewFriendMatch('${uid}')" title="Coba buka"><i class="fas fa-eye"></i></button></div>`;
-            else if(isPending) statusBtn = `<span style="font-size:11px; color:var(--warning); font-weight:bold;">Menunggu...</span>`;
-            else statusBtn = `<span style="font-size:11px; color:var(--text-muted);">Tidak ada akses</span>`;
+            if(hasAccess) {
+                clearPendingReq(uid);
+                statusBtn = `<div style="display:flex; gap:6px; align-items:center;">${act ? '' : wait('Selesai')}<button class="btn btn-success" style="padding:6px 10px; width:auto; font-size:12px;" onclick="viewFriendMatch('${uid}')"><i class="fas fa-eye"></i> Tonton</button>${act ? '' : xBtn(uid)}</div>`;
+            } else if(!act) {
+                clearPendingReq(uid);
+                statusBtn = `<div style="display:flex; gap:6px; align-items:center;"><span style="font-size:11px; color:var(--text-muted);">Tidak ada match aktif</span>${xBtn(uid)}</div>`;
+            } else {
+                let pend = getPendingReq()[uid] || {};
+                let pv = d ? (t.viewRequests || []).includes(me) : !!pend.view;
+                if(pv) statusBtn = `<div style="display:flex; gap:6px; align-items:center;">${wait('Menunggu persetujuan')}<button class="btn btn-ghost" style="padding:6px 9px; width:auto; font-size:12px;" onclick="reqJoinMatch('${uid}')" title="Kirim ulang permintaan"><i class="fas fa-rotate-right"></i></button>${xBtn(uid)}</div>`;
+                else statusBtn = `<div style="display:flex; gap:6px; align-items:center;"><button class="btn btn-primary" style="padding:6px 10px; width:auto; font-size:12px;" onclick="reqJoinMatch('${uid}')"><i class="fas fa-door-open"></i> Request Tonton</button>${xBtn(uid)}</div>`;
+            }
 
-            html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
-                <div><b style="font-size:13px;">${escapeHtml(t.title || (d ? 'Tanpa Judul' : 'Pertandingan ' + ownerName))}</b><br><small style="color:var(--text-muted);">oleh ${escapeHtml(ownerName)}</small></div>
+            html += `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:10px; background:var(--input-bg); margin-bottom:5px; border-radius:8px; border:1px solid var(--border-color);">
+                <div style="min-width:0;"><b style="font-size:13px;">${escapeHtml(t.title || ownerDoc.data().activeMatch && ownerDoc.data().activeMatch.title || 'Pertandingan ' + ownerName)}</b><br><small style="color:var(--text-muted);">oleh ${escapeHtml(ownerName)}</small></div>
                 ${statusBtn}
             </div>`;
         }
-        container.innerHTML = html || '<span style="font-size:12px; color:var(--text-muted);">Belum ada pertandingan yang diikuti.</span>';
+        container.innerHTML = html || '<span style="font-size:12px; color:var(--text-muted);">Belum ada pertandingan yang diikuti lewat QR/Link.</span>';
     }
 
     async function openAccessManager() {
@@ -3030,7 +3056,11 @@
             });
             unused = new Array(stuck); // yang benar-benar tak bisa dijadwalkan (aturan gender)
         }
-        return { rounds, leftover: unused.length, repeated };
+        // hitung lawan yang belum pernah bertemu (dipakai untuk memilih jadwal terbaik)
+        let oppSeen = {};
+        rounds.forEach(rd => rd.forEach(m => m.t1.forEach(a => m.t2.forEach(b => { oppSeen[pairKeyOf(a, b)] = 1; }))));
+        let uncovOpp = 0; for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) if (!oppSeen[pairKeyOf(ids[i], ids[j])]) uncovOpp++;
+        return { rounds, leftover: unused.length, repeated, uncovOpp };
     }
 
     // ======================================================================
@@ -3041,7 +3071,8 @@
     // ======================================================================
     function mexGamesPerPlayer(n) { let g = n - 1; while ((g * n) % 4 !== 0) g++; return g; }
 
-    function mexicanoBalancedAttempt(ids, courts) {
+    function mexicanoBalancedAttempt(ids, courts, canFace) {
+        if (!canFace) canFace = () => true;
         const n = ids.length, g = mexGamesPerPlayer(n), M = g * n / 4, d = g - (n - 1);
 
         // 1) partner ulang: graf d-reguler sederhana (tiap pemain mengulang tepat d partner)
@@ -3071,7 +3102,8 @@
         for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) pool.push([ids[i], ids[j]]);
         extras.forEach(e => pool.push(e.slice()));
         if (pool.length !== 2 * M) return null;
-        const disjoint = (a, b) => a[0] !== b[0] && a[0] !== b[1] && a[1] !== b[0] && a[1] !== b[1];
+        const disjoint0 = (a, b) => a[0] !== b[0] && a[0] !== b[1] && a[1] !== b[0] && a[1] !== b[1];
+        const disjoint = (a, b) => disjoint0(a, b) && canFace(a, b);
 
         // 2b) cara utama: susun ronde demi ronde langsung dari kumpulan pasangan (lapangan terisi penuh, istirahat merata)
         {
@@ -3108,7 +3140,8 @@
             }
             if (!fail2 && !pl2.length) {
                 let sq = 0; Object.values(opp2).forEach(v => sq += v * v);
-                return { rounds: rounds2, leftover: 0, repeated: extras.length, gamesEach: g, score: rounds2.length * 100 + sq + streakPen2 };
+                let uncov2 = 0; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) if (!opp2[pairKeyOf(ids[i], ids[j])]) uncov2++;
+                return { rounds: rounds2, leftover: 0, repeated: extras.length, gamesEach: g, score: rounds2.length * 100 + uncov2 * 60 + sq + streakPen2 };
             }
         }
 
@@ -3170,7 +3203,8 @@
         if (remaining.length) return null;
 
         let oppSq = 0; Object.values(opp).forEach(v => oppSq += v * v);
-        return { rounds, leftover: 0, repeated: extras.length, gamesEach: g, score: rounds.length * 100 + oppSq + streakPen };
+        let uncov = 0; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) if (!opp[pairKeyOf(ids[i], ids[j])]) uncov++;
+        return { rounds, leftover: 0, repeated: extras.length, gamesEach: g, score: rounds.length * 100 + uncov * 60 + oppSq + streakPen };
     }
 
     function bestPartnerSchedule(ids, courts, genderOf, enforceGender, attempts) {
@@ -3181,19 +3215,19 @@
                 return !((f1 && m2) || (m1 && f2));
               }
             : () => true;
-        if (!enforceGender) {
+        {
             let mb = null;
-            for (let i = 0; i < 60; i++) {
-                let r = mexicanoBalancedAttempt(ids, courts);
+            for (let i = 0; i < 150; i++) {
+                let r = mexicanoBalancedAttempt(ids, courts, canFace);
                 if (r && (!mb || r.score < mb.score)) mb = r;
             }
             if (mb) return mb;   // gagal total (sangat jarang) -> pakai cara lama di bawah
         }
         let best = null;
-        for (let i = 0; i < (attempts || 40); i++) {
+        for (let i = 0; i < Math.max(attempts || 40, 120); i++) {
             let r = schedPartnerAttempt(ids, courts, canFace, !enforceGender);
-            if (!best || r.leftover < best.leftover || (r.leftover === best.leftover && (r.repeated < best.repeated || (r.repeated === best.repeated && r.rounds.length < best.rounds.length)))) best = r;
-            if (best.leftover === 0 && i > 8) break;
+            if (!best || r.leftover < best.leftover || (r.leftover === best.leftover && (r.uncovOpp < best.uncovOpp || (r.uncovOpp === best.uncovOpp && (r.repeated < best.repeated || (r.repeated === best.repeated && r.rounds.length < best.rounds.length)))))) best = r;
+            if (best.leftover === 0 && best.uncovOpp === 0 && i > 8) break;
         }
         return best;
     }
@@ -4121,7 +4155,7 @@
         appConfirm("RESET DATA", "PERINGATAN: Semua data pemain, judul, dan riwayat pertandingan aktif akan dihapus. Yakin?", () => {
             let defaultData = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [], tournamentMode: 'league', bracket: null, sport: null, plannedRounds: null, roundNumber: 0, partnerMode: 'fair', schedule: [], scheduleMeta: null, eloRatings: {}, eloBefore: null, eloApplied: false, eloLocked: false, eloDeltas: {} };
             if(db && auth.currentUser) {
-                db.collection("tournaments").doc(auth.currentUser.uid).set(Object.assign(defaultData, { eloRatings: data.eloRatings || {} })).then(() => location.reload());
+                db.collection("tournaments").doc(auth.currentUser.uid).set(Object.assign(defaultData, { eloRatings: data.eloRatings || {} })).then(() => location.reload()).catch(e => appAlert('Gagal Reset', 'Tidak bisa mereset data: ' + (e && e.code ? e.code : e)));
             } else {
                 appAlert("Error", "Anda tidak sedang login, tidak ada data untuk direset.");
             }
