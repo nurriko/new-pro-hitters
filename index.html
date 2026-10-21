@@ -282,7 +282,7 @@
         .segmented-control:has(#btnPasanganMexicano) { flex-wrap: wrap; }
         #btnPasanganMexicano, #btnPasanganDinamis, #btnPasanganFair, #btnPasanganTetap { flex: 1 1 45%; font-size: 12px; }
         .dialog-msg { white-space: pre-line; }
-        #awardsModal, #ratingModal, #tvShareModal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        #awardsModal, #ratingModal, #tvShareModal, #posterModal, #inviteCaptainModal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 20px; box-sizing: border-box; }
         .award-block { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 14px; padding: 12px; margin-bottom: 10px; text-align: left; display:flex; gap:12px; align-items:center; }
         .award-block img { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold); background:#fff; flex-shrink:0; }
         .award-label { font-size: 10px; font-weight: 900; letter-spacing: 1px; color: var(--gold); text-transform: uppercase; }
@@ -314,6 +314,14 @@
         .tv-rank .nm { flex: 1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .tv-rank .pt { font-weight: 900; color: #fde047; }
         .tv-empty { color: rgba(255,255,255,0.55); font-size: clamp(14px, 2vw, 28px); padding: 3vw 0; text-align:center; }
+
+        /* ===== SPARRING: LAYAR KAPTEN & CLUB DI LIVE BOARD ===== */
+        #inviteScreen { position: fixed; inset: 0; z-index: 9995; background: var(--bg-grad); overflow-y: auto; padding: 16px; box-sizing: border-box; }
+        .tv-clubs { display:flex; align-items:center; justify-content:space-between; gap:2vw; background: rgba(255,255,255,0.07); border: 2px solid rgba(255,215,0,0.4); border-radius: 18px; padding: 1.2vw 2vw; margin-bottom: 1.5vw; box-shadow: 0 0 30px rgba(255,215,0,0.12); }
+        .tv-club { flex: 1; text-align: center; min-width: 0; }
+        .tv-club img, .tv-club .ph { width: clamp(44px, 6vw, 90px); height: clamp(44px, 6vw, 90px); border-radius: 50%; object-fit: cover; border: 3px solid; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; font-size: clamp(18px, 3vw, 42px); background: #fff2; }
+        .tv-club-n { font-size: clamp(14px, 2.2vw, 32px); font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tv-club-s { font-size: clamp(40px, 7vw, 110px); font-family: 'Rajdhani', sans-serif; font-weight: 700; line-height: 1; white-space: nowrap; }
 
         /* ===== JADWAL: SLIDER KANAN-KIRI ===== */
         .sched-track { display:flex; gap:10px; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; padding:4px 2px 10px; scrollbar-width:thin; }
@@ -366,6 +374,7 @@
 <body>
 
 <div id="toastContainer"></div>
+<input type="file" id="spLogoFile" hidden accept="image/*" onchange="spLogoChosen(this)">
 
 <div id="customDialog">
     <div class="dialog-box">
@@ -508,7 +517,7 @@
 <div id="tvShareModal" class="hidden" onclick="if(event.target.id === 'tvShareModal') closeTvShare()">
     <div class="dialog-box" style="width: 92%; max-width: 380px; padding: 20px;">
         <h3 style="color:var(--primary); margin-top:0;"><i class="fas fa-tv"></i> Layar TV / Live Board</h3>
-        <p style="font-size:12px; color:var(--text-muted);">Scan QR ini dari TV / laptop / tablet untuk menampilkan skor lapangan, antrean match, dan klasemen secara real-time.</p>
+        <p style="font-size:12px; color:var(--text-muted);">Scan QR ini dari TV / laptop / tablet / HP pemain untuk menampilkan skor lapangan, antrean match, dan klasemen secara real-time.</p>
         <div id="tvQrContainer" style="display:inline-block; background:#fff; padding:8px; border-radius:10px; line-height:0;"></div>
         <div style="margin-top:10px; display:flex; gap:8px;">
             <input id="tvLinkInput" readonly style="flex:1; margin-bottom:0; font-size:11px; text-align:center;">
@@ -520,6 +529,36 @@
     </div>
 </div>
 
+<div id="posterModal" class="hidden" style="justify-content:flex-start;" onclick="if(event.target.id === 'posterModal') closePoster()">
+    <div style="margin:auto 0; display:flex; flex-direction:column; align-items:center;">
+        <div id="posterTicket" style="width:340px; box-sizing:border-box; padding:24px 22px; border-radius:22px; color:#fff; background:linear-gradient(160deg, #0f172a 0%, #1e3a8a 55%, #0b1226 100%); border:2px solid rgba(255,215,0,0.45); box-shadow:0 15px 35px rgba(0,0,0,0.5); font-family:'Outfit', sans-serif;"></div>
+        <div style="display:flex; gap:10px; width:340px; flex-wrap:wrap; margin-top:14px;">
+            <button class="btn btn-ghost" style="flex:1; background:rgba(255,255,255,0.1); color:white;" onclick="closePoster()">Tutup</button>
+            <button class="btn btn-primary" style="flex:2;" onclick="downloadPoster()"><i class="fas fa-download"></i> Simpan Gambar</button>
+            <button class="btn btn-success" style="flex-basis:100%;" onclick="sharePoster()"><i class="fas fa-share-nodes"></i> Bagikan Poster</button>
+        </div>
+    </div>
+</div>
+
+<div id="inviteCaptainModal" class="hidden" onclick="if(event.target.id === 'inviteCaptainModal') closeInviteModal()">
+    <div class="dialog-box" style="width: 92%; max-width: 380px; padding: 20px; max-height: 90vh; overflow-y:auto;">
+        <h3 id="invModalTitle" style="color:var(--primary); margin-top:0;"><i class="fas fa-qrcode"></i> Undang Kapten</h3>
+        <p style="font-size:12px; color:var(--text-muted);">Kapten club lawan scan QR ini, lalu mengisi nama club, logo, dan daftar pemainnya sendiri dari HP-nya. Data baru masuk ke pertandingan setelah Anda menerapkannya.</p>
+        <div id="invQr" style="display:inline-block; background:#fff; padding:8px; border-radius:10px; line-height:0;"></div>
+        <div style="margin-top:10px; display:flex; gap:8px;">
+            <input id="invLink" readonly style="flex:1; margin-bottom:0; font-size:11px; text-align:center;">
+            <button class="btn btn-ghost" style="width:auto; padding:0 14px;" onclick="copyInviteLink()"><i class="fas fa-copy"></i></button>
+        </div>
+        <div id="invStatus" style="margin-top:14px; text-align:left;"></div>
+        <button class="btn btn-ghost" onclick="closeInviteModal()" style="margin-top:12px;">Tutup</button>
+    </div>
+</div>
+
+<div id="inviteScreen" class="hidden">
+    <input type="file" id="invLogoFile" hidden accept="image/*" onchange="invLogoChosen(this)">
+    <div id="inviteContent"></div>
+</div>
+
 <div id="tvBoard" class="hidden">
     <div class="tv-head">
         <div><div id="tvTitle" class="tv-title">HAPPY HITTERS</div><div id="tvSub" class="tv-sub"></div></div>
@@ -527,6 +566,7 @@
     </div>
     <div class="tv-body">
         <div>
+            <div id="tvClubs"></div>
             <div class="tv-sec">SEDANG BERMAIN</div>
             <div id="tvCourts"></div>
             <div class="tv-sec" style="margin-top:1.5vw;">ANTREAN BERIKUTNYA</div>
@@ -782,6 +822,7 @@
             <div class="segmented-control">
                 <button id="btnModeLeague" class="seg-btn active" onclick="setTournamentMode('league')"><i class="fas fa-list-ol"></i> LIGA</button>
                 <button id="btnModeKnockout" class="seg-btn" onclick="setTournamentMode('knockout')"><i class="fas fa-sitemap"></i> KNOCKOUT</button>
+                <button id="btnModeSparring" class="seg-btn" onclick="setTournamentMode('sparring')"><i class="fas fa-handshake"></i> SPARRING</button>
             </div>
 
             <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">FORMAT PERTANDINGAN</label>
@@ -828,6 +869,15 @@
             </div>
 
             
+            <div id="sparringSetupFields" class="hidden">
+                <div id="sparringPanel"></div>
+                <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">JUMLAH LAPANGAN AKTIF</label>
+                <input type="number" id="spCourts" value="1" min="1" max="10" style="text-align:center; font-weight:900; font-size:16px;">
+                <button id="btnMulaiSparring" class="btn btn-primary owner-only" style="font-size:16px; padding:16px; margin-top:10px;" onclick="generateMatch()">
+                    <i class="fas fa-play"></i> GENERATE PERTANDINGAN SPARRING
+                </button>
+            </div>
+
             <div id="finishedSetupAlert" class="hidden" style="text-align:center; padding: 15px; background: rgba(239, 68, 68, 0.1); border: 1px dashed #ef4444; border-radius: 12px; margin-top: 15px; color: #ef4444; font-weight: bold; font-size: 13px;">
                 <i class="fas fa-lock"></i> Turnamen Telah Selesai.<br>Buka kembali turnamen di menu <b>Klasemen</b> untuk mengacak permainan lagi.
             </div>
@@ -882,6 +932,8 @@
         <button id="btnNewTournament" class="btn btn-success true-owner-only hidden" style="margin-bottom:15px; padding:16px; width:100%; box-shadow:0 4px 15px rgba(16, 185, 129, 0.4);" onclick="createNewTournament()">
             <i class="fas fa-plus-circle"></i> BUAT TURNAMEN BARU
         </button>
+
+        <div id="clubScoreBox"></div>
 
         <div id="rankCaptureArea" class="card" style="padding:20px;">
             <div style="text-align:center; margin-bottom:20px; border-bottom:2px dashed var(--border-color); padding-bottom:15px;">
@@ -1049,7 +1101,7 @@
         
         if (auth) {
             auth.onAuthStateChanged(user => {
-                if(window._tvMode) return;
+                if(window._tvMode || window._inviteMode) return;
                 if (user) {
                     // Saat registrasi berlangsung, profil belum tertulis: jangan dianggap "akun dihapus".
                     if(window._registering) return;
@@ -1546,6 +1598,8 @@
         let params = new URLSearchParams(location.search);
         let tvUid = params.get('tv');
         if(tvUid) { window._tvMode = true; startTVMode(tvUid); return; }
+        let invId = params.get('invite');
+        if(invId) { window._inviteMode = true; startInviteMode(invId); return; }
         let joinUid = params.get('join');
         if(!joinUid) return;
         history.replaceState({}, '', location.pathname); 
@@ -1899,6 +1953,7 @@
                         data.eloApplied = loadedData.eloApplied || false;
                         data.eloLocked = loadedData.eloLocked || false;
                         data.eloDeltas = loadedData.eloDeltas || {};
+                        data.sparring = loadedData.sparring || null;
                         markSynced();
 
                         if (!firstSnap && !doc.metadata.hasPendingWrites && loadedData.lastWriter && loadedData.lastWriter !== DEVICE_ID && Date.now() - _lastRemoteToastAt > 15000) {
@@ -1976,7 +2031,7 @@
     // Dulu SEMUA field ditulis ulang setiap save -> 2 HP yang memakai akun sama saling menimpa data.
     // Sekarang hanya field yang benar-benar berubah (dibanding data server terakhir) yang dikirim.
     const LOCAL_ONLY_KEYS = ['activeTab'];
-    const SYNC_KEYS = ['title','players','matches','fixedPairs','isFinished','currentMatches','tournamentMode','bracket','sport','plannedRounds','roundNumber','partnerMode','schedule','scheduleMeta','dateArchived','eloRatings','eloBefore','eloApplied','eloLocked','eloDeltas'];
+    const SYNC_KEYS = ['title','players','matches','fixedPairs','isFinished','currentMatches','tournamentMode','bracket','sport','plannedRounds','roundNumber','partnerMode','schedule','scheduleMeta','dateArchived','eloRatings','eloBefore','eloApplied','eloLocked','eloDeltas','sparring'];
     let _syncedJson = {};
     function jsonOf(v) { try { return JSON.stringify(v === undefined ? null : v); } catch(e) { return ''; } }
     function markSynced() { SYNC_KEYS.forEach(k => { _syncedJson[k] = jsonOf(data[k]); }); }
@@ -2220,7 +2275,7 @@
             localStorage.setItem('HH_ARCHIVES', JSON.stringify(archives));
             
             data = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [], tournamentMode: 'league', bracket: null, sport: null, plannedRounds: null, roundNumber: 0, partnerMode: 'fair', schedule: [], scheduleMeta: null, eloRatings: {}, eloBefore: null, eloApplied: false, eloLocked: false, eloDeltas: {} };
-            data.eloRatings = _keepElo; save(true);
+            data.sparring = null; data.eloRatings = _keepElo; save(true);
             appSuccess("Berhasil", "Turnamen baru siap dimulai!");
             nav('home');
             renderTitleSetup();
@@ -2489,7 +2544,8 @@
         document.getElementById('btnFormatSingles').className = f==='singles' ? 'seg-btn active' : 'seg-btn';
         document.getElementById('btnFormatDoubles').className = f==='doubles' ? 'seg-btn active' : 'seg-btn';
         let pms = document.getElementById('partnerModeSetup');
-        if(pms) pms.classList.toggle('hidden', f !== 'doubles');
+        if(pms) pms.classList.toggle('hidden', f !== 'doubles' || data.tournamentMode === 'sparring');
+        if(data.tournamentMode === 'sparring') renderSparringSetup(playSnd);
         renderNextUpPreview();
     }
     const PARTNER_HINTS = {
@@ -2524,6 +2580,11 @@
         document.getElementById('btnModeKnockout').className = mode === 'knockout' ? 'seg-btn active' : 'seg-btn';
         document.getElementById('leagueSetupFields').classList.toggle('hidden', mode !== 'league');
         document.getElementById('knockoutSetupFields').classList.toggle('hidden', mode !== 'knockout');
+        document.getElementById('btnModeSparring').className = mode === 'sparring' ? 'seg-btn active' : 'seg-btn';
+        document.getElementById('sparringSetupFields').classList.toggle('hidden', mode !== 'sparring');
+        let _pms = document.getElementById('partnerModeSetup');
+        if(_pms) _pms.classList.toggle('hidden', mode === 'sparring' || selectedFormat !== 'doubles');
+        if(mode === 'sparring') renderSparringSetup(playSnd);
         if(playSnd) { save(); renderRoundInfo(); }
     }
 
@@ -2581,12 +2642,12 @@
             if(btnInline) btnInline.classList.add('hidden');
             if(btnRank) btnRank.classList.add('hidden');
             let _sch0 = data.schedule || [];
-            if(data.tournamentMode === 'league' && _sch0.length) {
+            if(isLeagueLike() && _sch0.length) {
                 let totalR = (data.scheduleMeta && data.scheduleMeta.rounds) || Math.max(..._sch0.map(s => s.round));
                 let doneN = _sch0.filter(s => s.status === 'done').length;
                 bar.classList.remove('hidden');
                 if(data.scheduleMeta && data.scheduleMeta.mode === 'dinamis') txt.innerText = `MEXICANO DINAMIS • RONDE ${data.roundNumber || 0}${data.scheduleMeta.rounds ? ' DARI ' + data.scheduleMeta.rounds : ''} • ${doneN} MATCH SELESAI`;
-                else txt.innerText = `RONDE ${data.roundNumber || 0} DARI ${totalR} • ${doneN}/${_sch0.length} MATCH SELESAI`;
+                else txt.innerText = `${data.tournamentMode === 'sparring' ? 'SPARRING • ' : ''}RONDE ${data.roundNumber || 0} DARI ${totalR} • ${doneN}/${_sch0.length} MATCH SELESAI`;
             } else if(data.tournamentMode === 'league' && data.plannedRounds) {
                 bar.classList.remove('hidden');
                 txt.innerText = `RONDE ${data.roundNumber || 0} DARI ${data.plannedRounds}`;
@@ -2622,7 +2683,7 @@
         let _sessionOver = _sch1.length
             ? (_sch1.some(s => s.status === 'done') && _sch1.every(s => s.status !== 'pending' && s.status !== 'live'))
             : (data.plannedRounds && data.roundNumber >= data.plannedRounds);
-        if(data.tournamentMode === 'league' && _sessionOver &&
+        if(isLeagueLike() && _sessionOver &&
            (!data.currentMatches || data.currentMatches.length === 0) && !window._sessionOfferShown) {
             window._sessionOfferShown = true;
             setTimeout(() => {
@@ -2633,7 +2694,7 @@
 
     function isSessionOver() {
         let sc = data.schedule || [];
-        return data.tournamentMode === 'league' && !data.isFinished && sc.length > 0 &&
+        return isLeagueLike() && !data.isFinished && sc.length > 0 &&
                sc.some(x => x.status === 'done') && sc.every(x => x.status !== 'pending' && x.status !== 'live') &&
                (!data.currentMatches || data.currentMatches.length === 0);
     }
@@ -3280,6 +3341,7 @@
 
     function buildAndStartSchedule() {
         window._sessionOfferShown = false;
+        if (data.tournamentMode === 'sparring') return buildSparringSchedule();
         let reqCourts = parseInt(document.getElementById('numCourts').value) || 1;
         let mode = currentPartnerMode;
         let active = data.players.filter(p => p.isPresent !== false);
@@ -3348,9 +3410,9 @@
             t1: item.t1.map(id => slimP(playerById(id))), t2: item.t2.map(id => slimP(playerById(id))),
             t1Name: item.t1Name || null, t2Name: item.t2Name || null,
             sport: meta.sport, format: meta.format,
-            partnerMode: meta.mode === 'singles' ? 'fair' : meta.mode,
+            partnerMode: (meta.mode === 'singles' || meta.mode === 'sparring') ? 'fair' : meta.mode,
             g1: (item.draft && item.draft.g1) || 0, g2: (item.draft && item.draft.g2) || 0, d1: (item.draft && item.draft.d1) || 0, d2: (item.draft && item.draft.d2) || 0,
-            scheduleId: item.id, matchNo: item.no, round: item.round
+            scheduleId: item.id, matchNo: item.no, round: item.round, c1: item.c1 || null, c2: item.c2 || null
         });
         delete item.draft;
         data.roundNumber = Math.max(data.roundNumber || 0, item.round);
@@ -3580,7 +3642,7 @@
         let box = document.getElementById('scheduleArea');
         if (!box) return;
         let sch = data.schedule || [];
-        if (!sch.length || data.tournamentMode !== 'league') { box.innerHTML = ''; window._schedRound = null; return; }
+        if (!sch.length || !isLeagueLike()) { box.innerHTML = ''; window._schedRound = null; return; }
         const nameOf = id => { let p = playerById(id); return p ? p.name : '(dihapus)'; };
         const teamStr = (ids, custom) => escapeHtml(custom || ids.map(nameOf).join(' & '));
         let done = sch.filter(s => s.status === 'done').length;
@@ -3621,9 +3683,9 @@
             }
             return `<div class="mcard ${s.status}">
                 <div class="mcard-top"><span class="mcard-no">MATCH ${s.no}</span>${st}</div>
-                <div class="mcard-team" style="color:var(--accent);"><span class="n">${teamStr(s.t1, s.t1Name)}</span>${scA}</div>
+                <div class="mcard-team" style="color:var(--accent);"><span class="n">${s.c1 ? '<small style="display:block; font-size:10px; opacity:.85;">' + clubBadge(s.c1, 14) + '</small>' : ''}${teamStr(s.t1, s.t1Name)}</span>${scA}</div>
                 <div class="mcard-vs">VS</div>
-                <div class="mcard-team" style="color:var(--primary);"><span class="n">${teamStr(s.t2, s.t2Name)}</span>${scB}</div>
+                <div class="mcard-team" style="color:var(--primary);"><span class="n">${s.c2 ? '<small style="display:block; font-size:10px; opacity:.85;">' + clubBadge(s.c2, 14) + '</small>' : ''}${teamStr(s.t2, s.t2Name)}</span>${scB}</div>
                 ${acts ? `<div class="mcard-acts">${acts}</div>` : ''}
             </div>`;
         }).join('');
@@ -3682,7 +3744,7 @@
                 </div>`;
             return;
         }
-        if(data.tournamentMode === 'league' && (!data.currentMatches || data.currentMatches.length === 0) && (data.schedule || []).some(s => s.status === 'pending')) {
+        if(isLeagueLike() && (!data.currentMatches || data.currentMatches.length === 0) && (data.schedule || []).some(s => s.status === 'pending')) {
             document.getElementById('setupArea').style.display = 'none';
             let wa = document.getElementById('waitingHostArea'); if(wa) wa.classList.add('hidden');
             document.getElementById('multiCourtContainer').innerHTML = `<div class="card" style="text-align:center; padding:25px 20px;"><i class="fas fa-pause-circle" style="font-size:32px; color:var(--warning); margin-bottom:8px;"></i><h4 style="margin:0 0 6px 0;">Belum ada match berjalan</h4><p style="font-size:12px; color:var(--text-muted); margin:0 0 12px 0;">Masih ada match di antrean. Pilih match mana saja lewat tombol Mainkan di jadwal, atau mulai match berikutnya yang pemainnya siap.</p><button class="btn btn-primary admin-only" onclick="playNextInQueue()"><i class="fas fa-forward"></i> Mulai Match Berikutnya</button></div>`;
@@ -3740,7 +3802,7 @@
                 <div class="live-scoreboard">
                     <div class="score-row">
                         <div class="score-team-info">
-                            <span class="score-team-name" style="color:var(--accent); font-size:14px;">${escapeHtml(t1Names)}</span>
+                            <span class="score-team-name" style="color:var(--accent); font-size:14px;">${escapeHtml(t1Names)}</span>${m.c1 ? '<span style="font-size:11px; color:var(--text-muted); font-weight:bold;">' + clubBadge(m.c1, 16) + '</span>' : ''}
                             <span style="font-size:11px; color:var(--text-muted); font-weight:bold;">Skor Akhir:</span>
                         </div>
                         <div class="score-controls">
@@ -3752,7 +3814,7 @@
 
                     <div class="score-row">
                         <div class="score-team-info">
-                            <span class="score-team-name" style="color:var(--primary); font-size:14px;">${escapeHtml(t2Names)}</span>
+                            <span class="score-team-name" style="color:var(--primary); font-size:14px;">${escapeHtml(t2Names)}</span>${m.c2 ? '<span style="font-size:11px; color:var(--text-muted); font-weight:bold;">' + clubBadge(m.c2, 16) + '</span>' : ''}
                             <span style="font-size:11px; color:var(--text-muted); font-weight:bold;">Skor Akhir:</span>
                         </div>
                         <div class="score-controls">
@@ -3954,8 +4016,8 @@
 
                 data.matches.unshift({
                     id: histId,
-                    sport: m.sport, format: m.format, logic: m.partnerMode === 'tetap' ? 'fixed' : (m.partnerMode === 'dinamis' ? 'dinamis' : (m.partnerMode === 'mexicano' ? 'mexicano' : 'fair')),
-                    matchNo: m.matchNo || null, scheduleId: m.scheduleId || null, comeback: comebackOf(m, s1, s2),
+                    sport: m.sport, format: m.format, logic: m.c1 ? 'sparring' : m.partnerMode === 'tetap' ? 'fixed' : (m.partnerMode === 'dinamis' ? 'dinamis' : (m.partnerMode === 'mexicano' ? 'mexicano' : 'fair')),
+                    matchNo: m.matchNo || null, scheduleId: m.scheduleId || null, c1: m.c1 || null, c2: m.c2 || null, comeback: comebackOf(m, s1, s2),
                     t1: m.t1Name || m.t1.map(x=>x.name).join(' & '), t2: m.t2Name || m.t2.map(x=>x.name).join(' & '), 
                     ids1: m.t1.map(x=>x.id), ids2: m.t2.map(x=>x.id), court: m.court,
                     s1, s2, time: new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}),
@@ -4247,6 +4309,8 @@
     }
 
     function renderAll() {
+        renderClubScore();
+        if(data.tournamentMode === 'sparring') { renderSparringSetup(false); watchSparringInvites(); }
         document.getElementById('pCount').innerText = data.players.length;
         document.getElementById('playerList').innerHTML = data.players.length === 0 ? emptyStateHtml('fa-user-plus', 'Belum ada pemain', 'Tambahkan pemain pertama untuk mulai turnamen') : data.players.slice().reverse().map(p => {
             let pStatus = p.isPresent === false ? false : true;
@@ -4304,7 +4368,7 @@
             let sportClass = m.sport === 'padel' ? 'sport-padel' : 'sport-tennis';
             let icon = m.sport === 'padel' ? '<i class="fas fa-table-tennis-paddle-ball"></i>' : '🎾';
             let typeStr = m.format === 'singles' ? '(1v1)' : '(2v2)';
-            let logicStr = (m.matchNo ? ' • Match ' + m.matchNo : '') + (m.logic === 'fixed' ? ' • Fixed Partner' : (m.logic === 'dinamis' ? ' • Mex. Dinamis' : m.logic === 'mexicano' ? ' • Mexicano' : (m.logic === 'fair' ? ' • Fair' : '')));
+            let logicStr = (m.matchNo ? ' • Match ' + m.matchNo : '') + (m.logic === 'sparring' ? ' • Sparring' : m.logic === 'fixed' ? ' • Fixed Partner' : (m.logic === 'dinamis' ? ' • Mex. Dinamis' : m.logic === 'mexicano' ? ' • Mexicano' : (m.logic === 'fair' ? ' • Fair' : '')));
             return `
             <div class="card" style="padding:15px; font-size:13px; margin-bottom:0; position:relative; border-left:3px solid var(--${m.sport === 'padel' ? 'padel-glow' : 'tennis-glow'});">
                 <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:8px;">
@@ -4553,13 +4617,22 @@
             if(d.scheduleMeta && d.scheduleMeta.mode === 'dinamis') sub += ' • MEXICANO DINAMIS';
             if(d.roundNumber) sub += ' • RONDE ' + d.roundNumber + (d.scheduleMeta && d.scheduleMeta.rounds ? '/' + d.scheduleMeta.rounds : '');
         }
+        if(d.tournamentMode === 'sparring') { let _ct = clubTally(d); if(_ct && _ct.length >= 2) sub += ' • ' + _ct[0].name + ' ' + _ct[0].w + ' - ' + _ct[1].w + ' ' + _ct[1].name; }
         if(d.isFinished) sub += ' • 🏁 SELESAI';
         document.getElementById('tvSub').innerText = sub;
+        let tcEl = document.getElementById('tvClubs');
+        if(tcEl) {
+            let ct = (d.tournamentMode === 'sparring') ? clubTally(d) : null;
+            if(ct) {
+                const tside = (c, col) => `<div class="tv-club">${c.logo ? `<img src="${c.logo}" style="border-color:${col};">` : `<div class="ph" style="border-color:${col}; color:${col};"><i class="fas fa-shield-halved"></i></div>`}<div class="tv-club-n" style="color:${col};">${escapeHtml(c.name)}</div></div>`;
+                tcEl.innerHTML = `<div class="tv-clubs">${tside(ct[0], '#f9a8d4')}<div class="tv-club-s"><span style="color:#f72585;">${ct[0].w}</span> - <span style="color:#4cc9f0;">${ct[1].w}</span></div>${tside(ct[1], '#93c5fd')}</div>`;
+            } else tcEl.innerHTML = '';
+        }
 
         let cms = d.currentMatches || [];
         document.getElementById('tvCourts').innerHTML = cms.length ? cms.map(m => `
             <div class="tv-court">
-                <div class="tv-court-h"><span class="live-dot"></span> LAPANGAN ${m.court}${m.matchNo ? ' • MATCH ' + m.matchNo : ''}</div>
+                <div class="tv-court-h"><span class="live-dot"></span> LAPANGAN ${m.court}${m.matchNo ? ' • MATCH ' + m.matchNo : ''}${m.c1 && m.c2 ? ' • ' + escapeHtml(tvClubName(d, m.c1)) + ' VS ' + escapeHtml(tvClubName(d, m.c2)) : ''}</div>
                 <div class="tv-row"><span class="tv-team a">${escapeHtml(m.t1Name || m.t1.map(x => x.name).join(' & '))}</span><span class="tv-score a">${m.g1}</span></div>
                 <div class="tv-row"><span class="tv-team b">${escapeHtml(m.t2Name || m.t2.map(x => x.name).join(' & '))}</span><span class="tv-score b">${m.g2}</span></div>
             </div>`).join('') : `<div class="tv-empty">${d.isFinished ? '🏆 Turnamen selesai' : 'Belum ada match berjalan'}</div>`;
@@ -4569,6 +4642,685 @@
 
         let sorted = players.slice().sort((a, b) => b.stats.pts - a.stats.pts || b.stats.gd - a.stats.gd).slice(0, 10);
         document.getElementById('tvRank').innerHTML = sorted.length ? sorted.map((p, i) => `<div class="tv-rank"><span class="pos">${i + 1}</span><span class="nm">${escapeHtml(p.name)}</span><span class="pt">${p.stats.pts}</span></div>`).join('') : '<div class="tv-empty">Belum ada pemain</div>';
+    }
+
+    // ======================================================================
+    //  SPARRING ANTAR CLUB
+    //  Dua club saling bertanding. Setiap match selalu Club 1 (Tim A) vs Club 2 (Tim B).
+    // ======================================================================
+    function isLeagueLike() { return data.tournamentMode === 'league' || data.tournamentMode === 'sparring'; }
+
+    function ensureSparring() {
+        let s = data.sparring;
+        if (!s || !Array.isArray(s.clubs) || s.clubs.length < 2) {
+            data.sparring = { clubs: [ { id: 'CA', name: '', logo: '', playerIds: [] }, { id: 'CB', name: '', logo: '', playerIds: [] } ], pairing: 'random', mixed: false, fixedPairs: [] };
+        }
+        if (!Array.isArray(data.sparring.fixedPairs)) data.sparring.fixedPairs = [];
+        if (!data.sparring.invites) data.sparring.invites = {};
+        if (!data.sparring.invitesApplied) data.sparring.invitesApplied = {};
+        data.sparring.clubs.forEach(c => { if (!Array.isArray(c.playerIds)) c.playerIds = []; });
+        return data.sparring;
+    }
+    function spClubOf(pid) { let s = data.sparring; if (!s || !s.clubs) return null; return s.clubs.find(c => c.playerIds.includes(pid)) || null; }
+    function spGType(a, b) { return a.gender === b.gender ? a.gender : 'X'; }
+
+    function clubBadge(id, sz) {
+        let c = ((data.sparring && data.sparring.clubs) || []).find(x => x.id === id);
+        if (!c) return '';
+        sz = sz || 18;
+        let ic = c.logo ? `<img src="${c.logo}" style="width:${sz}px; height:${sz}px; border-radius:50%; object-fit:cover; vertical-align:middle; margin-right:4px;">` : '<i class="fas fa-shield-halved" style="margin-right:4px;"></i>';
+        return ic + escapeHtml(c.name || 'Club');
+    }
+
+    function spSet(k, v) { playSfx('pop'); ensureSparring()[k] = v; save(); renderSparringSetup(true); }
+    function spName(i, v) { ensureSparring().clubs[i].name = String(v).substring(0, 24); saveDebounced(); }
+    function spPickLogo(i) { window._spLogoIdx = i; document.getElementById('spLogoFile').click(); }
+    function spRemoveLogo(i) { ensureSparring().clubs[i].logo = ''; save(); renderSparringSetup(true); }
+    function spLogoChosen(inp) {
+        let f = inp.files && inp.files[0];
+        if (!f) return;
+        let idx = window._spLogoIdx || 0;
+        let r = new FileReader();
+        r.onload = e => {
+            let img = new Image();
+            img.onload = () => {
+                let s = Math.min(img.width, img.height), c = document.createElement('canvas');
+                c.width = c.height = 160;
+                let x = c.getContext('2d');
+                x.fillStyle = '#ffffff'; x.fillRect(0, 0, 160, 160);
+                x.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 160, 160);
+                ensureSparring().clubs[idx].logo = c.toDataURL('image/jpeg', 0.82);
+                save(); renderSparringSetup(true);
+            };
+            img.onerror = () => appAlert("Error", "Gambar logo tidak bisa dibaca. Coba file lain.");
+            img.src = e.target.result;
+        };
+        r.readAsDataURL(f);
+        inp.value = '';
+    }
+
+    function spAssign(i) {
+        let sel = document.getElementById('spSel_' + i);
+        if (!sel || !sel.value) return appAlert("Peringatan", "Pilih pemain terlebih dahulu.");
+        let sp = ensureSparring();
+        if (spClubOf(sel.value)) return appAlert("Peringatan", "Pemain ini sudah terdaftar di sebuah club.");
+        sp.clubs[i].playerIds.push(sel.value);
+        playSfx('pop'); save(); renderSparringSetup(true);
+    }
+    function spQuickAdd(i) {
+        let nameEl = document.getElementById('spNew_' + i), gEl = document.getElementById('spNewG_' + i);
+        let name = (nameEl.value || '').trim().substring(0, 12);
+        if (!name) return appAlert("Peringatan", "Isi nama pemain terlebih dahulu!");
+        let exists = data.players.find(p => p.name.toLowerCase() === name.toLowerCase());
+        if (exists) return appAlert("Peringatan", "Nama pemain sudah terdaftar! Pilih dari daftar 'pemain yang sudah ada' atau gunakan nama berbeda.");
+        let sp = ensureSparring();
+        let p = { id: 'P' + Date.now() + Math.floor(Math.random() * 1000), name, gender: gEl.value === 'F' ? 'F' : 'M', img: '', isPresent: true, stats: { p: 0, w: 0, l: 0, d: 0, pts: 0, gd: 0 } };
+        data.players.push(p);
+        sp.clubs[i].playerIds.push(p.id);
+        playSfx('pop'); save(); renderSparringSetup(true);
+    }
+    function spUnassign(i, pid) {
+        let sp = ensureSparring();
+        sp.clubs[i].playerIds = sp.clubs[i].playerIds.filter(x => x !== pid);
+        sp.fixedPairs = sp.fixedPairs.filter(f => f.p1 !== pid && f.p2 !== pid);
+        playSfx('pop'); save(); renderSparringSetup(true);
+    }
+    function spAddPair(i) {
+        let sp = ensureSparring(), c = sp.clubs[i];
+        let a = document.getElementById('spPA_' + i).value, b = document.getElementById('spPB_' + i).value;
+        if (!a || !b || a === b) return appAlert("Error", "Pilih dua pemain yang berbeda dari club ini!");
+        if (sp.fixedPairs.some(f => [f.p1, f.p2].includes(a) || [f.p1, f.p2].includes(b))) return appAlert("Error", "Salah satu pemain sudah memiliki pasangan. Hapus dulu pasangan sebelumnya.");
+        let pa = playerById(a), pb = playerById(b);
+        if (!pa || !pb) return;
+        if (sp.mixed && pa.gender === pb.gender) return appAlert("Mixed Double", "Pada mixed double setiap pasangan harus terdiri dari 1 pria dan 1 wanita.");
+        sp.fixedPairs.push({ id: 'FP' + Date.now(), club: c.id, p1: a, p2: b });
+        playSfx('pop'); save(); renderSparringSetup(true);
+    }
+    function spDelPair(id) {
+        let sp = ensureSparring();
+        sp.fixedPairs = sp.fixedPairs.filter(f => f.id !== id);
+        save(); renderSparringSetup(true);
+    }
+
+    function renderSparringSetup(force) {
+        let box = document.getElementById('sparringPanel');
+        if (!box || data.tournamentMode !== 'sparring') return;
+        let ae = document.activeElement;
+        if (!force && ae && box.contains(ae) && (ae.tagName === 'INPUT' || ae.tagName === 'SELECT')) return;
+        let sp = ensureSparring();
+        let doubles = selectedFormat === 'doubles';
+        let accent = ['var(--accent)', 'var(--primary)'];
+        let free = data.players.filter(p => p.isPresent !== false && !spClubOf(p.id));
+        let freeOpts = '<option value="">-- Pilih pemain yang sudah ada --</option>' + free.map(p => `<option value="${p.id}">${escapeHtml(p.name)} (${p.gender === 'M' ? 'Pria' : 'Wanita'})</option>`).join('');
+        let html = '';
+
+        html += `<div style="font-size:11px; color:var(--text-muted); background:var(--input-bg); border:1px dashed var(--border-color); border-radius:10px; padding:8px 10px; margin-bottom:15px; line-height:1.4;"><b>SPARRING ANTAR CLUB</b> — isi nama club (wajib) dan logo (opsional), masukkan pemain tiap club, lalu generate. Setiap pemain/pasangan Club 1 akan bertemu semua pemain/pasangan Club 2.</div>`;
+
+        sp.clubs.forEach((c, i) => {
+            let members = c.playerIds.map(playerById).filter(Boolean);
+            let chips = members.map(p => `<span class="next-up-chip"><img src="${getAvatar(p)}">${escapeHtml(p.name)} <small>${p.gender === 'M' ? '♂' : '♀'}</small><i class="fas fa-xmark" style="cursor:pointer; color:#ef4444; margin-left:4px;" onclick="spUnassign(${i}, '${p.id}')"></i></span>`).join('') || '<span style="font-size:12px; color:var(--text-muted);">Belum ada pemain di club ini.</span>';
+            let nm = members.filter(p => p.gender === 'M').length, nf = members.length - nm;
+
+            let inviteHtml = '';
+            {
+                let sub = invSubOf(c.id), applied = invAppliedOf(c.id, sub);
+                inviteHtml = `<div style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--border-color);">
+                    <button class="btn btn-ghost" style="padding:10px; font-size:12px;" onclick="spInvite(${i})"><i class="fas fa-qrcode"></i> Undang Kapten via QR</button>
+                    ${sub && !applied ? `<div style="margin-top:8px; padding:10px; border-radius:10px; border:1px solid var(--success); background:rgba(16,185,129,0.08); font-size:12px;"><b style="color:var(--success);"><i class="fas fa-inbox"></i> Roster dari kapten siap:</b> ${escapeHtml(sub.clubName || '-')} • ${(sub.players || []).length} pemain<button class="btn btn-success" style="margin-top:8px; padding:8px; font-size:12px;" onclick="spApplyInvite(${i})"><i class="fas fa-check"></i> Terapkan ke Club ${i + 1}</button></div>` : ''}
+                    ${sub && applied ? '<div style="margin-top:6px; font-size:11px; color:var(--success); font-weight:bold;"><i class="fas fa-check-circle"></i> Roster kapten sudah diterapkan.</div>' : ''}
+                </div>`;
+            }
+            let pairHtml = '';
+            if (doubles && sp.pairing === 'fixed') {
+                let pairedIds = new Set(); sp.fixedPairs.forEach(f => { pairedIds.add(f.p1); pairedIds.add(f.p2); });
+                let opts = '<option value="">-- Pemain --</option>' + members.filter(p => !pairedIds.has(p.id)).map(p => `<option value="${p.id}">${escapeHtml(p.name)} (${p.gender === 'M' ? 'P' : 'W'})</option>`).join('');
+                let mine = sp.fixedPairs.filter(f => f.club === c.id);
+                let list = mine.map(f => { let a = playerById(f.p1), b = playerById(f.p2); if (!a || !b) return ''; return `<div style="display:flex; justify-content:space-between; align-items:center; background:var(--input-bg); padding:8px 12px; margin-bottom:6px; border-radius:10px; border:1px solid var(--border-color); font-weight:bold; font-size:13px;"><span>${escapeHtml(a.name)} &amp; ${escapeHtml(b.name)}</span><button onclick="spDelPair('${f.id}')" style="color:#ef4444; background:none; border:none; cursor:pointer;"><i class="fas fa-trash-alt"></i></button></div>`; }).join('') || '<div style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">Belum ada pasangan tetap.</div>';
+                pairHtml = `<div style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--border-color);">
+                    <div style="font-size:11px; font-weight:900; color:var(--text-muted); margin-bottom:6px;">PASANGAN TETAP ${escapeHtml(c.name || 'CLUB ' + (i + 1))}</div>
+                    ${list}
+                    <div style="display:flex; gap:6px;"><select id="spPA_${i}" style="margin-bottom:0;">${opts}</select><select id="spPB_${i}" style="margin-bottom:0;">${opts}</select></div>
+                    <button class="btn btn-ghost" style="margin-top:8px; padding:8px; font-size:12px;" onclick="spAddPair(${i})"><i class="fas fa-link"></i> Jadikan Pasangan</button>
+                </div>`;
+            }
+
+            html += `<div class="card" style="border:2px solid ${accent[i]}; padding:14px; margin-bottom:12px; text-align:left;">
+                <div style="font-size:11px; font-weight:900; color:${accent[i]}; margin-bottom:8px; letter-spacing:1px;">CLUB ${i + 1} ${i === 0 ? '(TIM A)' : '(TIM B)'}</div>
+                <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px;">
+                    <div onclick="spPickLogo(${i})" style="width:64px; height:64px; border-radius:50%; border:2px dashed var(--text-muted); display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; flex-shrink:0; background:var(--input-bg);">${c.logo ? `<img src="${c.logo}" style="width:100%; height:100%; object-fit:cover;">` : '<i class="fas fa-image" style="color:var(--text-muted); font-size:20px;"></i>'}</div>
+                    <div style="flex:1; min-width:0;">
+                        <input type="text" value="${escapeHtml(c.name)}" placeholder="Nama Club (wajib)" maxlength="24" oninput="spName(${i}, this.value)" style="margin-bottom:4px; font-weight:bold;">
+                        <div style="font-size:11px; color:var(--text-muted);">Logo opsional — ketuk lingkaran. ${c.logo ? `<a onclick="spRemoveLogo(${i})" style="color:#ef4444; font-weight:bold; cursor:pointer;">Hapus logo</a>` : ''}</div>
+                    </div>
+                </div>
+                <div style="font-size:11px; font-weight:900; color:var(--text-muted); margin-bottom:6px;">PEMAIN (${members.length}) • ♂ ${nm} • ♀ ${nf}</div>
+                <div style="display:flex; flex-wrap:wrap; margin-bottom:8px;">${chips}</div>
+                <div style="display:flex; gap:6px; margin-bottom:8px;"><select id="spSel_${i}" style="margin-bottom:0;">${freeOpts}</select><button class="btn btn-ghost" style="width:auto; padding:0 14px;" onclick="spAssign(${i})"><i class="fas fa-plus"></i></button></div>
+                <div style="display:flex; gap:6px;">
+                    <input type="text" id="spNew_${i}" placeholder="Atau ketik nama pemain baru" maxlength="12" style="margin-bottom:0; flex:1;">
+                    <select id="spNewG_${i}" style="margin-bottom:0; width:auto;"><option value="M">Pria</option><option value="F">Wanita</option></select>
+                    <button class="btn btn-primary" style="width:auto; padding:0 14px;" onclick="spQuickAdd(${i})"><i class="fas fa-user-plus"></i></button>
+                </div>
+                ${pairHtml}${inviteHtml}
+            </div>`;
+        });
+
+        if (doubles) {
+            html += `<label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">SISTEM PASANGAN (PARTNER)</label>
+            <div class="segmented-control">
+                <button class="seg-btn ${sp.pairing === 'random' ? 'active' : ''}" onclick="spSet('pairing','random')"><i class="fas fa-dice"></i> RANDOM PARTNER</button>
+                <button class="seg-btn ${sp.pairing === 'fixed' ? 'active' : ''}" onclick="spSet('pairing','fixed')"><i class="fas fa-link"></i> FIXED PARTNER</button>
+            </div>
+            <label style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px; display:block;">JENIS GANDA</label>
+            <div class="segmented-control">
+                <button class="seg-btn ${!sp.mixed ? 'active' : ''}" onclick="spSet('mixed',false)"><i class="fas fa-users"></i> NON-MIXED</button>
+                <button class="seg-btn ${sp.mixed ? 'active' : ''}" onclick="spSet('mixed',true)"><i class="fas fa-venus-mars"></i> MIXED DOUBLE</button>
+            </div>
+            <div style="font-size:11px; color:var(--text-muted); background:var(--input-bg); border:1px dashed var(--border-color); border-radius:10px; padding:8px 10px; margin-bottom:15px; line-height:1.5;">
+                ${sp.pairing === 'random' ? '<b>RANDOM</b> — pasangan tiap club diacak otomatis saat generate.' : '<b>FIXED</b> — pasangan ditentukan manual di kartu tiap club.'}<br>
+                ${sp.mixed ? '<b>MIXED</b> — setiap pasangan wajib 1 pria + 1 wanita.' : '<b>NON-MIXED</b> — pasangan bebas (putra/putri/campur).'}<br>
+                <i class="fas fa-ban" style="color:var(--warning);"></i> Ganda putri <b>tidak akan dipertemukan</b> dengan ganda putra.
+            </div>`;
+        } else {
+            html += `<div style="font-size:11px; color:var(--text-muted); background:var(--input-bg); border:1px dashed var(--border-color); border-radius:10px; padding:8px 10px; margin-bottom:15px; line-height:1.4;"><b>1 VS 1</b> — setiap pemain Club 1 bertemu setiap pemain Club 2.</div>`;
+        }
+        html += `<div class="card" style="padding:14px; margin-bottom:12px; text-align:left;">
+            <div style="font-size:11px; font-weight:900; color:var(--text-muted); margin-bottom:8px; letter-spacing:1px;">DETAIL ACARA (UNTUK POSTER)</div>
+            <input type="text" value="${escapeHtml(sp.venue || '')}" placeholder="Lokasi (opsional), misal: Lapangan Senayan" maxlength="60" oninput="spSetText('venue', this.value)" style="margin-bottom:8px;">
+            <input type="text" value="${escapeHtml(sp.when || '')}" placeholder="Waktu (opsional), misal: Sabtu 25 Okt, 08.00 WIB" maxlength="60" oninput="spSetText('when', this.value)" style="margin-bottom:0;">
+        </div>
+        <div style="display:flex; gap:8px; margin-bottom:15px;">
+            <button class="btn btn-ghost" style="padding:10px; font-size:12px; border-color:var(--primary); color:var(--primary);" onclick="openSparringPoster('vs')"><i class="fas fa-image"></i> Poster VS</button>
+            <button class="btn btn-ghost" style="padding:10px; font-size:12px; border-color:var(--primary); color:var(--primary);" onclick="openTvShare()"><i class="fas fa-tv"></i> QR Live Board Pemain</button>
+        </div>`;
+        box.innerHTML = html;
+    }
+
+    function schedFromMatchups(units, matchups, courts) {
+        let unused = matchups.slice(), cnt = units.map(() => 0), rounds = [], guard = 0;
+        while (unused.length && guard++ < 3000) {
+            let busy = new Set(), round = [];
+            for (let c = 0; c < courts; c++) {
+                let best = null, bestS = 1e9;
+                unused.forEach(m => {
+                    let ids = units[m[0]].ids.concat(units[m[1]].ids);
+                    if (ids.some(id => busy.has(id))) return;
+                    let s = cnt[m[0]] + cnt[m[1]] + Math.random() * 0.9;
+                    if (s < bestS) { bestS = s; best = m; }
+                });
+                if (!best) break;
+                units[best[0]].ids.concat(units[best[1]].ids).forEach(id => busy.add(id));
+                cnt[best[0]]++; cnt[best[1]]++;
+                unused = unused.filter(m => m !== best);
+                round.push({ t1: units[best[0]].ids, t2: units[best[1]].ids, c1: units[best[0]].club, c2: units[best[1]].club });
+            }
+            if (!round.length) break;
+            rounds.push(round);
+        }
+        return { rounds, leftover: unused.length };
+    }
+
+    function buildSparringSchedule() {
+        let sp = ensureSparring();
+        let reqCourts = parseInt((document.getElementById('spCourts') || {}).value) || 1;
+        let doubles = selectedFormat === 'doubles';
+        let cA = sp.clubs[0], cB = sp.clubs[1];
+        if (!(cA.name || '').trim() || !(cB.name || '').trim()) return appAlert("Nama Club Wajib", "Isi nama kedua club terlebih dahulu sebelum membuat pertandingan.");
+        if (cA.name.trim().toLowerCase() === cB.name.trim().toLowerCase()) return appAlert("Nama Club Sama", "Nama kedua club harus berbeda.");
+
+        let notes = [], teams = [[], []];
+        for (let i = 0; i < 2; i++) {
+            let c = sp.clubs[i], cn = c.name.trim();
+            let r = c.playerIds.map(playerById).filter(p => p && p.isPresent !== false);
+            if (!doubles) {
+                if (r.length < 1) return appAlert("Pemain Kurang", `Club ${cn} belum memiliki pemain HADIR.`);
+                teams[i] = r.map(p => ({ ids: [p.id], g: 'S' }));
+                continue;
+            }
+            if (r.length < 2) return appAlert("Pemain Kurang", `Club ${cn} butuh minimal 2 pemain HADIR untuk pertandingan ganda.`);
+            if (sp.pairing === 'fixed') {
+                let ok = [];
+                for (let f of sp.fixedPairs.filter(x => x.club === c.id)) {
+                    let a = playerById(f.p1), b = playerById(f.p2);
+                    if (!a || !b || a.isPresent === false || b.isPresent === false) continue;
+                    if (sp.mixed && a.gender === b.gender) return appAlert("Mixed Double", `Pasangan ${a.name} & ${b.name} (${cn}) bukan 1 pria + 1 wanita. Ubah pasangan atau matikan Mixed Double.`);
+                    ok.push({ ids: [a.id, b.id], g: spGType(a, b) });
+                }
+                if (!ok.length) return appAlert("Pasangan Belum Ada", `Club ${cn} belum punya Pasangan Tetap. Buat pasangan di kartu club, atau pilih Random Partner.`);
+                let paired = new Set(); ok.forEach(t => t.ids.forEach(id => paired.add(id)));
+                let left = r.filter(p => !paired.has(p.id));
+                if (left.length) notes.push(`${left.map(p => p.name).join(', ')} (${cn}) tidak ikut karena belum berpasangan.`);
+                teams[i] = ok;
+            } else {
+                let sh = r.slice().sort(() => Math.random() - 0.5), made = [], left = [];
+                if (sp.mixed) {
+                    let m = sh.filter(p => p.gender === 'M'), f = sh.filter(p => p.gender === 'F');
+                    let k = Math.min(m.length, f.length);
+                    if (!k) return appAlert("Mixed Double", `Club ${cn} butuh minimal 1 pria dan 1 wanita HADIR untuk mixed double.`);
+                    for (let j = 0; j < k; j++) made.push({ ids: [m[j].id, f[j].id], g: 'X' });
+                    left = m.slice(k).concat(f.slice(k));
+                } else {
+                    for (let j = 0; j + 1 < sh.length; j += 2) made.push({ ids: [sh[j].id, sh[j + 1].id], g: spGType(sh[j], sh[j + 1]) });
+                    if (sh.length % 2) left = [sh[sh.length - 1]];
+                }
+                if (left.length) notes.push(`${left.map(p => p.name).join(', ')} (${cn}) tidak mendapat pasangan.`);
+                teams[i] = made;
+            }
+        }
+
+        let units = teams[0].map(t => ({ ids: t.ids, club: cA.id })).concat(teams[1].map(t => ({ ids: t.ids, club: cB.id })));
+        let nA = teams[0].length, matchups = [], blocked = 0;
+        for (let i = 0; i < nA; i++) for (let j = 0; j < teams[1].length; j++) {
+            let a = teams[0][i], b = teams[1][j];
+            if (doubles && ((a.g === 'F' && b.g === 'M') || (a.g === 'M' && b.g === 'F'))) { blocked++; continue; }
+            matchups.push([i, nA + j]);
+        }
+        if (!matchups.length) return appAlert("Tidak Ada Pertandingan", "Semua kemungkinan pertemuan terhalang aturan (ganda putri tidak boleh melawan ganda putra). Ubah susunan pasangan atau gunakan Mixed Double.");
+
+        let courts = Math.max(1, Math.min(reqCourts, teams[0].length, teams[1].length));
+        let best = null;
+        for (let i = 0; i < 30; i++) {
+            let r = schedFromMatchups(units, matchups, courts);
+            if (!best || r.leftover < best.leftover || (r.leftover === best.leftover && r.rounds.length < best.rounds.length)) best = r;
+            if (best.leftover === 0 && i > 5) break;
+        }
+        if (!best.rounds.length) return appAlert("Error", "Jadwal tidak dapat dibuat.");
+
+        let stamp = Date.now(), no = 0, items = [];
+        best.rounds.forEach((rd, ri) => rd.forEach(mt => {
+            no++;
+            items.push({ id: 'SC_' + stamp + '_' + no, no, round: ri + 1, t1: mt.t1, t2: mt.t2, t1Name: null, t2Name: null, c1: mt.c1, c2: mt.c2, status: 'pending' });
+        }));
+
+        data.schedule = items;
+        data.scheduleMeta = { courts, mode: 'sparring', format: selectedFormat, sport: selectedSport, rounds: best.rounds.length, total: items.length, leftover: best.leftover, createdAt: stamp };
+        data.currentMatches = [];
+        data.roundNumber = 0;
+        fillCourtsFromSchedule();
+
+        if (courts < reqCourts) notes.push(`Lapangan dikurangi jadi ${courts} karena jumlah pasangan/pemain.`);
+        if (blocked) notes.push(`${blocked} pertemuan dilewati karena aturan: ganda putri tidak bertemu ganda putra.`);
+        showToast('Jadwal Sparring Dibuat', `${cA.name.trim()} vs ${cB.name.trim()}: ${items.length} match dalam ${best.rounds.length} ronde.` + (notes.length ? ' ' + notes.join(' ') : ''), notes.length ? 'warning' : 'success');
+        playSfx('whistle');
+        save(); renderMatches(); renderRoundInfo();
+    }
+
+    function clubTally(d) {
+        let sp = d && d.sparring;
+        if (!sp || !Array.isArray(sp.clubs) || sp.clubs.length < 2) return null;
+        let t = {};
+        sp.clubs.forEach(c => { t[c.id] = { id: c.id, name: c.name || 'Club', logo: c.logo || '', w: 0, d: 0, l: 0, games: 0, gf: 0, ga: 0 }; });
+        (d.matches || []).forEach(m => {
+            if (!m.c1 || !m.c2 || !t[m.c1] || !t[m.c2]) return;
+            let a = t[m.c1], b = t[m.c2];
+            a.games++; b.games++;
+            a.gf += m.s1; a.ga += m.s2; b.gf += m.s2; b.ga += m.s1;
+            if (m.s1 > m.s2) { a.w++; b.l++; } else if (m.s1 < m.s2) { b.w++; a.l++; } else { a.d++; b.d++; }
+        });
+        return sp.clubs.map(c => t[c.id]);
+    }
+
+    function renderClubScore() {
+        let box = document.getElementById('clubScoreBox');
+        if (!box) return;
+        let ct = (data.tournamentMode === 'sparring') ? clubTally(data) : null;
+        if (!ct) { box.innerHTML = ''; return; }
+        let [a, b] = ct;
+        const side = (c, col, win) => `<div style="flex:1; text-align:center; min-width:0;">
+            ${c.logo ? `<img src="${c.logo}" style="width:52px; height:52px; border-radius:50%; object-fit:cover; border:3px solid ${col}; margin-bottom:6px;">` : `<div style="width:52px; height:52px; border-radius:50%; border:3px solid ${col}; margin:0 auto 6px; display:flex; align-items:center; justify-content:center; color:${col}; font-size:22px;"><i class="fas fa-shield-halved"></i></div>`}
+            <div style="font-weight:900; font-size:13px; color:${col}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(c.name)}${win ? ' 👑' : ''}</div>
+        </div>`;
+        let lead = a.w > b.w ? 'a' : (b.w > a.w ? 'b' : '');
+        box.innerHTML = `<div class="card" style="padding:18px; margin-bottom:15px; text-align:center;">
+            <div style="font-size:11px; font-weight:900; letter-spacing:1px; color:var(--text-muted); margin-bottom:12px;"><i class="fas fa-handshake"></i> SKOR SPARRING ANTAR CLUB</div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                ${side(a, 'var(--accent)', lead === 'a')}
+                <div style="font-family:'Rajdhani',sans-serif; font-size:44px; font-weight:700; line-height:1; white-space:nowrap;"><span style="color:var(--accent);">${a.w}</span> <span style="color:var(--text-muted); font-size:28px;">-</span> <span style="color:var(--primary);">${b.w}</span></div>
+                ${side(b, 'var(--primary)', lead === 'b')}
+            </div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:10px; font-weight:bold;">Kemenangan match • ${a.games} match selesai${a.d ? ' • ' + a.d + ' seri' : ''} • Total game ${a.gf} - ${b.gf}</div>
+            <div style="display:flex; gap:8px; margin-top:12px;">
+                <button class="btn btn-primary" style="padding:10px; font-size:12px;" onclick="openSparringPoster('result')"><i class="fas fa-image"></i> Poster Hasil</button>
+                <button class="btn btn-ghost" style="padding:10px; font-size:12px;" onclick="openTvShare()"><i class="fas fa-qrcode"></i> QR Live Board</button>
+            </div>
+        </div>`;
+    }
+
+    // ======================================================================
+    //  SPARRING: UNDANGAN KAPTEN (QR), POSTER, DAN TAMPILAN KAPTEN
+    //  Undangan disimpan di koleksi Firestore "sparringInvites/{id}".
+    // ======================================================================
+    window._invState = {};
+    window._invModalClub = null;
+    const _invUnsubs = {};
+
+    function spSetText(k, v) { ensureSparring()[k] = String(v).substring(0, 60); saveDebounced(); }
+    function spInviteLink(id) { return location.origin + location.pathname + '?invite=' + id; }
+
+    function spInvite(i) {
+        if (!auth.currentUser || currentViewingId !== auth.currentUser.uid) return appAlert("Hanya Pembuat Turnamen", "Undangan kapten hanya bisa dibuat oleh pembuat turnamen.");
+        let sp = ensureSparring(), c = sp.clubs[i], o = sp.clubs[1 - i];
+        if (!sp.invites) sp.invites = {};
+        let id = sp.invites[c.id], isNew = !id;
+        if (isNew) id = 'INV' + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+        let info = { hostUid: auth.currentUser.uid, clubId: c.id, clubIndex: i, tournamentTitle: data.title || '', otherClubName: o.name || '', otherClubLogo: o.logo || '', sport: data.sport || selectedSport, format: selectedFormat, mixed: !!sp.mixed };
+        if (isNew) { info.createdAt = Date.now(); info.submission = null; }
+        db.collection('sparringInvites').doc(id).set(info, { merge: true }).then(() => {
+            sp.invites[c.id] = id;
+            save();
+            window._invModalClub = i;
+            showInviteModal(i, id);
+            watchSparringInvites();
+            renderSparringSetup(true);
+        }).catch(e => {
+            console.error('spInvite gagal:', e);
+            appAlert("Gagal Membuat Undangan", "Undangan tidak bisa dibuat." + (e && e.code === 'permission-denied' ? "\n\nAturan Firestore menolak. Tambahkan aturan untuk koleksi 'sparringInvites' di Firebase Console (Rules)." : (e && e.code ? "\n\nKode: " + e.code : "")));
+        });
+    }
+
+    function showInviteModal(i, id) {
+        let sp = ensureSparring(), c = sp.clubs[i];
+        document.getElementById('invModalTitle').innerText = 'Undang Kapten ' + (c.name || 'Club ' + (i + 1));
+        let url = spInviteLink(id);
+        document.getElementById('invLink').value = url;
+        renderQRInto(document.getElementById('invQr'), url, 190);
+        renderInviteStatus();
+        document.getElementById('inviteCaptainModal').classList.remove('hidden');
+    }
+    function closeInviteModal() { window._invModalClub = null; document.getElementById('inviteCaptainModal').classList.add('hidden'); }
+    function copyInviteLink() {
+        let inp = document.getElementById('invLink');
+        if (!inp || !inp.value) return;
+        inp.select(); inp.setSelectionRange(0, 99999);
+        try { navigator.clipboard.writeText(inp.value); } catch (e) { document.execCommand('copy'); }
+        showToast('Disalin', 'Tautan undangan kapten disalin.', 'success');
+    }
+
+    function invSubOf(clubId) {
+        let sp = data.sparring; if (!sp || !sp.invites) return null;
+        let st = window._invState[sp.invites[clubId]];
+        return (st && st.submission) ? st.submission : null;
+    }
+    function invAppliedOf(clubId, sub) { return !!(sub && data.sparring && data.sparring.invitesApplied && data.sparring.invitesApplied[clubId] === sub.submittedAt); }
+
+    function renderInviteStatus() {
+        let el = document.getElementById('invStatus'), i = window._invModalClub;
+        if (!el || i == null || !data.sparring) return;
+        let c = data.sparring.clubs[i], sub = invSubOf(c.id);
+        if (!sub) el.innerHTML = '<div style="font-size:12px; color:var(--warning); font-weight:bold;"><i class="fas fa-hourglass-half"></i> Menunggu kapten mengisi data club...</div>';
+        else if (invAppliedOf(c.id, sub)) el.innerHTML = '<div style="font-size:12px; color:var(--success); font-weight:bold;"><i class="fas fa-check-circle"></i> Roster sudah diterapkan.</div>';
+        else el.innerHTML = `<div style="font-size:12px; margin-bottom:8px;"><b style="color:var(--success);"><i class="fas fa-inbox"></i> Roster diterima:</b> ${escapeHtml(sub.clubName || '-')} • ${(sub.players || []).length} pemain</div><button class="btn btn-success" onclick="spApplyInvite(${i})"><i class="fas fa-check"></i> Terapkan ke Club ${i + 1}</button>`;
+    }
+
+    function watchSparringInvites() {
+        if (!auth.currentUser || currentViewingId !== auth.currentUser.uid || data.tournamentMode !== 'sparring') return;
+        let inv = data.sparring && data.sparring.invites;
+        if (!inv) return;
+        Object.keys(inv).forEach(cid => {
+            let id = inv[cid];
+            if (!id || _invUnsubs[id]) return;
+            _invUnsubs[id] = db.collection('sparringInvites').doc(id).onSnapshot(doc => {
+                let prev = window._invState[id], d = doc.exists ? doc.data() : null;
+                window._invState[id] = d;
+                let sub = d && d.submission;
+                if (sub && prev !== undefined && (!prev || !prev.submission || prev.submission.submittedAt !== sub.submittedAt)) {
+                    showToast('Roster Diterima', `Kapten <b>${escapeHtml(sub.clubName || 'club lawan')}</b> mengirim data club & pemain. Buka kartu club untuk menerapkan.`, 'success');
+                }
+                renderInviteStatus();
+                renderSparringSetup(false);
+            }, err => { console.warn('Listener undangan gagal:', err); delete _invUnsubs[id]; });
+        });
+    }
+
+    function spApplyInvite(i) {
+        let sp = ensureSparring(), c = sp.clubs[i], sub = invSubOf(c.id);
+        if (!sub) return appAlert("Info", "Belum ada roster dari kapten.");
+        let n = (sub.players || []).length;
+        appConfirm("Terapkan Roster", `Terapkan roster "${sub.clubName || '-'}" (${n} pemain) ke Club ${i + 1}? Nama & logo club akan diperbarui dan pemain ditambahkan.`, () => {
+            if (sub.clubName) c.name = String(sub.clubName).substring(0, 24);
+            if (typeof sub.logo === 'string' && sub.logo.indexOf('data:image/') === 0) c.logo = sub.logo;
+            let added = 0, skipped = [];
+            (sub.players || []).slice(0, 30).forEach(pl => {
+                let nm = String(pl.name || '').trim().substring(0, 12);
+                if (!nm) return;
+                let ex = data.players.find(p => p.name.toLowerCase() === nm.toLowerCase());
+                if (ex) {
+                    let oc = spClubOf(ex.id);
+                    if (oc) { if (oc.id !== c.id) skipped.push(nm); return; }
+                    c.playerIds.push(ex.id); added++; return;
+                }
+                let p = { id: 'P' + Date.now() + Math.floor(Math.random() * 100000), name: nm, gender: pl.gender === 'F' ? 'F' : 'M', img: '', isPresent: true, stats: { p: 0, w: 0, l: 0, d: 0, pts: 0, gd: 0 } };
+                data.players.push(p); c.playerIds.push(p.id); added++;
+            });
+            if (!sp.invitesApplied) sp.invitesApplied = {};
+            sp.invitesApplied[c.id] = sub.submittedAt;
+            save(); renderSparringSetup(true); renderInviteStatus();
+            showToast('Roster Diterapkan', `${added} pemain ditambahkan ke ${c.name || 'Club ' + (i + 1)}.` + (skipped.length ? ' Dilewati (sudah di club lain): ' + skipped.join(', ') : ''), skipped.length ? 'warning' : 'success');
+        });
+    }
+
+    // ---------------------------- POSTER ----------------------------
+    function openSparringPoster(kind) {
+        let sp = data.sparring;
+        if (!sp || !sp.clubs || sp.clubs.length < 2) return;
+        let a = sp.clubs[0], b = sp.clubs[1];
+        if (!(a.name || '').trim() || !(b.name || '').trim()) return appAlert("Nama Club Wajib", "Isi nama kedua club terlebih dahulu untuk membuat poster.");
+        playSfx('pop');
+        const cA = '#f72585', cB = '#4cc9f0';
+        let sport = data.sport === 'padel' ? 'PADEL' : 'TENNIS';
+        let fmt = (data.scheduleMeta && data.scheduleMeta.format) ? data.scheduleMeta.format : selectedFormat;
+        let doubles = fmt === 'doubles';
+        let fmtTxt = doubles ? (sp.mixed ? 'MIXED DOUBLE' : 'GANDA') : '1 VS 1';
+        let when = sp.when || new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const logo = (c, col) => c.logo
+            ? `<img src="${c.logo}" style="width:78px; height:78px; border-radius:50%; object-fit:cover; border:4px solid ${col}; background:#fff; display:block; margin:0 auto 8px;">`
+            : `<div style="width:78px; height:78px; border-radius:50%; border:4px solid ${col}; display:flex; align-items:center; justify-content:center; font-size:32px; color:${col}; margin:0 auto 8px;"><i class="fas fa-shield-halved"></i></div>`;
+        const clubCol = (c, col) => `<div style="flex:1; min-width:0; text-align:center;">${logo(c, col)}<div style="font-weight:900; font-size:14px; color:${col}; line-height:1.2; overflow-wrap:anywhere;">${escapeHtml(c.name)}</div></div>`;
+
+        let html = `<div style="font-size:10px; letter-spacing:3px; color:#FFD700; font-weight:900; text-align:center;">HAPPY HITTERS • SPARRING ANTAR CLUB</div>
+            <div style="font-size:19px; font-weight:900; text-align:center; text-transform:uppercase; margin:6px 0 4px; line-height:1.2; overflow-wrap:anywhere;">${escapeHtml(data.title || 'Sparring Antar Club')}</div>
+            <div style="text-align:center; margin-bottom:16px;"><span style="display:inline-block; background:rgba(255,255,255,0.14); border-radius:20px; padding:4px 12px; font-size:11px; font-weight:800; letter-spacing:1px;">${sport} • ${fmtTxt}</span></div>`;
+
+        if (kind === 'result') {
+            let ct = clubTally(data) || [];
+            let ta = ct[0] || { w: 0, gf: 0, d: 0 }, tb = ct[1] || { w: 0, gf: 0 };
+            let verdict = ta.w > tb.w ? `🏆 ${escapeHtml(a.name)} MENANG` : (tb.w > ta.w ? `🏆 ${escapeHtml(b.name)} MENANG` : 'PERTANDINGAN SERI');
+            html += `<div style="display:flex; align-items:center; gap:6px;">${clubCol(a, cA)}<div style="font-family:'Rajdhani',sans-serif; font-size:52px; font-weight:700; line-height:1; white-space:nowrap;"><span style="color:${cA};">${ta.w}</span><span style="opacity:.6; font-size:34px;"> - </span><span style="color:${cB};">${tb.w}</span></div>${clubCol(b, cB)}</div>
+                <div style="text-align:center; margin:14px 0 4px; font-weight:900; font-size:15px; color:#FFD700;">${verdict}</div>
+                <div style="text-align:center; font-size:11px; opacity:.75; margin-bottom:14px;">Total game ${ta.gf} - ${tb.gf}${ta.d ? ' • ' + ta.d + ' match seri' : ''}</div>`;
+            let ms = (data.matches || []).filter(m => m.c1 && m.c2).slice().reverse();
+            if (ms.length) {
+                html += `<div style="background:rgba(0,0,0,0.25); border-radius:12px; padding:10px 12px; margin-bottom:12px;"><div style="font-size:10px; font-weight:900; letter-spacing:1px; opacity:.7; margin-bottom:6px;">HASIL PERTANDINGAN</div>` +
+                    ms.slice(0, 12).map(m => `<div style="display:flex; align-items:center; gap:6px; font-size:11px; padding:3px 0; border-bottom:1px solid rgba(255,255,255,0.08);"><span style="flex:1; text-align:right; font-weight:${m.s1 > m.s2 ? '900' : '600'}; color:${m.s1 > m.s2 ? '#fff' : 'rgba(255,255,255,0.65)'};">${escapeHtml(m.t1)}</span><b style="font-family:'Rajdhani',sans-serif; font-size:14px; color:#FFD700; min-width:44px; text-align:center;">${m.s1} - ${m.s2}</b><span style="flex:1; text-align:left; font-weight:${m.s2 > m.s1 ? '900' : '600'}; color:${m.s2 > m.s1 ? '#fff' : 'rgba(255,255,255,0.65)'};">${escapeHtml(m.t2)}</span></div>`).join('') +
+                    (ms.length > 12 ? `<div style="font-size:10px; opacity:.6; text-align:center; margin-top:4px;">+${ms.length - 12} match lainnya</div>` : '') + `</div>`;
+            }
+            const best = c => c.playerIds.map(playerById).filter(p => p && p.stats.p > 0).sort((x, y) => y.stats.pts - x.stats.pts || y.stats.gd - x.stats.gd)[0] || null;
+            let ba = best(a), bb = best(b);
+            if (ba || bb) {
+                const bcell = (p, col) => `<div style="flex:1; text-align:center; font-size:11px;"><div style="opacity:.65; font-size:9px; letter-spacing:1px;">⭐ PEMAIN TERBAIK</div><div style="font-weight:900; color:${col};">${p ? escapeHtml(p.name) : '-'}</div>${p ? `<div style="opacity:.7;">${p.stats.pts} poin</div>` : ''}</div>`;
+                html += `<div style="display:flex; gap:8px; margin-bottom:12px;">${bcell(ba, cA)}${bcell(bb, cB)}</div>`;
+            }
+        } else {
+            html += `<div style="display:flex; align-items:center; gap:6px;">${clubCol(a, cA)}<div style="font-family:'Rajdhani',sans-serif; font-size:40px; font-weight:700; color:#FFD700; text-shadow:0 0 16px rgba(255,215,0,0.5);">VS</div>${clubCol(b, cB)}</div>`;
+            const roster = c => {
+                let ms = c.playerIds.map(playerById).filter(Boolean);
+                if (!ms.length) return '<div style="opacity:.5; font-size:11px; text-align:center;">-</div>';
+                const one = p => `${escapeHtml(p.name)} <span style="opacity:.55; font-size:10px;">${p.gender === 'M' ? '♂' : '♀'}</span>`;
+                if (doubles && sp.pairing === 'fixed') {
+                    let prs = (sp.fixedPairs || []).filter(f => f.club === c.id).map(f => [playerById(f.p1), playerById(f.p2)]).filter(x => x[0] && x[1]);
+                    if (prs.length) return prs.map(x => `<div style="font-size:12px; font-weight:700; margin-bottom:4px;">${one(x[0])} &amp; ${one(x[1])}</div>`).join('');
+                }
+                return ms.map(p => `<div style="font-size:12px; font-weight:700; margin-bottom:3px;">${one(p)}</div>`).join('');
+            };
+            html += `<div style="background:rgba(0,0,0,0.25); border-radius:12px; padding:12px; margin:16px 0 12px; display:flex; gap:10px;">
+                <div style="flex:1; min-width:0; text-align:center;"><div style="font-size:9px; letter-spacing:1px; font-weight:900; color:${cA}; margin-bottom:6px;">LINEUP</div>${roster(a)}</div>
+                <div style="width:1px; background:rgba(255,255,255,0.15);"></div>
+                <div style="flex:1; min-width:0; text-align:center;"><div style="font-size:9px; letter-spacing:1px; font-weight:900; color:${cB}; margin-bottom:6px;">LINEUP</div>${roster(b)}</div>
+            </div>`;
+        }
+
+        html += `<div style="text-align:center; font-size:12px; font-weight:700; margin-bottom:12px; line-height:1.5;"><div><i class="fas fa-calendar-day" style="color:#FFD700;"></i> ${escapeHtml(when)}</div>${sp.venue ? `<div><i class="fas fa-location-dot" style="color:#FFD700;"></i> ${escapeHtml(sp.venue)}</div>` : ''}</div>
+            <div style="display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.1); border-radius:14px; padding:10px 12px;">
+                <div id="posterQr" style="background:#fff; padding:5px; border-radius:8px; line-height:0; flex-shrink:0;"></div>
+                <div style="text-align:left; font-size:11px; line-height:1.4;"><b style="color:#FFD700;">SCAN UNTUK LIHAT SKOR LIVE</b><br>Skor lapangan, antrean match, dan klasemen real-time.</div>
+            </div>
+            <div style="margin-top:14px; font-size:9px; opacity:.5; text-align:center; letter-spacing:1px;">Generated by Happy Hitters App</div>`;
+
+        document.getElementById('posterTicket').innerHTML = html;
+        document.getElementById('posterModal').classList.remove('hidden');
+        renderQRInto(document.getElementById('posterQr'), tvUrl(), 84);
+    }
+    function closePoster() { document.getElementById('posterModal').classList.add('hidden'); }
+    function posterCapture(cb) {
+        if (typeof html2canvas !== 'function') return appAlert("Error", "Pustaka pembuat gambar belum termuat. Periksa koneksi internet.");
+        html2canvas(document.getElementById('posterTicket'), { backgroundColor: null, scale: 2, useCORS: true }).then(cb).catch(e => { console.error(e); appAlert("Gagal", "Gambar poster gagal dibuat."); });
+    }
+    function downloadPoster() {
+        posterCapture(canvas => {
+            let l = document.createElement('a');
+            l.download = 'HappyHitters_Poster_' + Date.now() + '.png';
+            l.href = canvas.toDataURL('image/png');
+            l.click();
+        });
+    }
+    function sharePoster() {
+        posterCapture(canvas => canvas.toBlob(blob => {
+            if (!blob) return;
+            let f = new File([blob], 'HappyHitters_Poster.png', { type: 'image/png' });
+            if (navigator.canShare && navigator.canShare({ files: [f] })) {
+                navigator.share({ files: [f], title: data.title || 'Sparring Antar Club' }).catch(() => {});
+            } else {
+                let l = document.createElement('a');
+                l.download = 'HappyHitters_Poster.png';
+                l.href = URL.createObjectURL(blob);
+                l.click();
+                showToast('Gambar Disimpan', 'Perangkat ini tidak mendukung berbagi langsung, gambar diunduh.', 'primary');
+            }
+        }, 'image/png'));
+    }
+
+    function tvClubName(d, id) {
+        let c = ((d.sparring && d.sparring.clubs) || []).find(x => x.id === id);
+        return c ? (c.name || 'Club') : '';
+    }
+
+    // ---------------------------- TAMPILAN KAPTEN ----------------------------
+    let invS = { id: null, info: null, clubName: '', captain: '', logo: '', players: [], done: false };
+
+    function invSet(html) { document.getElementById('inviteContent').innerHTML = html; }
+    function invMsg(t, icon) { invSet(`<div class="card" style="max-width:420px; width:100%; margin:40px auto; text-align:center; padding:30px 20px;"><i class="fas ${icon || 'fa-circle-info'}" style="font-size:34px; color:var(--primary); margin-bottom:12px;"></i><div style="font-weight:700;">${escapeHtml(t)}</div></div>`); }
+
+    function startInviteMode(id) {
+        ['welcomeScreen', 'appSkeleton'].forEach(x => { let e = document.getElementById(x); if (e) e.classList.add('hidden'); });
+        document.getElementById('inviteScreen').classList.remove('hidden');
+        invMsg('Menghubungkan ke undangan...', 'fa-spinner fa-spin');
+        if (!auth) return invMsg('Firebase belum dikonfigurasi.');
+        let started = false;
+        auth.onAuthStateChanged(u => {
+            if (u) { if (started) return; started = true; invLoad(id); }
+            else auth.signInAnonymously().catch(e => { console.error(e); invMsg('Login anonim gagal. Minta pembuat turnamen mengaktifkan "Anonymous" di Firebase Authentication.', 'fa-triangle-exclamation'); });
+        });
+    }
+
+    function invLoad(id) {
+        db.collection('sparringInvites').doc(id).get().then(doc => {
+            if (!doc.exists) return invMsg('Undangan tidak ditemukan atau sudah tidak berlaku.', 'fa-link-slash');
+            invS = { id, info: doc.data(), clubName: '', captain: '', logo: '', players: [], done: false };
+            let sub = invS.info.submission;
+            if (sub) {
+                invS.clubName = sub.clubName || ''; invS.captain = sub.captain || ''; invS.logo = sub.logo || '';
+                invS.players = (sub.players || []).map(p => ({ name: p.name, gender: p.gender === 'F' ? 'F' : 'M' }));
+            }
+            renderInviteForm();
+        }).catch(e => {
+            console.error(e);
+            invMsg('Tidak bisa memuat undangan (akses ditolak atau koneksi bermasalah).' + (e && e.code ? ' Kode: ' + e.code : ''), 'fa-triangle-exclamation');
+        });
+    }
+
+    function renderInviteForm() {
+        let i = invS.info, S = invS;
+        let chips = S.players.map((p, idx) => `<span class="next-up-chip" style="padding-left:12px;">${escapeHtml(p.name)} <small>${p.gender === 'M' ? '♂' : '♀'}</small><i class="fas fa-xmark" style="cursor:pointer; color:#ef4444; margin-left:6px;" onclick="invDelPlayer(${idx})"></i></span>`).join('') || '<span style="font-size:12px; color:var(--text-muted);">Belum ada pemain. Tambahkan di bawah.</span>';
+        invSet(`<div class="card" style="max-width:420px; width:100%; margin:20px auto; text-align:left;">
+            <div style="text-align:center; margin-bottom:16px;">
+                <div style="font-size:11px; font-weight:900; color:var(--primary); letter-spacing:1px;"><i class="fas fa-handshake"></i> UNDANGAN SPARRING</div>
+                <h3 style="margin:6px 0; color:var(--text-main);">${escapeHtml(i.tournamentTitle || 'Sparring Antar Club')}</h3>
+                <div style="font-size:12px; color:var(--text-muted);">Anda diundang sebagai kapten untuk melawan <b>${escapeHtml(i.otherClubName || 'club lawan')}</b>. Isi data club dan daftar pemain Anda.</div>
+            </div>
+            <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px;">
+                <div onclick="document.getElementById('invLogoFile').click()" style="width:70px; height:70px; border-radius:50%; border:2px dashed var(--text-muted); display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; flex-shrink:0; background:var(--input-bg);">${S.logo ? `<img src="${S.logo}" style="width:100%; height:100%; object-fit:cover;">` : '<i class="fas fa-image" style="color:var(--text-muted); font-size:22px;"></i>'}</div>
+                <div style="flex:1; min-width:0;">
+                    <input type="text" id="invClubName" value="${escapeHtml(S.clubName)}" placeholder="Nama Club (wajib)" maxlength="24" oninput="invS.clubName=this.value" style="margin-bottom:6px; font-weight:bold;">
+                    <input type="text" id="invCaptain" value="${escapeHtml(S.captain)}" placeholder="Nama kapten (opsional)" maxlength="20" oninput="invS.captain=this.value" style="margin-bottom:0;">
+                </div>
+            </div>
+            <div style="font-size:11px; color:var(--text-muted); margin-bottom:12px;">Logo opsional — ketuk lingkaran untuk memilih gambar.</div>
+            <div style="font-size:11px; font-weight:900; color:var(--text-muted); margin-bottom:6px;">PEMAIN (${S.players.length})</div>
+            <div style="display:flex; flex-wrap:wrap; margin-bottom:10px;">${chips}</div>
+            <div style="display:flex; gap:6px; margin-bottom:16px;">
+                <input type="text" id="invPN" placeholder="Nama pemain" maxlength="12" style="margin-bottom:0; flex:1;">
+                <select id="invPG" style="margin-bottom:0; width:auto;"><option value="M">Pria</option><option value="F">Wanita</option></select>
+                <button class="btn btn-primary" style="width:auto; padding:0 14px;" onclick="invAddPlayer()"><i class="fas fa-plus"></i></button>
+            </div>
+            <button class="btn btn-success" onclick="invSubmit()"><i class="fas fa-paper-plane"></i> KIRIM KE PEMBUAT TURNAMEN</button>
+        </div>`);
+    }
+
+    function invAddPlayer() {
+        let n = (document.getElementById('invPN').value || '').trim().substring(0, 12);
+        let g = document.getElementById('invPG').value === 'F' ? 'F' : 'M';
+        if (!n) return appAlert("Peringatan", "Isi nama pemain terlebih dahulu!");
+        if (invS.players.some(p => p.name.toLowerCase() === n.toLowerCase())) return appAlert("Peringatan", "Nama pemain sudah ada di daftar.");
+        if (invS.players.length >= 30) return appAlert("Peringatan", "Maksimal 30 pemain.");
+        invS.players.push({ name: n, gender: g });
+        renderInviteForm();
+    }
+    function invDelPlayer(idx) { invS.players.splice(idx, 1); renderInviteForm(); }
+
+    function invLogoChosen(inp) {
+        let f = inp.files && inp.files[0];
+        if (!f) return;
+        let r = new FileReader();
+        r.onload = e => {
+            let img = new Image();
+            img.onload = () => {
+                let s = Math.min(img.width, img.height), c = document.createElement('canvas');
+                c.width = c.height = 160;
+                let x = c.getContext('2d');
+                x.fillStyle = '#ffffff'; x.fillRect(0, 0, 160, 160);
+                x.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 160, 160);
+                invS.logo = c.toDataURL('image/jpeg', 0.82);
+                renderInviteForm();
+            };
+            img.onerror = () => appAlert("Error", "Gambar logo tidak bisa dibaca. Coba file lain.");
+            img.src = e.target.result;
+        };
+        r.readAsDataURL(f);
+        inp.value = '';
+    }
+
+    function invSubmit() {
+        let name = (invS.clubName || '').trim();
+        if (!name) return appAlert("Nama Club Wajib", "Isi nama club Anda terlebih dahulu.");
+        if (!invS.players.length) return appAlert("Pemain Kosong", "Tambahkan minimal 1 pemain.");
+        let sub = { clubName: name.substring(0, 24), captain: (invS.captain || '').trim().substring(0, 20), logo: invS.logo || '', players: invS.players.map(p => ({ name: p.name, gender: p.gender })), submittedAt: Date.now() };
+        db.collection('sparringInvites').doc(invS.id).update({ submission: sub }).then(() => {
+            invS.done = true; renderInviteDone(sub);
+        }).catch(e => {
+            console.error(e);
+            appAlert("Gagal Mengirim", "Data belum terkirim." + (e && e.code === 'permission-denied' ? "\n\nAkses ditolak. Minta pembuat turnamen memeriksa aturan Firestore 'sparringInvites'." : (e && e.code ? "\n\nKode: " + e.code : "")));
+        });
+    }
+
+    function renderInviteDone(sub) {
+        let hostUid = invS.info.hostUid;
+        invSet(`<div class="card" style="max-width:420px; width:100%; margin:40px auto; text-align:center; padding:28px 20px;">
+            <i class="fas fa-circle-check" style="font-size:44px; color:var(--success); margin-bottom:10px;"></i>
+            <h3 style="margin:0 0 6px 0; color:var(--text-main);">Data Terkirim!</h3>
+            <div style="font-size:13px; color:var(--text-muted); margin-bottom:16px;"><b>${escapeHtml(sub.clubName)}</b> • ${sub.players.length} pemain. Pembuat turnamen akan menerapkan data ini ke pertandingan.</div>
+            <a href="${location.pathname}?tv=${encodeURIComponent(hostUid)}" class="btn btn-primary" style="text-decoration:none; margin-bottom:10px;"><i class="fas fa-tv"></i> Lihat Skor Live</a>
+            <button class="btn btn-ghost" onclick="invS.done=false; renderInviteForm();"><i class="fas fa-pen"></i> Ubah Data & Kirim Ulang</button>
+        </div>`);
     }
 
     function toggleTools() { document.getElementById('toolsPanel').classList.toggle('hidden'); }
