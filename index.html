@@ -4861,6 +4861,46 @@
         box.innerHTML = html;
     }
 
+    // Membentuk daftar pertemuan Club A vs Club B dengan jumlah main SAMA untuk tiap pasangan/pemain.
+    // Tiap unit Club A main dA kali dan tiap unit Club B main dB kali (nA*dA = nB*dB = total match).
+    // Pertemuan yang tidak diizinkan (mis. ganda putri vs ganda putra) dilewati, dan jika ada unit
+    // yang pilihan lawannya sedikit, pertemuan diulang agar jumlah mainnya tetap sama.
+    // Min-cost max-flow: pertemuan ke-k antara dua unit yang sama berbiaya makin mahal,
+    // sehingga pengulangan hanya dipakai bila memang dibutuhkan.
+    function spBalancedMatchups(nA, nB, allowed) {
+        let dA = nB, dB = nA, total = nA * nB;
+        let N = nA + nB + 2, S = nA + nB, T = S + 1;
+        let edges = [], g = Array.from({ length: N }, () => []);
+        const add = (u, v, cap, cost) => { g[u].push(edges.length); edges.push({ v, cap, cost, flow: 0 }); g[v].push(edges.length); edges.push({ v: u, cap: 0, cost: -cost, flow: 0 }); };
+        for (let i = 0; i < nA; i++) add(S, i, dA, 0);
+        for (let j = 0; j < nB; j++) add(nA + j, T, dB, 0);
+        let pairEdges = [];
+        let K = Math.max(dA, dB);
+        for (let i = 0; i < nA; i++) for (let j = 0; j < nB; j++) {
+            if (!allowed(i, j)) continue;
+            for (let k = 1; k <= K; k++) { pairEdges.push([i, j, edges.length]); add(i, nA + j, 1, k * 100 + Math.floor(Math.random() * 10)); }
+        }
+        let flow = 0, guard = 0;
+        while (flow < total && guard++ < total + 5) {
+            let dist = new Array(N).fill(Infinity), inq = new Array(N).fill(false), prev = new Array(N).fill(-1);
+            dist[S] = 0; let q = [S];
+            while (q.length) {
+                let u = q.shift(); inq[u] = false;
+                for (let id of g[u]) {
+                    let e = edges[id];
+                    if (e.cap - e.flow > 0 && dist[u] + e.cost < dist[e.v]) { dist[e.v] = dist[u] + e.cost; prev[e.v] = id; if (!inq[e.v]) { inq[e.v] = true; q.push(e.v); } }
+                }
+            }
+            if (dist[T] === Infinity) break;
+            let v = T;
+            while (v !== S) { let id = prev[v]; edges[id].flow += 1; edges[id ^ 1].flow -= 1; v = edges[id ^ 1].v; }
+            flow++;
+        }
+        let pairs = [], degA = new Array(nA).fill(0), degB = new Array(nB).fill(0);
+        pairEdges.forEach(([i, j, id]) => { if (edges[id].flow > 0) { pairs.push([i, nA + j]); degA[i]++; degB[j]++; } });
+        return { pairs, degA, degB, dA, dB, total, perfect: flow === total };
+    }
+
     function schedFromMatchups(units, matchups, courts) {
         let unused = matchups.slice(), cnt = units.map(() => 0), rounds = [], guard = 0;
         while (unused.length && guard++ < 3000) {
@@ -4934,13 +4974,13 @@
         }
 
         let units = teams[0].map(t => ({ ids: t.ids, club: cA.id })).concat(teams[1].map(t => ({ ids: t.ids, club: cB.id })));
-        let nA = teams[0].length, matchups = [], blocked = 0;
-        for (let i = 0; i < nA; i++) for (let j = 0; j < teams[1].length; j++) {
-            let a = teams[0][i], b = teams[1][j];
-            if (doubles && ((a.g === 'F' && b.g === 'M') || (a.g === 'M' && b.g === 'F'))) { blocked++; continue; }
-            matchups.push([i, nA + j]);
-        }
+        let nA = teams[0].length;
+        let okPair = (i, j) => { let a = teams[0][i], b = teams[1][j]; return !(doubles && ((a.g === 'F' && b.g === 'M') || (a.g === 'M' && b.g === 'F'))); };
+        let bal = spBalancedMatchups(nA, teams[1].length, okPair);
+        let matchups = bal.pairs;
         if (!matchups.length) return appAlert("Tidak Ada Pertandingan", "Semua kemungkinan pertemuan terhalang aturan (ganda putri tidak boleh melawan ganda putra). Ubah susunan pasangan atau gunakan Mixed Double.");
+        let repeated = 0, seenP = new Set();
+        matchups.forEach(m => { let k = m[0] + '-' + m[1]; if (seenP.has(k)) repeated++; else seenP.add(k); });
 
         let courts = Math.max(1, Math.min(reqCourts, teams[0].length, teams[1].length));
         let best = null;
@@ -4964,7 +5004,11 @@
         fillCourtsFromSchedule();
 
         if (courts < reqCourts) notes.push(`Lapangan dikurangi jadi ${courts} karena jumlah pasangan/pemain.`);
-        if (blocked) notes.push(`${blocked} pertemuan dilewati karena aturan: ganda putri tidak bertemu ganda putra.`);
+        if (repeated) notes.push(`${repeated} pertemuan diulang supaya semua pasangan main sama banyak (ganda putri tidak bertemu ganda putra).`);
+        if (!bal.perfect) {
+            let lowA = bal.degA.filter(x => x < bal.dA).length + bal.degB.filter(x => x < bal.dB).length;
+            notes.push(`Jumlah main belum bisa sama untuk ${lowA} pasangan karena komposisi pria/wanita kedua club tidak memungkinkan. Tambah pemain atau ubah pasangan.`);
+        }
         showToast('Jadwal Sparring Dibuat', `${cA.name.trim()} vs ${cB.name.trim()}: ${items.length} match dalam ${best.rounds.length} ronde.` + (notes.length ? ' ' + notes.join(' ') : ''), notes.length ? 'warning' : 'success');
         playSfx('whistle');
         save(); renderMatches(); renderRoundInfo();
