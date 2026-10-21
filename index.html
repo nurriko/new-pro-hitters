@@ -4791,7 +4791,7 @@
                 let sub = invSubOf(c.id), applied = invAppliedOf(c.id, sub);
                 inviteHtml = `<div style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--border-color);">
                     <button class="btn btn-ghost" style="padding:10px; font-size:12px;" onclick="spInvite(${i})"><i class="fas fa-qrcode"></i> Undang Kapten via QR</button>
-                    ${sub && !applied ? `<div style="margin-top:8px; padding:10px; border-radius:10px; border:1px solid var(--success); background:rgba(16,185,129,0.08); font-size:12px;"><b style="color:var(--success);"><i class="fas fa-inbox"></i> Roster dari kapten siap:</b> ${escapeHtml(sub.clubName || '-')} • ${(sub.players || []).length} pemain<button class="btn btn-success" style="margin-top:8px; padding:8px; font-size:12px;" onclick="spApplyInvite(${i})"><i class="fas fa-check"></i> Terapkan ke Club ${i + 1}</button></div>` : ''}
+                    ${sub && !applied ? `<div style="margin-top:8px; padding:10px; border-radius:10px; border:1px solid var(--success); background:rgba(16,185,129,0.08); font-size:12px;"><b style="color:var(--success);"><i class="fas fa-inbox"></i> Roster dari kapten siap:</b> ${escapeHtml(sub.clubName || '-')} • ${(sub.players || []).length} pemain${(sub.pairs || []).length ? ' • ' + sub.pairs.length + ' pasangan' : ''}<button class="btn btn-success" style="margin-top:8px; padding:8px; font-size:12px;" onclick="spApplyInvite(${i})"><i class="fas fa-check"></i> Terapkan ke Club ${i + 1}</button></div>` : ''}
                     ${sub && applied ? '<div style="margin-top:6px; font-size:11px; color:var(--success); font-weight:bold;"><i class="fas fa-check-circle"></i> Roster kapten sudah diterapkan.</div>' : ''}
                 </div>`;
             }
@@ -5118,7 +5118,7 @@
         let c = data.sparring.clubs[i], sub = invSubOf(c.id);
         if (!sub) el.innerHTML = '<div style="font-size:12px; color:var(--warning); font-weight:bold;"><i class="fas fa-hourglass-half"></i> Menunggu kapten mengisi data club...</div>';
         else if (invAppliedOf(c.id, sub)) el.innerHTML = '<div style="font-size:12px; color:var(--success); font-weight:bold;"><i class="fas fa-check-circle"></i> Roster sudah diterapkan.</div>';
-        else el.innerHTML = `<div style="font-size:12px; margin-bottom:8px;"><b style="color:var(--success);"><i class="fas fa-inbox"></i> Roster diterima:</b> ${escapeHtml(sub.clubName || '-')} • ${(sub.players || []).length} pemain</div><button class="btn btn-success" onclick="spApplyInvite(${i})"><i class="fas fa-check"></i> Terapkan ke Club ${i + 1}</button>`;
+        else el.innerHTML = `<div style="font-size:12px; margin-bottom:8px;"><b style="color:var(--success);"><i class="fas fa-inbox"></i> Roster diterima:</b> ${escapeHtml(sub.clubName || '-')} • ${(sub.players || []).length} pemain${(sub.pairs || []).length ? ' • ' + sub.pairs.length + ' pasangan' : ''}</div><button class="btn btn-success" onclick="spApplyInvite(${i})"><i class="fas fa-check"></i> Terapkan ke Club ${i + 1}</button>`;
     }
 
     function watchSparringInvites() {
@@ -5145,7 +5145,7 @@
         let sp = ensureSparring(), c = sp.clubs[i], sub = invSubOf(c.id);
         if (!sub) return appAlert("Info", "Belum ada roster dari kapten.");
         let n = (sub.players || []).length;
-        appConfirm("Terapkan Roster", `Terapkan roster "${sub.clubName || '-'}" (${n} pemain) ke Club ${i + 1}? Nama & logo club akan diperbarui dan pemain ditambahkan.`, () => {
+        appConfirm("Terapkan Roster", `Terapkan roster "${sub.clubName || '-'}" (${n} pemain${(sub.pairs || []).length ? ', ' + sub.pairs.length + ' pasangan' : ''}) ke Club ${i + 1}? Nama & logo club akan diperbarui, pemain ditambahkan${(sub.pairs || []).length ? ', dan pasangan tetap club ini diganti dengan pasangan dari kapten' : ''}.`, () => {
             if (sub.clubName) c.name = String(sub.clubName).substring(0, 24);
             if (typeof sub.logo === 'string' && sub.logo.indexOf('data:image/') === 0) c.logo = sub.logo;
             let added = 0, skipped = [];
@@ -5161,10 +5161,27 @@
                 let p = { id: 'P' + Date.now() + Math.floor(Math.random() * 100000), name: nm, gender: pl.gender === 'F' ? 'F' : 'M', img: '', isPresent: true, stats: { p: 0, w: 0, l: 0, d: 0, pts: 0, gd: 0 } };
                 data.players.push(p); c.playerIds.push(p.id); added++;
             });
+            let pairsMade = 0, pairNotes = [];
+            if (Array.isArray(sub.pairs) && sub.pairs.length) {
+                sp.fixedPairs = sp.fixedPairs.filter(f => f.club !== c.id);
+                let inPair = new Set(); sp.fixedPairs.forEach(f => { inPair.add(f.p1); inPair.add(f.p2); });
+                sub.pairs.forEach(pr => {
+                    let a = data.players.find(p => p.name.toLowerCase() === String(pr.a || '').trim().toLowerCase() && c.playerIds.includes(p.id));
+                    let b = data.players.find(p => p.name.toLowerCase() === String(pr.b || '').trim().toLowerCase() && c.playerIds.includes(p.id));
+                    if (!a || !b || a.id === b.id || inPair.has(a.id) || inPair.has(b.id)) { pairNotes.push(`${pr.a} & ${pr.b}`); return; }
+                    if (sp.mixed && a.gender === b.gender) { pairNotes.push(`${a.name} & ${b.name} (bukan mixed)`); return; }
+                    sp.fixedPairs.push({ id: 'FP' + Date.now() + '_' + pairsMade, club: c.id, p1: a.id, p2: b.id });
+                    inPair.add(a.id); inPair.add(b.id); pairsMade++;
+                });
+            }
             if (!sp.invitesApplied) sp.invitesApplied = {};
             sp.invitesApplied[c.id] = sub.submittedAt;
             save(); renderSparringSetup(true); renderInviteStatus();
-            showToast('Roster Diterapkan', `${added} pemain ditambahkan ke ${c.name || 'Club ' + (i + 1)}.` + (skipped.length ? ' Dilewati (sudah di club lain): ' + skipped.join(', ') : ''), skipped.length ? 'warning' : 'success');
+            let msg = `${added} pemain ditambahkan ke ${c.name || 'Club ' + (i + 1)}.`;
+            if (skipped.length) msg += ' Dilewati (sudah di club lain): ' + skipped.join(', ') + '.';
+            if (pairsMade) msg += ` ${pairsMade} pasangan diterapkan.` + (sp.pairing !== 'fixed' ? ' Ubah Sistem Pasangan ke FIXED PARTNER agar pasangan ini dipakai.' : '');
+            if (pairNotes.length) msg += ' Pasangan dilewati: ' + pairNotes.join(', ') + '.';
+            showToast('Roster Diterapkan', msg, (skipped.length || pairNotes.length || (pairsMade && sp.pairing !== 'fixed')) ? 'warning' : 'success');
         });
     }
 
@@ -5274,7 +5291,7 @@
     }
 
     // ---------------------------- TAMPILAN KAPTEN ----------------------------
-    let invS = { id: null, info: null, clubName: '', captain: '', logo: '', players: [], done: false };
+    let invS = { id: null, info: null, clubName: '', captain: '', logo: '', players: [], pairs: [], done: false };
 
     function invSet(html) { document.getElementById('inviteContent').innerHTML = html; }
     function invMsg(t, icon) { invSet(`<div class="card" style="max-width:420px; width:100%; margin:40px auto; text-align:center; padding:30px 20px;"><i class="fas ${icon || 'fa-circle-info'}" style="font-size:34px; color:var(--primary); margin-bottom:12px;"></i><div style="font-weight:700;">${escapeHtml(t)}</div></div>`); }
@@ -5294,11 +5311,12 @@
     function invLoad(id) {
         db.collection('sparringInvites').doc(id).get().then(doc => {
             if (!doc.exists) return invMsg('Undangan tidak ditemukan atau sudah tidak berlaku.', 'fa-link-slash');
-            invS = { id, info: doc.data(), clubName: '', captain: '', logo: '', players: [], done: false };
+            invS = { id, info: doc.data(), clubName: '', captain: '', logo: '', players: [], pairs: [], done: false };
             let sub = invS.info.submission;
             if (sub) {
                 invS.clubName = sub.clubName || ''; invS.captain = sub.captain || ''; invS.logo = sub.logo || '';
                 invS.players = (sub.players || []).map(p => ({ name: p.name, gender: p.gender === 'F' ? 'F' : 'M' }));
+                invS.pairs = (sub.pairs || []).map(x => ({ a: x.a, b: x.b }));
             }
             renderInviteForm();
         }).catch(e => {
@@ -5331,9 +5349,37 @@
                 <select id="invPG" style="margin-bottom:0; width:auto;"><option value="M">Pria</option><option value="F">Wanita</option></select>
                 <button class="btn btn-primary" style="width:auto; padding:0 14px;" onclick="invAddPlayer()"><i class="fas fa-plus"></i></button>
             </div>
+            ${invPairsHtml()}
             <button class="btn btn-success" onclick="invSubmit()"><i class="fas fa-paper-plane"></i> KIRIM KE PEMBUAT TURNAMEN</button>
         </div>`);
     }
+
+    function invPairsHtml() {
+        let S = invS, i = S.info;
+        if (!i || i.format !== 'doubles') return '';
+        let paired = new Set(); S.pairs.forEach(x => { paired.add(x.a); paired.add(x.b); });
+        let free = S.players.filter(p => !paired.has(p.name));
+        let opts = '<option value="">-- Pemain --</option>' + free.map(p => `<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)} (${p.gender === 'M' ? 'P' : 'W'})</option>`).join('');
+        let gOf = n => { let p = S.players.find(x => x.name === n); return p ? (p.gender === 'M' ? '♂' : '♀') : ''; };
+        let list = S.pairs.map((x, k) => `<div style="display:flex; justify-content:space-between; align-items:center; background:var(--input-bg); padding:8px 12px; margin-bottom:6px; border-radius:10px; border:1px solid var(--border-color); font-weight:bold; font-size:13px;"><span>${escapeHtml(x.a)} ${gOf(x.a)} &amp; ${escapeHtml(x.b)} ${gOf(x.b)}</span><button onclick="invDelPair(${k})" style="color:#ef4444; background:none; border:none; cursor:pointer;"><i class="fas fa-trash-alt"></i></button></div>`).join('') || '<div style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">Belum ada pasangan. Atur pasangan jika ingin partner tetap; kosongkan bila pembuat turnamen yang mengacak.</div>';
+        return `<div style="margin-bottom:16px; padding-top:12px; border-top:1px dashed var(--border-color);">
+            <div style="font-size:11px; font-weight:900; color:var(--text-muted); margin-bottom:6px;">PASANGAN / PARTNER (${S.pairs.length})</div>
+            ${i.mixed ? '<div style="font-size:11px; color:var(--warning); margin-bottom:6px;"><i class="fas fa-venus-mars"></i> Mixed double: setiap pasangan harus 1 pria + 1 wanita.</div>' : ''}
+            ${list}
+            <div style="display:flex; gap:6px;"><select id="invPA" style="margin-bottom:0;">${opts}</select><select id="invPB" style="margin-bottom:0;">${opts}</select></div>
+            <button class="btn btn-ghost" style="margin-top:8px; padding:8px; font-size:12px;" onclick="invAddPair()"><i class="fas fa-link"></i> Jadikan Pasangan</button>
+        </div>`;
+    }
+    function invAddPair() {
+        let a = document.getElementById('invPA').value, b = document.getElementById('invPB').value;
+        if (!a || !b || a === b) return appAlert("Error", "Pilih dua pemain yang berbeda!");
+        let pa = invS.players.find(p => p.name === a), pb = invS.players.find(p => p.name === b);
+        if (!pa || !pb) return;
+        if (invS.info.mixed && pa.gender === pb.gender) return appAlert("Mixed Double", "Pada mixed double setiap pasangan harus terdiri dari 1 pria dan 1 wanita.");
+        invS.pairs.push({ a, b });
+        renderInviteForm();
+    }
+    function invDelPair(k) { invS.pairs.splice(k, 1); renderInviteForm(); }
 
     function invAddPlayer() {
         let n = (document.getElementById('invPN').value || '').trim().substring(0, 12);
@@ -5344,7 +5390,7 @@
         invS.players.push({ name: n, gender: g });
         renderInviteForm();
     }
-    function invDelPlayer(idx) { invS.players.splice(idx, 1); renderInviteForm(); }
+    function invDelPlayer(idx) { let n = invS.players[idx] && invS.players[idx].name; invS.players.splice(idx, 1); invS.pairs = invS.pairs.filter(x => x.a !== n && x.b !== n); renderInviteForm(); }
 
     function invLogoChosen(inp) {
         let f = inp.files && inp.files[0];
@@ -5372,7 +5418,7 @@
         let name = (invS.clubName || '').trim();
         if (!name) return appAlert("Nama Club Wajib", "Isi nama club Anda terlebih dahulu.");
         if (!invS.players.length) return appAlert("Pemain Kosong", "Tambahkan minimal 1 pemain.");
-        let sub = { clubName: name.substring(0, 24), captain: (invS.captain || '').trim().substring(0, 20), logo: invS.logo || '', players: invS.players.map(p => ({ name: p.name, gender: p.gender })), submittedAt: Date.now() };
+        let sub = { clubName: name.substring(0, 24), captain: (invS.captain || '').trim().substring(0, 20), logo: invS.logo || '', players: invS.players.map(p => ({ name: p.name, gender: p.gender })), pairs: (invS.info.format === 'doubles' ? invS.pairs.map(x => ({ a: x.a, b: x.b })) : []), submittedAt: Date.now() };
         db.collection('sparringInvites').doc(invS.id).update({ submission: sub }).then(() => {
             invS.done = true; renderInviteDone(sub);
         }).catch(e => {
@@ -5386,7 +5432,7 @@
         invSet(`<div class="card" style="max-width:420px; width:100%; margin:40px auto; text-align:center; padding:28px 20px;">
             <i class="fas fa-circle-check" style="font-size:44px; color:var(--success); margin-bottom:10px;"></i>
             <h3 style="margin:0 0 6px 0; color:var(--text-main);">Data Terkirim!</h3>
-            <div style="font-size:13px; color:var(--text-muted); margin-bottom:16px;"><b>${escapeHtml(sub.clubName)}</b> • ${sub.players.length} pemain. Pembuat turnamen akan menerapkan data ini ke pertandingan.</div>
+            <div style="font-size:13px; color:var(--text-muted); margin-bottom:16px;"><b>${escapeHtml(sub.clubName)}</b> • ${sub.players.length} pemain${sub.pairs && sub.pairs.length ? ' • ' + sub.pairs.length + ' pasangan' : ''}. Pembuat turnamen akan menerapkan data ini ke pertandingan.</div>
             <a href="${location.pathname}?tv=${encodeURIComponent(hostUid)}" class="btn btn-primary" style="text-decoration:none; margin-bottom:10px;"><i class="fas fa-tv"></i> Lihat Skor Live</a>
             <button class="btn btn-ghost" onclick="invS.done=false; renderInviteForm();"><i class="fas fa-pen"></i> Ubah Data & Kirim Ulang</button>
         </div>`);
