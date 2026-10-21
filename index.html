@@ -524,7 +524,7 @@
             <button class="btn btn-ghost" style="width:auto; padding:0 14px;" onclick="copyTvLink()"><i class="fas fa-copy"></i></button>
         </div>
         <button class="btn btn-primary" style="margin-top:12px;" onclick="openTvHere()"><i class="fas fa-expand"></i> Buka di perangkat ini</button>
-        <p style="font-size:10px; color:var(--text-muted); margin:10px 0 0 0;">Catatan: Live Board memakai login anonim Firebase. Pastikan "Anonymous" aktif di Firebase Authentication dan aturan Firestore mengizinkan pembacaan koleksi tournaments.</p>
+        <p style="font-size:10px; color:var(--text-muted); margin:10px 0 0 0;">Catatan: Live Board memakai login anonim Firebase dan hanya menampilkan data ringkas (tanpa foto & daftar akses). Pastikan "Anonymous" aktif di Firebase Authentication dan aturan koleksi liveBoards sudah ditambahkan.</p>
         <button class="btn btn-ghost" onclick="closeTvShare()" style="margin-top:10px;">Tutup</button>
     </div>
 </div>
@@ -573,7 +573,7 @@
             <div id="tvQueue"></div>
         </div>
         <div>
-            <div class="tv-sec">KLASEMEN</div>
+            <div class="tv-sec" id="tvRankLabel">KLASEMEN</div>
             <div id="tvRank"></div>
         </div>
     </div>
@@ -2666,6 +2666,11 @@
                 if(rankTitle) rankTitle.innerText = 'BAGAN BRACKET';
                 let { html } = buildBracketTreeHTML();
                 rankBracketBox.innerHTML = html;
+            } else if(data.tournamentMode === 'sparring') {
+                rankTableBox.classList.add('hidden');
+                rankBracketBox.classList.remove('hidden');
+                if(rankTitle) rankTitle.innerText = 'SPARRING ANTAR CLUB';
+                rankBracketBox.innerHTML = buildSparringBoardHTML();
             } else {
                 rankTableBox.classList.remove('hidden');
                 rankBracketBox.classList.add('hidden');
@@ -4278,6 +4283,7 @@
 
     function openShareLeaderboard() {
         playSfx('pop');
+        if(data.tournamentMode === 'sparring' && data.sparring && data.sparring.clubs && data.sparring.clubs.length >= 2) return openSparringPoster('result');
         let allPlayers = [...data.players].sort((a,b) => b.stats.pts - a.stats.pts || b.stats.gd - a.stats.gd);
         
         document.getElementById('shareTourTitle').innerText = data.title || 'Turnamen Happy Hitters';
@@ -4309,6 +4315,7 @@
     }
 
     function renderAll() {
+        publishLiveBoard();
         renderClubScore();
         if(data.tournamentMode === 'sparring') { renderSparringSetup(false); watchSparringInvites(); }
         document.getElementById('pCount').innerText = data.players.length;
@@ -4536,8 +4543,9 @@
 
     // ======================= LAYAR TV / LIVE BOARD =======================
     // Gambar QR: pakai library lokal; jika gagal/hilang, pakai layanan QR online; jika offline, tampilkan tautan.
-    function renderQRInto(container, url, width) {
+    function renderQRInto(container, url, width, opts) {
         if(!container) return;
+        opts = opts || {};
         width = width || 170;
         container.innerHTML = '';
         const linkFallback = () => {
@@ -4555,9 +4563,10 @@
         if(typeof QRCode === 'undefined' || typeof QRCode.toCanvas !== 'function') return onlineFallback();
         try {
             let canvas = document.createElement('canvas');
-            QRCode.toCanvas(canvas, url, { width: width, margin: 1, color: { dark: '#111827', light: '#ffffff' } }, err => {
+            QRCode.toCanvas(canvas, url, { width: width * (opts.hiRes ? 4 : 1), margin: opts.margin != null ? opts.margin : 1, errorCorrectionLevel: opts.ecl || 'M', color: { dark: '#000000', light: '#ffffff' } }, err => {
                 if(err) return onlineFallback();
                 canvas.style.display = 'block';
+                if(opts.hiRes) { canvas.style.width = width + 'px'; canvas.style.height = width + 'px'; }
                 container.appendChild(canvas);
             });
         } catch(e) { console.error('QR gagal:', e); onlineFallback(); }
@@ -4594,10 +4603,19 @@
         auth.onAuthStateChanged(u => {
             if(u) {
                 if(started) return; started = true;
-                db.collection('tournaments').doc(uid).onSnapshot(doc => {
-                    if(!doc.exists) return tvMsg('Pertandingan tidak ditemukan.');
-                    renderTV(doc.data());
-                }, err => { console.error(err); tvMsg('Tidak bisa memuat Live Board (akses ditolak / koneksi bermasalah).'); });
+                let unsub = null;
+                const sub = () => {
+                    if(unsub) { try { unsub(); } catch(e) {} }
+                    unsub = db.collection('liveBoards').doc(uid).onSnapshot(doc => {
+                        if(!doc.exists) return tvMsg('Live Board belum tersedia. Minta pembuat turnamen membuka aplikasinya dan memulai pertandingan.');
+                        try { renderTV(doc.data()); } catch(e) { console.error('renderTV gagal:', e); tvMsg('Gagal menampilkan data: ' + e.message); }
+                    }, err => {
+                        console.error(err);
+                        tvMsg('Tidak bisa memuat Live Board (' + (err && err.code ? err.code : 'koneksi bermasalah') + '). Mencoba lagi...');
+                        setTimeout(sub, 6000);
+                    });
+                };
+                sub();
             } else {
                 auth.signInAnonymously().catch(e => { console.error(e); tvMsg('Login anonim gagal. Aktifkan "Anonymous" di Firebase Authentication.'); });
             }
@@ -4640,6 +4658,13 @@
         let q = pendingSorted(sch).slice(0, 6);
         document.getElementById('tvQueue').innerHTML = q.length ? q.map(s => `<div class="tv-q"><small>MATCH ${s.no} • R${s.round}${s.pp > 0 ? ' • ⏸ DITUNDA' : ''}</small><br>${escapeHtml(s.t1Name || s.t1.map(nm).join(' & '))} <span style="opacity:.6;">vs</span> ${escapeHtml(s.t2Name || s.t2.map(nm).join(' & '))}</div>`).join('') : '<div class="tv-empty" style="padding:1vw 0;">Tidak ada antrean</div>';
 
+        let rankLbl = document.getElementById('tvRankLabel');
+        if(d.tournamentMode === 'sparring' && d.sparring && d.sparring.clubs) {
+            if(rankLbl) rankLbl.innerText = 'HASIL PERTANDINGAN & PEMAIN TERBAIK';
+            document.getElementById('tvRank').innerHTML = tvSparringBoard(d);
+            return;
+        }
+        if(rankLbl) rankLbl.innerText = 'KLASEMEN';
         let sorted = players.slice().sort((a, b) => b.stats.pts - a.stats.pts || b.stats.gd - a.stats.gd).slice(0, 10);
         document.getElementById('tvRank').innerHTML = sorted.length ? sorted.map((p, i) => `<div class="tv-rank"><span class="pos">${i + 1}</span><span class="nm">${escapeHtml(p.name)}</span><span class="pt">${p.stats.pts}</span></div>`).join('') : '<div class="tv-empty">Belum ada pemain</div>';
     }
@@ -5161,14 +5186,14 @@
 
         html += `<div style="text-align:center; font-size:12px; font-weight:700; margin-bottom:12px; line-height:1.5;"><div><i class="fas fa-calendar-day" style="color:#FFD700;"></i> ${escapeHtml(when)}</div>${sp.venue ? `<div><i class="fas fa-location-dot" style="color:#FFD700;"></i> ${escapeHtml(sp.venue)}</div>` : ''}</div>
             <div style="display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.1); border-radius:14px; padding:10px 12px;">
-                <div id="posterQr" style="background:#fff; padding:5px; border-radius:8px; line-height:0; flex-shrink:0;"></div>
-                <div style="text-align:left; font-size:11px; line-height:1.4;"><b style="color:#FFD700;">SCAN UNTUK LIHAT SKOR LIVE</b><br>Skor lapangan, antrean match, dan klasemen real-time.</div>
+                <div id="posterQr" style="background:#fff; padding:6px; border-radius:10px; line-height:0; flex-shrink:0;"></div>
+                <div style="text-align:left; font-size:10px; line-height:1.4; min-width:0;"><b style="color:#FFD700;">SCAN UNTUK LIHAT SKOR LIVE</b><br>Skor lapangan, antrean match, dan klasemen real-time.</div>
             </div>
             <div style="margin-top:14px; font-size:9px; opacity:.5; text-align:center; letter-spacing:1px;">Generated by Happy Hitters App</div>`;
 
         document.getElementById('posterTicket').innerHTML = html;
         document.getElementById('posterModal').classList.remove('hidden');
-        renderQRInto(document.getElementById('posterQr'), tvUrl(), 84);
+        renderQRInto(document.getElementById('posterQr'), tvUrl(), 132, { hiRes: true, margin: 2, ecl: 'L' });
     }
     function closePoster() { document.getElementById('posterModal').classList.add('hidden'); }
     function posterCapture(cb) {
@@ -5321,6 +5346,104 @@
             <a href="${location.pathname}?tv=${encodeURIComponent(hostUid)}" class="btn btn-primary" style="text-decoration:none; margin-bottom:10px;"><i class="fas fa-tv"></i> Lihat Skor Live</a>
             <button class="btn btn-ghost" onclick="invS.done=false; renderInviteForm();"><i class="fas fa-pen"></i> Ubah Data & Kirim Ulang</button>
         </div>`);
+    }
+
+    // ======================================================================
+    //  LIVE BOARD PUBLIK
+    //  Dokumen "tournaments" tertutup (hanya pemilik/co-host/penonton disetujui). Agar QR Live Board bisa
+    //  dibuka siapa saja (login anonim), pemilik menerbitkan salinan RINGKAS ke "liveBoards/{uid}":
+    //  tanpa foto pemain, tanpa daftar akses/permintaan, tanpa data pertemanan.
+    // ======================================================================
+    let _lbTimer = null, _lbLast = '', _lbWarned = false;
+    function buildLiveBoard() {
+        let sp = data.sparring;
+        return {
+            title: data.title || '', sport: data.sport || null, tournamentMode: data.tournamentMode || 'league',
+            isFinished: !!data.isFinished, roundNumber: data.roundNumber || 0,
+            players: (data.players || []).map(p => ({ id: p.id, name: p.name, gender: p.gender || 'M', stats: p.stats || { p: 0, w: 0, l: 0, d: 0, pts: 0, gd: 0 } })),
+            currentMatches: data.currentMatches || [],
+            schedule: (data.schedule || []).map(x => ({ id: x.id, no: x.no, round: x.round, t1: x.t1, t2: x.t2, t1Name: x.t1Name || null, t2Name: x.t2Name || null, status: x.status, pp: x.pp || 0 })),
+            scheduleMeta: data.scheduleMeta || null,
+            bracket: data.bracket ? { totalRounds: data.bracket.totalRounds, championId: data.bracket.championId || null, rounds: (data.bracket.rounds || []).map(r => r.length) } : null,
+            sparring: (sp && Array.isArray(sp.clubs)) ? { clubs: sp.clubs.map(c => ({ id: c.id, name: c.name || '', logo: c.logo || '', playerIds: c.playerIds || [] })) } : null,
+            matches: (data.matches || []).filter(m => m.c1 && m.c2).map(m => ({ no: m.matchNo || 0, c1: m.c1, c2: m.c2, s1: m.s1 || 0, s2: m.s2 || 0, t1: m.t1 || '', t2: m.t2 || '' }))
+        };
+    }
+    function publishLiveBoard() {
+        if (!db || !auth || !auth.currentUser || currentViewingId !== auth.currentUser.uid) return;
+        if (_lbTimer) clearTimeout(_lbTimer);
+        _lbTimer = setTimeout(() => {
+            let j;
+            try { j = JSON.stringify(buildLiveBoard()); } catch (e) { console.error('buildLiveBoard gagal:', e); return; }
+            if (j === _lbLast) return;
+            _lbLast = j;
+            // Lewat JSON agar nilai undefined (yang ditolak Firestore) terbuang
+            let lb = JSON.parse(j);
+            lb.updatedAt = Date.now();
+            const fail = e => {
+                _lbLast = '';
+                console.warn('publishLiveBoard gagal:', e);
+                if (!_lbWarned) {
+                    _lbWarned = true;
+                    let code = (e && e.code) ? e.code : 'error';
+                    showToast('Live Board Gagal Diperbarui', code === 'permission-denied' ? 'Aturan Firestore untuk koleksi liveBoards belum benar / belum dipublikasikan.' : 'Penyebab: ' + code + ((e && e.message) ? ' - ' + String(e.message).substring(0, 90) : ''), 'warning');
+                    setTimeout(() => { _lbWarned = false; }, 60000);
+                }
+            };
+            try { db.collection('liveBoards').doc(auth.currentUser.uid).set(lb).catch(fail); } catch (e) { fail(e); }
+        }, 1200);
+    }
+
+    // ---------- TABEL SPARRING (Live Board & tab Klasemen) ----------
+    function tvSparringBoard(d) {
+        let clubs = d.sparring.clubs, players = d.players || [];
+        let cols = ['#f72585', '#4cc9f0'];
+        let res = (d.matches || []).slice().sort((a, b) => (b.no || 0) - (a.no || 0));
+        let cn = id => { let c = clubs.find(x => x.id === id); return c ? (c.name || 'Club') : ''; };
+        let html = '';
+        if (res.length) {
+            html += '<div style="margin-bottom:14px;">' + res.slice(0, 12).map(m => {
+                let w1 = m.s1 > m.s2, w2 = m.s2 > m.s1;
+                return `<div class="tv-rank" style="gap:6px;"><span class="pos" style="min-width:34px;">#${m.no || '-'}</span>
+                    <span class="nm" style="text-align:right; ${w1 ? 'font-weight:900;' : 'opacity:.7;'}"><small style="color:${cols[0]}; display:block; font-size:10px;">${escapeHtml(cn(m.c1))}</small>${escapeHtml(m.t1)}</span>
+                    <span class="pt" style="min-width:60px; text-align:center;">${m.s1} - ${m.s2}</span>
+                    <span class="nm" style="text-align:left; ${w2 ? 'font-weight:900;' : 'opacity:.7;'}"><small style="color:${cols[1]}; display:block; font-size:10px;">${escapeHtml(cn(m.c2))}</small>${escapeHtml(m.t2)}</span></div>`;
+            }).join('') + (res.length > 12 ? `<div class="tv-empty" style="padding:4px;">+${res.length - 12} match lainnya</div>` : '') + '</div>';
+        } else html += '<div class="tv-empty" style="margin-bottom:12px;">Belum ada match selesai</div>';
+        clubs.forEach((c, i) => {
+            let ms = (c.playerIds || []).map(id => players.find(p => p.id === id)).filter(Boolean)
+                .sort((a, b) => b.stats.pts - a.stats.pts || b.stats.gd - a.stats.gd);
+            html += `<div class="tv-sec" style="color:${cols[i]}; margin-top:10px;">${escapeHtml(c.name || 'Club ' + (i + 1))}</div>`;
+            html += ms.length ? ms.map((p, k) => `<div class="tv-rank"><span class="pos">${k + 1}</span><span class="nm">${escapeHtml(p.name)}</span><span style="opacity:.7; font-size:.8em;">${p.stats.w}M ${p.stats.l}K</span><span class="pt">${p.stats.pts}</span></div>`).join('') : '<div class="tv-empty">Belum ada pemain</div>';
+        });
+        return html;
+    }
+
+    function buildSparringBoardHTML() {
+        let sp = data.sparring;
+        if (!sp || !Array.isArray(sp.clubs) || sp.clubs.length < 2) return '<div style="text-align:center; color:var(--text-muted); padding:20px;">Belum ada data sparring.</div>';
+        let cols = ['var(--accent)', 'var(--primary)'];
+        let cn = id => { let c = sp.clubs.find(x => x.id === id); return c ? (c.name || 'Club') : ''; };
+        let res = (data.matches || []).filter(m => m.c1 && m.c2);
+        let html = '';
+        html += `<div style="font-size:11px; font-weight:900; letter-spacing:1px; color:var(--text-muted); margin:4px 0 8px;">HASIL PERTANDINGAN (${res.length})</div>`;
+        if (!res.length) html += '<div style="text-align:center; color:var(--text-muted); font-size:13px; padding:10px 0 16px;">Belum ada match selesai.</div>';
+        else html += `<div style="overflow-x:auto; margin-bottom:18px;"><table style="min-width:100%;"><thead><tr><th style="width:34px;">#</th><th>${escapeHtml(cn('CA'))}</th><th style="text-align:center;">Skor</th><th style="text-align:right;">${escapeHtml(cn('CB'))}</th></tr></thead><tbody>` +
+            res.slice().sort((a, b) => (a.matchNo || 0) - (b.matchNo || 0)).map(m => {
+                let w1 = m.s1 > m.s2, w2 = m.s2 > m.s1;
+                return `<tr><td style="font-weight:900; color:var(--text-muted);">${m.matchNo || '-'}</td>
+                    <td style="font-weight:${w1 ? '900' : '500'}; ${w1 ? 'color:var(--success);' : ''}">${escapeHtml(m.t1)}</td>
+                    <td style="text-align:center; font-weight:900; font-family:'Rajdhani',sans-serif; font-size:16px; white-space:nowrap;">${m.s1} - ${m.s2}</td>
+                    <td style="text-align:right; font-weight:${w2 ? '900' : '500'}; ${w2 ? 'color:var(--success);' : ''}">${escapeHtml(m.t2)}</td></tr>`;
+            }).join('') + '</tbody></table></div>';
+        sp.clubs.forEach((c, i) => {
+            let ms = (c.playerIds || []).map(playerById).filter(Boolean).sort((a, b) => b.stats.pts - a.stats.pts || b.stats.gd - a.stats.gd);
+            html += `<div style="font-size:11px; font-weight:900; letter-spacing:1px; color:${cols[i]}; margin:6px 0 8px; display:flex; align-items:center; gap:6px;">${c.logo ? `<img src="${c.logo}" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">` : '<i class="fas fa-shield-halved"></i>'} PEMAIN ${escapeHtml((c.name || 'CLUB ' + (i + 1)).toUpperCase())}</div>`;
+            if (!ms.length) { html += '<div style="color:var(--text-muted); font-size:13px; margin-bottom:14px;">Belum ada pemain.</div>'; return; }
+            html += `<div style="overflow-x:auto; margin-bottom:18px;"><table style="min-width:100%;"><thead><tr><th style="width:30px;">#</th><th>Pemain</th><th style="text-align:center;">M</th><th style="text-align:center; color:var(--success);">W</th><th style="text-align:center; color:#ef4444;">L</th><th style="text-align:center;">+/-</th><th style="text-align:right;">Poin</th></tr></thead><tbody>` +
+                ms.map((p, k) => `<tr class="rank-row" onclick="openPlayerCard('${p.id}')"><td style="font-weight:900; color:var(--text-muted);">${k + 1}</td><td><b>${escapeHtml(p.name)}</b> <small style="color:var(--text-muted);">${p.gender === 'M' ? '♂' : '♀'}</small></td><td style="text-align:center;">${p.stats.p}</td><td style="text-align:center; color:var(--success); font-weight:bold;">${p.stats.w}</td><td style="text-align:center; color:#ef4444; font-weight:bold;">${p.stats.l}</td><td style="text-align:center;">${p.stats.gd > 0 ? '+' : ''}${p.stats.gd}</td><td style="text-align:right; font-weight:900; color:${cols[i]};">${p.stats.pts}</td></tr>`).join('') + '</tbody></table></div>';
+        });
+        return html;
     }
 
     function toggleTools() { document.getElementById('toolsPanel').classList.toggle('hidden'); }
