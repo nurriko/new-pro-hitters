@@ -531,11 +531,12 @@
 
 <div id="posterModal" class="hidden" style="justify-content:flex-start;" onclick="if(event.target.id === 'posterModal') closePoster()">
     <div style="margin:auto 0; display:flex; flex-direction:column; align-items:center;">
-        <div id="posterTicket" style="width:340px; box-sizing:border-box; padding:24px 22px; border-radius:22px; color:#fff; background:linear-gradient(160deg, #0f172a 0%, #1e3a8a 55%, #0b1226 100%); border:2px solid rgba(255,215,0,0.45); box-shadow:0 15px 35px rgba(0,0,0,0.5); font-family:'Outfit', sans-serif;"></div>
+        <div id="posterTicket" style="position:relative; overflow:hidden; width:340px; box-sizing:border-box; padding:26px 20px 22px; border-radius:24px; color:#fff; background:radial-gradient(circle at 50% 0%, #1b8a5f 0%, #0d5a43 38%, #072e25 100%); border:3px solid #d9f23a; box-shadow:0 15px 35px rgba(0,0,0,0.5); font-family:'Outfit', sans-serif;"></div>
         <div style="display:flex; gap:10px; width:340px; flex-wrap:wrap; margin-top:14px;">
+            <button class="btn" style="flex-basis:100%; background:#25D366; color:#fff; font-weight:900;" onclick="shareWhatsApp()"><i class="fab fa-whatsapp"></i> KIRIM KE WHATSAPP</button>
             <button class="btn btn-ghost" style="flex:1; background:rgba(255,255,255,0.1); color:white;" onclick="closePoster()">Tutup</button>
-            <button class="btn btn-primary" style="flex:2;" onclick="downloadPoster()"><i class="fas fa-download"></i> Simpan Gambar</button>
-            <button class="btn btn-success" style="flex-basis:100%;" onclick="sharePoster()"><i class="fas fa-share-nodes"></i> Bagikan Poster</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="downloadPoster()"><i class="fas fa-download"></i> Simpan</button>
+            <button class="btn btn-ghost" style="flex:1; background:rgba(255,255,255,0.1); color:white;" onclick="sharePoster()"><i class="fas fa-share-nodes"></i> Lainnya</button>
         </div>
     </div>
 </div>
@@ -5186,103 +5187,140 @@
     }
 
     // ---------------------------- POSTER ----------------------------
+    function ptBall(sz, extra) {
+        return `<svg width="${sz}" height="${sz}" viewBox="0 0 40 40" style="display:block; ${extra || ''}"><circle cx="20" cy="20" r="18" fill="#d9f23a" stroke="#a9c21c" stroke-width="1.5"/><path d="M6 11 C15 16 15 24 6 29" stroke="#fff" fill="none" stroke-width="2.4" stroke-linecap="round"/><path d="M34 11 C25 16 25 24 34 29" stroke="#fff" fill="none" stroke-width="2.4" stroke-linecap="round"/></svg>`;
+    }
+    function ptRacket(sz, rot, extra) {
+        let strings = ''; for (let k = -10; k <= 10; k += 5) strings += `<line x1="${24 + k}" y1="${16 - Math.sqrt(Math.max(0, 1 - (k / 12) * (k / 12))) * 14}" x2="${24 + k}" y2="${16 + Math.sqrt(Math.max(0, 1 - (k / 12) * (k / 12))) * 14}" stroke="#fff" stroke-width="0.9"/>`;
+        for (let k = -10; k <= 10; k += 5) strings += `<line x1="${24 - Math.sqrt(Math.max(0, 1 - (k / 14) * (k / 14))) * 12}" y1="${16 + k}" x2="${24 + Math.sqrt(Math.max(0, 1 - (k / 14) * (k / 14))) * 12}" y2="${16 + k}" stroke="#fff" stroke-width="0.9"/>`;
+        return `<svg width="${sz}" height="${sz * 2.1}" viewBox="0 0 48 100" style="transform:rotate(${rot}deg); ${extra || ''}"><ellipse cx="24" cy="31" rx="13" ry="16" transform="translate(0 0)" fill="none" stroke="#fff" stroke-width="3.2"/><g transform="translate(0 15)">${strings}</g><rect x="21.5" y="46" width="5" height="14" fill="#fff"/><rect x="20" y="60" width="8" height="34" rx="3" fill="#d9f23a"/></svg>`;
+    }
+    function posterShareText(kind) {
+        let sp = data.sparring, a = sp.clubs[0], b = sp.clubs[1];
+        let when = sp.when || '', venue = sp.venue || '';
+        if (kind === 'result') {
+            let ct = clubTally(data) || [], ta = ct[0] || { w: 0 }, tb = ct[1] || { w: 0 };
+            let v = ta.w > tb.w ? `🏆 ${a.name} menang!` : (tb.w > ta.w ? `🏆 ${b.name} menang!` : '🤝 Pertandingan seri!');
+            return `🎾 *${data.title || 'Sparring Antar Club'}*\n${a.name} ${ta.w} - ${tb.w} ${b.name}\n${v}\n\n📊 Hasil & klasemen live:\n${tvUrl()}`;
+        }
+        return `🎾 *${data.title || 'Sparring Antar Club'}*\n${a.name} 🆚 ${b.name}\n` + (when ? `📅 ${when}\n` : '') + (venue ? `📍 ${venue}\n` : '') + `\n📺 Pantau skor live:\n${tvUrl()}`;
+    }
+
     function openSparringPoster(kind) {
         let sp = data.sparring;
         if (!sp || !sp.clubs || sp.clubs.length < 2) return;
         let a = sp.clubs[0], b = sp.clubs[1];
         if (!(a.name || '').trim() || !(b.name || '').trim()) return appAlert("Nama Club Wajib", "Isi nama kedua club terlebih dahulu untuk membuat poster.");
         playSfx('pop');
-        const cA = '#f72585', cB = '#4cc9f0';
+        window._posterKind = kind; window._posterBlob = null;
+        const cA = '#ff4d8d', cB = '#38d0ff', yel = '#d9f23a';
         let sport = data.sport === 'padel' ? 'PADEL' : 'TENNIS';
         let fmt = (data.scheduleMeta && data.scheduleMeta.format) ? data.scheduleMeta.format : selectedFormat;
         let doubles = fmt === 'doubles';
         let fmtTxt = doubles ? (sp.mixed ? 'MIXED DOUBLE' : 'GANDA') : '1 VS 1';
         let when = sp.when || new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         const logo = (c, col) => c.logo
-            ? `<img src="${c.logo}" style="width:78px; height:78px; border-radius:50%; object-fit:cover; border:4px solid ${col}; background:#fff; display:block; margin:0 auto 8px;">`
-            : `<div style="width:78px; height:78px; border-radius:50%; border:4px solid ${col}; display:flex; align-items:center; justify-content:center; font-size:32px; color:${col}; margin:0 auto 8px;"><i class="fas fa-shield-halved"></i></div>`;
-        const clubCol = (c, col) => `<div style="flex:1; min-width:0; text-align:center;">${logo(c, col)}<div style="font-weight:900; font-size:14px; color:${col}; line-height:1.2; overflow-wrap:anywhere;">${escapeHtml(c.name)}</div></div>`;
+            ? `<img src="${c.logo}" style="width:92px; height:92px; border-radius:50%; object-fit:cover; border:4px solid ${col}; background:#fff; display:block; margin:0 auto 10px; box-shadow:0 0 0 4px rgba(255,255,255,0.12), 0 6px 18px rgba(0,0,0,0.45);">`
+            : `<div style="width:92px; height:92px; border-radius:50%; border:4px solid ${col}; background:rgba(0,0,0,0.25); display:flex; align-items:center; justify-content:center; font-size:38px; color:${col}; margin:0 auto 10px; box-shadow:0 0 0 4px rgba(255,255,255,0.12), 0 6px 18px rgba(0,0,0,0.45);"><i class="fas fa-shield-halved"></i></div>`;
+        const clubCol = (c, col) => `<div style="flex:1; min-width:0; text-align:center;">${logo(c, col)}<div style="font-weight:900; font-size:16px; color:#fff; line-height:1.15; text-transform:uppercase; overflow-wrap:anywhere; text-shadow:0 2px 6px rgba(0,0,0,0.5);">${escapeHtml(c.name)}</div><div style="width:34px; height:4px; border-radius:2px; background:${col}; margin:7px auto 0;"></div></div>`;
 
-        let html = `<div style="font-size:10px; letter-spacing:3px; color:#FFD700; font-weight:900; text-align:center;">HAPPY HITTERS • SPARRING ANTAR CLUB</div>
-            <div style="font-size:19px; font-weight:900; text-align:center; text-transform:uppercase; margin:6px 0 4px; line-height:1.2; overflow-wrap:anywhere;">${escapeHtml(data.title || 'Sparring Antar Club')}</div>
-            <div style="text-align:center; margin-bottom:16px;"><span style="display:inline-block; background:rgba(255,255,255,0.14); border-radius:20px; padding:4px 12px; font-size:11px; font-weight:800; letter-spacing:1px;">${sport} • ${fmtTxt}</span></div>`;
+        // Latar: lapangan tenis (garis putih) + kilau
+        let court = `<svg viewBox="0 0 340 600" preserveAspectRatio="none" style="position:absolute; left:0; top:0; width:100%; height:100%;">
+            <rect x="22" y="26" width="296" height="548" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="2.5"/>
+            <line x1="52" y1="26" x2="52" y2="574" stroke="rgba(255,255,255,0.12)" stroke-width="2"/><line x1="288" y1="26" x2="288" y2="574" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
+            <line x1="22" y1="300" x2="318" y2="300" stroke="rgba(255,255,255,0.09)" stroke-width="3" stroke-dasharray="6 5"/>
+            <line x1="52" y1="170" x2="288" y2="170" stroke="rgba(255,255,255,0.12)" stroke-width="2"/><line x1="52" y1="430" x2="288" y2="430" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
+            <line x1="170" y1="170" x2="170" y2="430" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
+        </svg>`;
+        let deco = `<div style="position:absolute; right:-18px; top:84px; opacity:0.16;">${ptRacket(46, 28)}</div><div style="position:absolute; left:-20px; bottom:150px; opacity:0.13;">${ptRacket(52, -24)}</div>`;
 
+        let head = `<div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:6px;">${ptBall(18)}<span style="font-size:10px; letter-spacing:3px; color:${yel}; font-weight:900;">SPARRING ANTAR CLUB</span>${ptBall(18)}</div>
+            <div style="font-size:23px; font-weight:900; text-align:center; text-transform:uppercase; line-height:1.15; overflow-wrap:anywhere; text-shadow:0 3px 10px rgba(0,0,0,0.5);">${escapeHtml(data.title || 'Sparring Antar Club')}</div>
+            <div style="text-align:center; margin:10px 0 18px;"><span style="display:inline-block; background:${yel}; color:#10301f; border-radius:20px; padding:5px 16px; font-size:11px; font-weight:900; letter-spacing:1.5px;">${sport} • ${fmtTxt}</span></div>`;
+
+        let body = '';
         if (kind === 'result') {
             let ct = clubTally(data) || [];
             let ta = ct[0] || { w: 0, gf: 0, d: 0 }, tb = ct[1] || { w: 0, gf: 0 };
-            let verdict = ta.w > tb.w ? `🏆 ${escapeHtml(a.name)} MENANG` : (tb.w > ta.w ? `🏆 ${escapeHtml(b.name)} MENANG` : 'PERTANDINGAN SERI');
-            html += `<div style="display:flex; align-items:center; gap:6px;">${clubCol(a, cA)}<div style="font-family:'Rajdhani',sans-serif; font-size:52px; font-weight:700; line-height:1; white-space:nowrap;"><span style="color:${cA};">${ta.w}</span><span style="opacity:.6; font-size:34px;"> - </span><span style="color:${cB};">${tb.w}</span></div>${clubCol(b, cB)}</div>
-                <div style="text-align:center; margin:14px 0 4px; font-weight:900; font-size:15px; color:#FFD700;">${verdict}</div>
-                <div style="text-align:center; font-size:11px; opacity:.75; margin-bottom:14px;">Total game ${ta.gf} - ${tb.gf}${ta.d ? ' • ' + ta.d + ' match seri' : ''}</div>`;
+            let verdict = ta.w > tb.w ? `🏆 ${escapeHtml(a.name)} MENANG` : (tb.w > ta.w ? `🏆 ${escapeHtml(b.name)} MENANG` : '🤝 PERTANDINGAN SERI');
+            body += `<div style="display:flex; align-items:center; gap:4px; margin-bottom:6px;">${clubCol(a, cA)}
+                <div style="text-align:center; flex-shrink:0;"><div style="font-family:'Rajdhani',sans-serif; font-size:60px; font-weight:700; line-height:1; white-space:nowrap; text-shadow:0 4px 14px rgba(0,0,0,0.55);"><span style="color:${cA};">${ta.w}</span><span style="color:${yel}; font-size:38px;"> : </span><span style="color:${cB};">${tb.w}</span></div></div>${clubCol(b, cB)}</div>
+                <div style="text-align:center; margin:12px 0 4px;"><span style="display:inline-block; background:linear-gradient(90deg, ${cA}, ${cB}); border-radius:20px; padding:7px 18px; font-weight:900; font-size:14px; letter-spacing:.5px; text-shadow:0 1px 3px rgba(0,0,0,0.4);">${verdict}</span></div>
+                <div style="text-align:center; font-size:11px; opacity:.8; margin-bottom:14px;">Total game ${ta.gf} - ${tb.gf}${ta.d ? ' • ' + ta.d + ' match seri' : ''}</div>`;
             let ms = (data.matches || []).filter(m => m.c1 && m.c2).slice().reverse();
             if (ms.length) {
-                html += `<div style="background:rgba(0,0,0,0.25); border-radius:12px; padding:10px 12px; margin-bottom:12px;"><div style="font-size:10px; font-weight:900; letter-spacing:1px; opacity:.7; margin-bottom:6px;">HASIL PERTANDINGAN</div>` +
-                    ms.slice(0, 12).map(m => `<div style="display:flex; align-items:center; gap:6px; font-size:11px; padding:3px 0; border-bottom:1px solid rgba(255,255,255,0.08);"><span style="flex:1; text-align:right; font-weight:${m.s1 > m.s2 ? '900' : '600'}; color:${m.s1 > m.s2 ? '#fff' : 'rgba(255,255,255,0.65)'};">${escapeHtml(m.t1)}</span><b style="font-family:'Rajdhani',sans-serif; font-size:14px; color:#FFD700; min-width:44px; text-align:center;">${m.s1} - ${m.s2}</b><span style="flex:1; text-align:left; font-weight:${m.s2 > m.s1 ? '900' : '600'}; color:${m.s2 > m.s1 ? '#fff' : 'rgba(255,255,255,0.65)'};">${escapeHtml(m.t2)}</span></div>`).join('') +
+                body += `<div style="background:rgba(0,0,0,0.32); border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:10px 12px; margin-bottom:12px;"><div style="font-size:10px; font-weight:900; letter-spacing:2px; color:${yel}; margin-bottom:6px; text-align:center;">HASIL PERTANDINGAN</div>` +
+                    ms.slice(0, 12).map(m => `<div style="display:flex; align-items:center; gap:6px; font-size:11px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.08);"><span style="flex:1; text-align:right; font-weight:${m.s1 > m.s2 ? '900' : '600'}; color:${m.s1 > m.s2 ? '#fff' : 'rgba(255,255,255,0.6)'};">${escapeHtml(m.t1)}</span><b style="font-family:'Rajdhani',sans-serif; font-size:15px; color:#10301f; background:${yel}; border-radius:6px; padding:0 7px; min-width:42px; text-align:center;">${m.s1}-${m.s2}</b><span style="flex:1; text-align:left; font-weight:${m.s2 > m.s1 ? '900' : '600'}; color:${m.s2 > m.s1 ? '#fff' : 'rgba(255,255,255,0.6)'};">${escapeHtml(m.t2)}</span></div>`).join('') +
                     (ms.length > 12 ? `<div style="font-size:10px; opacity:.6; text-align:center; margin-top:4px;">+${ms.length - 12} match lainnya</div>` : '') + `</div>`;
             }
             const best = c => c.playerIds.map(playerById).filter(p => p && p.stats.p > 0).sort((x, y) => y.stats.pts - x.stats.pts || y.stats.gd - x.stats.gd)[0] || null;
             let ba = best(a), bb = best(b);
             if (ba || bb) {
-                const bcell = (p, col) => `<div style="flex:1; text-align:center; font-size:11px;"><div style="opacity:.65; font-size:9px; letter-spacing:1px;">⭐ PEMAIN TERBAIK</div><div style="font-weight:900; color:${col};">${p ? escapeHtml(p.name) : '-'}</div>${p ? `<div style="opacity:.7;">${p.stats.pts} poin</div>` : ''}</div>`;
-                html += `<div style="display:flex; gap:8px; margin-bottom:12px;">${bcell(ba, cA)}${bcell(bb, cB)}</div>`;
+                const bcell = (p, col) => `<div style="flex:1; text-align:center; background:rgba(0,0,0,0.28); border-top:3px solid ${col}; border-radius:10px; padding:8px 4px;"><div style="opacity:.75; font-size:9px; letter-spacing:1px;">⭐ PEMAIN TERBAIK</div><div style="font-weight:900; font-size:14px;">${p ? escapeHtml(p.name) : '-'}</div>${p ? `<div style="opacity:.75; font-size:11px;">${p.stats.pts} poin</div>` : ''}</div>`;
+                body += `<div style="display:flex; gap:8px; margin-bottom:12px;">${bcell(ba, cA)}${bcell(bb, cB)}</div>`;
             }
         } else {
-            html += `<div style="display:flex; align-items:center; gap:6px;">${clubCol(a, cA)}<div style="font-family:'Rajdhani',sans-serif; font-size:40px; font-weight:700; color:#FFD700; text-shadow:0 0 16px rgba(255,215,0,0.5);">VS</div>${clubCol(b, cB)}</div>`;
-            const roster = c => {
+            body += `<div style="display:flex; align-items:center; gap:4px; margin-bottom:16px;">${clubCol(a, cA)}
+                <div style="text-align:center; flex-shrink:0; width:62px;">${ptBall(26, 'margin:0 auto 2px;')}<div style="font-family:'Rajdhani',sans-serif; font-size:46px; font-weight:700; line-height:.9; color:${yel}; text-shadow:0 0 18px rgba(217,242,58,0.55), 0 3px 8px rgba(0,0,0,0.5);">VS</div></div>${clubCol(b, cB)}</div>`;
+            const roster = (c, col) => {
                 let ms = c.playerIds.map(playerById).filter(Boolean);
                 if (!ms.length) return '<div style="opacity:.5; font-size:11px; text-align:center;">-</div>';
-                const one = p => `${escapeHtml(p.name)} <span style="opacity:.55; font-size:10px;">${p.gender === 'M' ? '♂' : '♀'}</span>`;
+                const one = p => `${escapeHtml(p.name)} <span style="opacity:.6; font-size:10px;">${p.gender === 'M' ? '♂' : '♀'}</span>`;
                 if (doubles && sp.pairing === 'fixed') {
                     let prs = (sp.fixedPairs || []).filter(f => f.club === c.id).map(f => [playerById(f.p1), playerById(f.p2)]).filter(x => x[0] && x[1]);
-                    if (prs.length) return prs.map(x => `<div style="font-size:12px; font-weight:700; margin-bottom:4px;">${one(x[0])} &amp; ${one(x[1])}</div>`).join('');
+                    if (prs.length) return prs.map(x => `<div style="font-size:12px; font-weight:800; margin-bottom:5px; line-height:1.25;">${one(x[0])}<br><span style="opacity:.55; font-size:10px;">&amp;</span> ${one(x[1])}</div>`).join('');
                 }
-                return ms.map(p => `<div style="font-size:12px; font-weight:700; margin-bottom:3px;">${one(p)}</div>`).join('');
+                return ms.map(p => `<div style="font-size:12px; font-weight:800; margin-bottom:4px;">${one(p)}</div>`).join('');
             };
-            html += `<div style="background:rgba(0,0,0,0.25); border-radius:12px; padding:12px; margin:16px 0 12px; display:flex; gap:10px;">
-                <div style="flex:1; min-width:0; text-align:center;"><div style="font-size:9px; letter-spacing:1px; font-weight:900; color:${cA}; margin-bottom:6px;">LINEUP</div>${roster(a)}</div>
-                <div style="width:1px; background:rgba(255,255,255,0.15);"></div>
-                <div style="flex:1; min-width:0; text-align:center;"><div style="font-size:9px; letter-spacing:1px; font-weight:900; color:${cB}; margin-bottom:6px;">LINEUP</div>${roster(b)}</div>
-            </div>`;
+            const lcard = (c, col) => `<div style="flex:1; min-width:0; text-align:center; background:rgba(0,0,0,0.32); border:1px solid rgba(255,255,255,0.12); border-top:4px solid ${col}; border-radius:12px; padding:9px 6px 8px;"><div style="font-size:9px; letter-spacing:2px; font-weight:900; color:${col}; margin-bottom:7px;">LINEUP</div>${roster(c, col)}</div>`;
+            body += `<div style="display:flex; gap:8px; margin-bottom:14px;">${lcard(a, cA)}${lcard(b, cB)}</div>`;
         }
 
-        html += `<div style="text-align:center; font-size:12px; font-weight:700; margin-bottom:12px; line-height:1.5;"><div><i class="fas fa-calendar-day" style="color:#FFD700;"></i> ${escapeHtml(when)}</div>${sp.venue ? `<div><i class="fas fa-location-dot" style="color:#FFD700;"></i> ${escapeHtml(sp.venue)}</div>` : ''}</div>
-            <div style="display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.1); border-radius:14px; padding:10px 12px;">
-                <div id="posterQr" style="background:#fff; padding:6px; border-radius:10px; line-height:0; flex-shrink:0;"></div>
-                <div style="text-align:left; font-size:10px; line-height:1.4; min-width:0;"><b style="color:#FFD700;">SCAN UNTUK LIHAT SKOR LIVE</b><br>Skor lapangan, antrean match, dan klasemen real-time.</div>
+        let info = `<div style="display:flex; flex-direction:column; gap:6px; align-items:center; margin-bottom:14px;">
+                <div style="background:rgba(255,255,255,0.12); border-radius:20px; padding:6px 16px; font-size:12px; font-weight:800;"><i class="fas fa-calendar-day" style="color:${yel};"></i> &nbsp;${escapeHtml(when)}</div>
+                ${sp.venue ? `<div style="background:rgba(255,255,255,0.12); border-radius:20px; padding:6px 16px; font-size:12px; font-weight:800;"><i class="fas fa-location-dot" style="color:${yel};"></i> &nbsp;${escapeHtml(sp.venue)}</div>` : ''}
             </div>
-            <div style="margin-top:14px; font-size:9px; opacity:.5; text-align:center; letter-spacing:1px;">Generated by Happy Hitters App</div>`;
+            <div style="display:flex; align-items:center; gap:12px; background:#fff; color:#10301f; border-radius:16px; padding:10px 12px; box-shadow:0 6px 18px rgba(0,0,0,0.4);">
+                <div id="posterQr" style="line-height:0; flex-shrink:0;"></div>
+                <div style="text-align:left; font-size:11px; line-height:1.4; min-width:0;"><b style="font-size:13px; color:#0b6b3a;">SCAN • SKOR LIVE</b><br>Pantau skor lapangan, antrean match, dan klasemen real-time.</div>
+            </div>
+            <div style="margin-top:12px; font-size:9px; opacity:.6; text-align:center; letter-spacing:2px;">HAPPY HITTERS</div>`;
 
-        document.getElementById('posterTicket').innerHTML = html;
+        document.getElementById('posterTicket').innerHTML = `${court}${deco}<div style="position:relative; z-index:2;">${head}${body}${info}</div>`;
         document.getElementById('posterModal').classList.remove('hidden');
-        renderQRInto(document.getElementById('posterQr'), tvUrl(), 132, { hiRes: true, margin: 2, ecl: 'L' });
+        renderQRInto(document.getElementById('posterQr'), tvUrl(), 112, { hiRes: true, margin: 1, ecl: 'L' });
+        // Siapkan gambar lebih dulu supaya tombol bagikan langsung berfungsi
+        setTimeout(() => posterCapture(c => c.toBlob(bl => { if (bl && window._posterKind === kind) window._posterBlob = bl; }, 'image/png'), true), 900);
     }
     function closePoster() { document.getElementById('posterModal').classList.add('hidden'); }
-    function posterCapture(cb) {
-        if (typeof html2canvas !== 'function') return appAlert("Error", "Pustaka pembuat gambar belum termuat. Periksa koneksi internet.");
-        html2canvas(document.getElementById('posterTicket'), { backgroundColor: null, scale: 2, useCORS: true }).then(cb).catch(e => { console.error(e); appAlert("Gagal", "Gambar poster gagal dibuat."); });
+    function posterCapture(cb, quiet) {
+        if (typeof html2canvas !== 'function') { if (!quiet) appAlert("Error", "Pustaka pembuat gambar belum termuat. Periksa koneksi internet."); return; }
+        html2canvas(document.getElementById('posterTicket'), { backgroundColor: null, scale: 2, useCORS: true }).then(cb).catch(e => { console.error(e); if (!quiet) appAlert("Gagal", "Gambar poster gagal dibuat."); });
     }
-    function downloadPoster() {
-        posterCapture(canvas => {
-            let l = document.createElement('a');
-            l.download = 'HappyHitters_Poster_' + Date.now() + '.png';
-            l.href = canvas.toDataURL('image/png');
-            l.click();
-        });
+    function posterGetBlob(cb) {
+        if (window._posterBlob) return cb(window._posterBlob);
+        posterCapture(canvas => canvas.toBlob(bl => { if (bl) { window._posterBlob = bl; cb(bl); } }, 'image/png'));
     }
-    function sharePoster() {
-        posterCapture(canvas => canvas.toBlob(blob => {
-            if (!blob) return;
+    function posterDownloadBlob(blob, name) {
+        let l = document.createElement('a');
+        l.download = name; l.href = URL.createObjectURL(blob);
+        document.body.appendChild(l); l.click(); l.remove();
+        setTimeout(() => URL.revokeObjectURL(l.href), 4000);
+    }
+    function downloadPoster() { posterGetBlob(bl => posterDownloadBlob(bl, 'HappyHitters_Poster_' + Date.now() + '.png')); }
+    function sharePoster() { shareWhatsApp(true); }
+    function shareWhatsApp(generic) {
+        let kind = window._posterKind || 'vs', text = posterShareText(kind);
+        posterGetBlob(blob => {
             let f = new File([blob], 'HappyHitters_Poster.png', { type: 'image/png' });
             if (navigator.canShare && navigator.canShare({ files: [f] })) {
-                navigator.share({ files: [f], title: data.title || 'Sparring Antar Club' }).catch(() => {});
+                navigator.share({ files: [f], text: text, title: data.title || 'Sparring Antar Club' }).catch(err => { if (err && err.name !== 'AbortError') console.warn(err); });
             } else {
-                let l = document.createElement('a');
-                l.download = 'HappyHitters_Poster.png';
-                l.href = URL.createObjectURL(blob);
-                l.click();
-                showToast('Gambar Disimpan', 'Perangkat ini tidak mendukung berbagi langsung, gambar diunduh.', 'primary');
+                posterDownloadBlob(blob, 'HappyHitters_Poster.png');
+                showToast('Gambar Disimpan', 'Perangkat ini tidak bisa melampirkan gambar otomatis. Lampirkan gambar yang baru diunduh di WhatsApp.', 'primary');
+                if (!generic) setTimeout(() => window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank'), 700);
             }
-        }, 'image/png'));
+        });
     }
 
     function tvClubName(d, id) {
