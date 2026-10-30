@@ -1118,17 +1118,31 @@
     };
 
     function handleSignedInUser(user) {
-        db.collection('users').doc(user.uid).get().then(doc => {
+        const userRef = db.collection('users').doc(user.uid);
+        // Baca dari SERVER dulu (bukan cache offline yang bisa usang). Jika offline, pakai cache.
+        userRef.get({ source: 'server' }).catch(() => userRef.get()).then(async doc => {
             let uData = doc.exists ? doc.data() : null;
             let uName = (uData && uData.username) ? uData.username.toLowerCase() : '';
-            let isSuperAdmin = user.email === 'admin@happyhitters.app' || 
-                               user.email === 'superadmin@happyhitters.app' || 
+            let isSuperAdmin = user.email === 'admin@happyhitters.app' ||
+                               user.email === 'superadmin@happyhitters.app' ||
                                (uData && (uData.role === 'admin' || uName === 'superadmin' || uName === 'admin'));
 
             if(!doc.exists && !isSuperAdmin) {
-                auth.signOut();
-                appAlert("Akses Ditolak", "Akun Anda tidak ditemukan atau telah dihapus oleh Admin.");
-                return;
+                // Login Firebase berhasil (password benar) tetapi profil Firestore hilang.
+                // Buat ulang profil secara otomatis supaya pengguna tidak terkunci.
+                try {
+                    await userRef.set({
+                        username: (user.email || '').split('@')[0],
+                        email: user.email || '',
+                        role: 'user', friends: [], friendRequests: [],
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } catch(e) {
+                    console.error('Gagal membuat ulang profil:', e);
+                    auth.signOut();
+                    appAlert("Akses Ditolak", "Profil akun tidak ditemukan dan gagal dibuat ulang." + (e && e.code ? "\n\nKode: " + e.code : ""));
+                    return;
+                }
             }
 
             if(isSuperAdmin) {
