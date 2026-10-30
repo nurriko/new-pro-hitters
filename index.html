@@ -5238,6 +5238,9 @@
             : `<div style="width:92px; height:92px; border-radius:50%; border:4px solid ${col}; background:rgba(0,0,0,0.25); display:flex; align-items:center; justify-content:center; font-size:38px; color:${col}; margin:0 auto 10px; box-shadow:0 0 0 4px rgba(255,255,255,0.12), 0 6px 18px rgba(0,0,0,0.45);"><i class="fas fa-shield-halved"></i></div>`;
         const clubCol = (c, col) => `<div style="flex:1; min-width:0; text-align:center;">${logo(c, col)}<div style="font-weight:900; font-size:16px; color:#fff; line-height:1.15; text-transform:uppercase; overflow-wrap:anywhere; text-shadow:0 2px 6px rgba(0,0,0,0.5);">${escapeHtml(c.name)}</div><div style="width:34px; height:4px; border-radius:2px; background:${col}; margin:7px auto 0;"></div></div>`;
 
+        // Bingkai poster rasio 9:16 (diekspor 1080x1920) = ukuran ideal untuk chat & status WhatsApp
+        document.getElementById('posterTicket').style.cssText = "position:relative; overflow:hidden; width:340px; min-height:604px; box-sizing:border-box; display:flex; flex-direction:column; padding:20px 18px 14px; color:#fff; font-family:'Outfit', sans-serif; background:radial-gradient(circle at 0% 24%, rgba(255,77,141,0.55) 0, rgba(255,77,141,0) 52%), radial-gradient(circle at 100% 64%, rgba(56,208,255,0.5) 0, rgba(56,208,255,0) 52%), linear-gradient(180deg, #0c1540 0%, #111b52 48%, #070b24 100%); box-shadow:0 15px 35px rgba(0,0,0,0.5);";
+        let sparkle = `<div style="position:absolute; left:14%; top:9%; width:5px; height:5px; border-radius:50%; background:${yel}; opacity:.9;"></div><div style="position:absolute; right:12%; top:15%; width:4px; height:4px; border-radius:50%; background:#fff; opacity:.8;"></div><div style="position:absolute; left:8%; top:52%; width:4px; height:4px; border-radius:50%; background:#fff; opacity:.6;"></div><div style="position:absolute; right:7%; top:46%; width:6px; height:6px; border-radius:50%; background:${yel}; opacity:.7;"></div><div style="position:absolute; left:20%; bottom:20%; width:5px; height:5px; border-radius:50%; background:${yel}; opacity:.6;"></div><div style="position:absolute; left:8px; right:8px; top:8px; bottom:8px; border:2px solid rgba(217,242,58,0.5); border-radius:18px;"></div>`;
         // Latar: lapangan tenis (garis putih) + kilau
         let court = `<svg viewBox="0 0 340 600" preserveAspectRatio="none" style="position:absolute; left:0; top:0; width:100%; height:100%;">
             <rect x="22" y="26" width="296" height="548" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="2.5"/>
@@ -5248,9 +5251,10 @@
         </svg>`;
         let deco = `<div style="position:absolute; right:-18px; top:84px; opacity:0.16;">${ptRacket(46, 28)}</div><div style="position:absolute; left:-20px; bottom:150px; opacity:0.13;">${ptRacket(52, -24)}</div>`;
 
-        let head = `<div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:6px;">${ptBall(18)}<span style="font-size:10px; letter-spacing:3px; color:${yel}; font-weight:900;">SPARRING ANTAR CLUB</span>${ptBall(18)}</div>
-            <div style="font-size:23px; font-weight:900; text-align:center; text-transform:uppercase; line-height:1.15; overflow-wrap:anywhere; text-shadow:0 3px 10px rgba(0,0,0,0.5);">${escapeHtml(data.title || 'Sparring Antar Club')}</div>
-            <div style="text-align:center; margin:10px 0 18px;"><span style="display:inline-block; background:${yel}; color:#10301f; border-radius:20px; padding:5px 16px; font-size:11px; font-weight:900; letter-spacing:1.5px;">${sport} • ${fmtTxt}</span></div>`;
+        let head = `<div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:6px;">${ptBall(16)}<span style="font-size:10px; letter-spacing:3px; color:${yel}; font-weight:900;">SPARRING ANTAR CLUB</span>${ptBall(16)}</div>
+            <div style="font-size:24px; font-weight:900; text-align:center; text-transform:uppercase; line-height:1.1; overflow-wrap:anywhere; text-shadow:0 3px 12px rgba(0,0,0,0.55);">${escapeHtml(data.title || 'Sparring Antar Club')}</div>
+            <div style="width:56px; height:4px; border-radius:2px; background:${yel}; margin:8px auto;"></div>
+            <div style="text-align:center; margin:0 0 12px;"><span style="display:inline-block; background:${yel}; color:#10301f; border-radius:20px; padding:4px 16px; font-size:11px; font-weight:900; letter-spacing:1.5px;">${sport} • ${fmtTxt}</span></div>`;
 
         let body = '';
         if (kind === 'result') {
@@ -5274,8 +5278,15 @@
                 body += `<div style="display:flex; gap:8px; margin-bottom:12px;">${bcell(ba, cA)}${bcell(bb, cB)}</div>`;
             }
         } else {
-            body += `<div style="display:flex; align-items:center; gap:4px; margin-bottom:16px;">${clubCol(a, cA)}
-                <div style="text-align:center; flex-shrink:0; width:62px;">${ptBall(26, 'margin:0 auto 2px;')}<div style="font-family:'Rajdhani',sans-serif; font-size:46px; font-weight:700; line-height:.9; color:${yel}; text-shadow:0 0 18px rgba(217,242,58,0.55), 0 3px 8px rgba(0,0,0,0.5);">VS</div></div>${clubCol(b, cB)}</div>`;
+            const vsLogo = (c, col) => c.logo
+                ? `<img src="${c.logo}" style="width:76px; height:76px; border-radius:50%; object-fit:cover; border:4px solid #fff; background:#fff; display:block; margin:0 auto 8px; box-shadow:0 0 0 4px ${col}, 0 0 26px ${col}, 0 8px 18px rgba(0,0,0,0.5);">`
+                : `<div style="width:76px; height:76px; border-radius:50%; border:4px solid #fff; background:rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center; font-size:34px; color:${col}; margin:0 auto 8px; box-shadow:0 0 0 4px ${col}, 0 0 26px ${col}, 0 8px 18px rgba(0,0,0,0.5);"><i class="fas fa-shield-halved"></i></div>`;
+            const vsClub = (c, col) => `<div style="flex:1; min-width:0; text-align:center; padding:0 2px;">${vsLogo(c, col)}<div style="font-weight:900; font-size:15px; color:#fff; line-height:1.12; text-transform:uppercase; overflow-wrap:anywhere; text-shadow:0 2px 8px rgba(0,0,0,0.6);">${escapeHtml(c.name)}</div></div>`;
+            body += `<div style="position:relative; border-radius:20px; overflow:hidden; border:2px solid rgba(255,255,255,0.22); padding:16px 8px 14px; margin-bottom:10px; box-shadow:0 10px 28px rgba(0,0,0,0.4);">
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; left:0; top:0; width:100%; height:100%;"><defs><linearGradient id="pvA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d8d"/><stop offset="1" stop-color="#a3174f"/></linearGradient><linearGradient id="pvB" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#38d0ff"/><stop offset="1" stop-color="#0b5fa8"/></linearGradient></defs><polygon points="0,0 55,0 43,100 0,100" fill="url(#pvA)"/><polygon points="59,0 100,0 100,100 47,100" fill="url(#pvB)"/><polygon points="55,0 59,0 47,100 43,100" fill="${yel}"/></svg>
+                <div style="position:relative; display:flex; align-items:flex-start;">${vsClub(a, cA)}<div style="width:46px; flex-shrink:0;"></div>${vsClub(b, cB)}</div>
+                <div style="position:absolute; left:50%; top:50%; margin:-27px 0 0 -27px; width:54px; height:54px; border-radius:50%; background:${yel}; border:3px solid #fff; box-shadow:0 0 0 4px rgba(217,242,58,0.35), 0 0 24px rgba(217,242,58,0.8), 0 6px 14px rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; font-family:'Rajdhani',sans-serif; font-size:26px; font-weight:700; color:#10301f; line-height:1;">VS</div>
+            </div>`;
             const roster = (c, col) => {
                 let ms = c.playerIds.map(playerById).filter(Boolean);
                 if (!ms.length) return '<div style="opacity:.5; font-size:11px; text-align:center;">-</div>';
@@ -5286,34 +5297,34 @@
                 }
                 return ms.map(p => `<div style="font-size:12px; font-weight:800; margin-bottom:4px;">${one(p)}</div>`).join('');
             };
-            const lcard = (c, col) => `<div style="flex:1; min-width:0; text-align:center; background:rgba(0,0,0,0.32); border:1px solid rgba(255,255,255,0.12); border-top:4px solid ${col}; border-radius:12px; padding:9px 6px 8px;"><div style="font-size:9px; letter-spacing:2px; font-weight:900; color:${col}; margin-bottom:7px;">LINEUP</div>${roster(c, col)}</div>`;
-            body += `<div style="display:flex; gap:8px; margin-bottom:14px;">${lcard(a, cA)}${lcard(b, cB)}</div>`;
+            const lcard = (c, col) => `<div style="flex:1; min-width:0; text-align:center; background:rgba(0,0,0,0.38); border:1px solid rgba(255,255,255,0.14); border-top:4px solid ${col}; border-radius:14px; padding:8px 6px 7px;"><div style="font-size:9px; letter-spacing:2px; font-weight:900; color:${col}; margin-bottom:6px;">LINEUP • ${c.playerIds.map(playerById).filter(Boolean).length} PEMAIN</div>${roster(c, col)}</div>`;
+            body += `<div style="display:flex; gap:8px; margin-bottom:10px;">${lcard(a, cA)}${lcard(b, cB)}</div>`;
         }
 
-        let info = `<div style="display:flex; flex-direction:column; gap:6px; align-items:center; margin-bottom:14px;">
-                <div style="background:rgba(255,255,255,0.12); border-radius:20px; padding:6px 16px; font-size:12px; font-weight:800;"><i class="fas fa-calendar-day" style="color:${yel};"></i> &nbsp;${escapeHtml(when)}</div>
-                ${sp.venue ? `<div style="background:rgba(255,255,255,0.12); border-radius:20px; padding:6px 16px; font-size:12px; font-weight:800;"><i class="fas fa-location-dot" style="color:${yel};"></i> &nbsp;${escapeHtml(sp.venue)}</div>` : ''}
+        let info = `<div style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.16); border-radius:14px; padding:8px 14px; margin-bottom:8px; display:flex; flex-direction:column; gap:5px;">
+                <div style="display:flex; align-items:center; gap:10px; font-size:13px; font-weight:800;"><i class="fas fa-calendar-day" style="color:${yel}; width:16px; text-align:center;"></i><span>${escapeHtml(when)}</span></div>
+                ${sp.venue ? `<div style="display:flex; align-items:center; gap:10px; font-size:13px; font-weight:800;"><i class="fas fa-location-dot" style="color:${yel}; width:16px; text-align:center;"></i><span>${escapeHtml(sp.venue)}</span></div>` : ''}
             </div>
-            <div style="display:flex; align-items:center; gap:12px; background:#fff; color:#10301f; border-radius:16px; padding:10px 12px; box-shadow:0 6px 18px rgba(0,0,0,0.4);">
+            <div style="display:flex; align-items:center; gap:12px; background:#fff; color:#10301f; border-radius:16px; padding:8px 12px; box-shadow:0 6px 18px rgba(0,0,0,0.4);">
                 <div id="posterQr" style="line-height:0; flex-shrink:0;"></div>
                 <div style="text-align:left; font-size:11px; line-height:1.4; min-width:0;"><b style="font-size:13px; color:#0b6b3a;">SCAN • SKOR LIVE</b><br>Pantau skor lapangan, antrean match, dan klasemen real-time.</div>
             </div>
-            <div style="margin-top:12px; font-size:9px; opacity:.6; text-align:center; letter-spacing:2px;">HAPPY HITTERS</div>`;
+            <div style="margin-top:8px; font-size:10px; opacity:.7; text-align:center; letter-spacing:4px; font-weight:800;">HAPPY HITTERS</div>`;
 
-        document.getElementById('posterTicket').innerHTML = `${court}${deco}<div style="position:relative; z-index:2;">${head}${body}${info}</div>`;
+        document.getElementById('posterTicket').innerHTML = `${court}${deco}${sparkle}<div style="position:relative; z-index:2; flex:1; display:flex; flex-direction:column;"><div>${head}${body}</div><div style="margin-top:auto; padding-top:6px;">${info}</div></div>`;
         document.getElementById('posterModal').classList.remove('hidden');
-        renderQRInto(document.getElementById('posterQr'), tvUrl(), 112, { hiRes: true, margin: 1, ecl: 'L' });
+        renderQRInto(document.getElementById('posterQr'), tvUrl(), 80, { hiRes: true, margin: 1, ecl: 'L' });
         // Siapkan gambar lebih dulu supaya tombol bagikan langsung berfungsi
-        setTimeout(() => posterCapture(c => c.toBlob(bl => { if (bl && window._posterKind === kind) window._posterBlob = bl; }, 'image/png'), true), 900);
+        setTimeout(() => posterCapture(c => c.toBlob(bl => { if (bl && window._posterKind === kind) window._posterBlob = bl; }, 'image/jpeg', 0.92), true), 1100);
     }
     function closePoster() { document.getElementById('posterModal').classList.add('hidden'); }
     function posterCapture(cb, quiet) {
         if (typeof html2canvas !== 'function') { if (!quiet) appAlert("Error", "Pustaka pembuat gambar belum termuat. Periksa koneksi internet."); return; }
-        html2canvas(document.getElementById('posterTicket'), { backgroundColor: null, scale: 2, useCORS: true }).then(cb).catch(e => { console.error(e); if (!quiet) appAlert("Gagal", "Gambar poster gagal dibuat."); });
+        html2canvas(document.getElementById('posterTicket'), { backgroundColor: '#0a1030', scale: 1080 / document.getElementById('posterTicket').offsetWidth, useCORS: true, logging: false }).then(cb).catch(e => { console.error(e); if (!quiet) appAlert("Gagal", "Gambar poster gagal dibuat."); });
     }
     function posterGetBlob(cb) {
         if (window._posterBlob) return cb(window._posterBlob);
-        posterCapture(canvas => canvas.toBlob(bl => { if (bl) { window._posterBlob = bl; cb(bl); } }, 'image/png'));
+        posterCapture(canvas => canvas.toBlob(bl => { if (bl) { window._posterBlob = bl; cb(bl); } }, 'image/jpeg', 0.92));
     }
     function posterDownloadBlob(blob, name) {
         let l = document.createElement('a');
@@ -5321,16 +5332,16 @@
         document.body.appendChild(l); l.click(); l.remove();
         setTimeout(() => URL.revokeObjectURL(l.href), 4000);
     }
-    function downloadPoster() { posterGetBlob(bl => posterDownloadBlob(bl, 'HappyHitters_Poster_' + Date.now() + '.png')); }
+    function downloadPoster() { posterGetBlob(bl => posterDownloadBlob(bl, 'HappyHitters_Poster_' + Date.now() + '.jpg')); }
     function sharePoster() { shareWhatsApp(true); }
     function shareWhatsApp(generic) {
         let kind = window._posterKind || 'vs', text = posterShareText(kind);
         posterGetBlob(blob => {
-            let f = new File([blob], 'HappyHitters_Poster.png', { type: 'image/png' });
+            let f = new File([blob], 'HappyHitters_Poster.jpg', { type: 'image/jpeg' });
             if (navigator.canShare && navigator.canShare({ files: [f] })) {
                 navigator.share({ files: [f], text: text, title: data.title || 'Sparring Antar Club' }).catch(err => { if (err && err.name !== 'AbortError') console.warn(err); });
             } else {
-                posterDownloadBlob(blob, 'HappyHitters_Poster.png');
+                posterDownloadBlob(blob, 'HappyHitters_Poster.jpg');
                 showToast('Gambar Disimpan', 'Perangkat ini tidak bisa melampirkan gambar otomatis. Lampirkan gambar yang baru diunduh di WhatsApp.', 'primary');
                 if (!generic) setTimeout(() => window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank'), 700);
             }
