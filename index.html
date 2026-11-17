@@ -323,7 +323,7 @@
         .segmented-control:has(#btnPasanganMexicano) { flex-wrap: wrap; }
         #btnPasanganMexicano, #btnPasanganDinamis, #btnPasanganFair, #btnPasanganTetap { flex: 1 1 45%; font-size: 12px; }
         .dialog-msg { white-space: pre-line; }
-        #awardsModal, #ratingModal, #tvShareModal, #posterModal, #inviteCaptainModal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        #awardsModal, #ratingModal, #tvShareModal, #posterModal, #funPosterModal, #inviteCaptainModal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 20px; box-sizing: border-box; }
         .award-block { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 14px; padding: 12px; margin-bottom: 10px; text-align: left; display:flex; gap:12px; align-items:center; }
         .award-block img { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold); background:#fff; flex-shrink:0; }
         .award-label { font-size: 10px; font-weight: 900; letter-spacing: 1px; color: var(--gold); text-transform: uppercase; }
@@ -581,6 +581,22 @@
             <button class="btn btn-ghost" style="flex:1; background:rgba(255,255,255,0.1); color:white;" onclick="closePoster()">Tutup</button>
             <button class="btn btn-primary" style="flex:1;" onclick="downloadPoster()"><i class="fas fa-download"></i> Simpan</button>
             <button class="btn btn-ghost" style="flex:1; background:rgba(255,255,255,0.1); color:white;" onclick="sharePoster()"><i class="fas fa-share-nodes"></i> Lainnya</button>
+        </div>
+    </div>
+</div>
+
+<div id="funPosterModal" class="hidden" style="justify-content:flex-start;" onclick="if(event.target.id === 'funPosterModal') closeFunPoster()">
+    <div style="margin:auto 0; display:flex; flex-direction:column; align-items:center; width:100%;">
+        <canvas id="funPosterCanvas" width="1080" height="1500" style="width:min(340px, 88vw); height:auto; border-radius:18px; box-shadow:0 15px 30px rgba(0,0,0,0.6); background:#1a0b4d;"></canvas>
+        <div id="funPosterStatus" style="color:#fff; font-size:12px; min-height:16px; margin-top:6px;"></div>
+        <label style="display:flex; align-items:center; gap:8px; color:#fff; font-size:12px; font-weight:700; margin:4px 0 8px; cursor:pointer;">
+            <input type="checkbox" id="funCartoonChk" checked onchange="funPosterToggleCartoon(this.checked)" style="width:auto; margin:0;"> Efek kartun pada foto (diproses di HP, foto tidak dikirim ke mana pun)
+        </label>
+        <div style="display:flex; gap:10px; width:min(340px, 88vw); flex-wrap:wrap;">
+            <button class="btn" style="flex-basis:100%; background:#25D366; color:#fff; font-weight:900;" onclick="funPosterShare()"><i class="fas fa-share-nodes"></i> BAGIKAN POSTER</button>
+            <button class="btn btn-ghost" style="flex:1; background:rgba(255,255,255,0.1); color:white;" onclick="closeFunPoster()">Tutup</button>
+            <button class="btn btn-warning" style="flex:1;" onclick="funPosterReroll()"><i class="fas fa-dice"></i> Acak Ulang</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="funPosterDownload()"><i class="fas fa-download"></i> Simpan</button>
         </div>
     </div>
 </div>
@@ -963,6 +979,10 @@
 
         <button class="btn btn-primary" style="margin-bottom:15px; width:100%; box-shadow:0 4px 15px rgba(67, 97, 238, 0.4);" onclick="openShareLeaderboard()">
             <i class="fas fa-share-alt"></i> BAGIKAN KLASEMEN
+        </button>
+
+        <button class="btn btn-warning" style="margin-bottom:15px; width:100%;" onclick="openFunPoster()">
+            <i class="fas fa-face-grin-squint-tears"></i> POSTER PODIUM LUCU (TOP 5)
         </button>
 
         <button id="btnViewBracketRank" class="btn btn-warning hidden" style="margin-bottom:15px; width:100%;" onclick="openBracketView()">
@@ -4894,6 +4914,260 @@
         });
         lines.push('Dibuat dengan Happy Hitters Tournament App 🎾');
         window.open('https://wa.me/?text=' + encodeURIComponent(lines.join('\n')), '_blank');
+    }
+
+    // ======================= POSTER PODIUM LUCU (khusus fun) =======================
+    // Semua diproses di perangkat lewat canvas: foto diberi efek kartun (posterize + garis tepi),
+    // juara 1-3 berdiri di podium, peringkat 4-5 "sedih" di luar podium. Foto tidak dikirim ke server mana pun.
+    let _fun = { seed: 1, cartoon: true, busy: false };
+
+    function fpRng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+    function fpLoadImg(src) {
+        return new Promise(res => { if(!src) return res(null); let im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
+    }
+    function fpRR(c, x, y, w, h, r) {
+        r = Math.min(r, w / 2, h / 2); c.beginPath();
+        c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+    }
+    function fpFit(c, text, maxW, size, weight, family) {
+        let s = size; family = family || "Outfit, 'Segoe UI', Arial, sans-serif";
+        do { c.font = `${weight} ${s}px ${family}`; s -= 2; } while(c.measureText(text).width > maxW && s > 14);
+        return text;
+    }
+
+    // Efek "kartun": blur ringan -> kuantisasi warna -> garis tepi (Sobel). mood: 'happy' (cerah) | 'sad' (pucat kebiruan)
+    function fpCartoon(img, size, mood) {
+        const cv = document.createElement('canvas'); cv.width = cv.height = size;
+        const x = cv.getContext('2d', { willReadFrequently: true });
+        let iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, s = Math.min(iw, ih);
+        let sx = (iw - s) / 2, sy = ih > iw ? (ih - s) * 0.22 : 0;
+        x.drawImage(img, sx, sy, s, s, 0, 0, size, size);
+        let id = x.getImageData(0, 0, size, size), d = id.data, n = size * size;
+        let a = new Float32Array(n * 3), b = new Float32Array(n * 3);
+        for(let i = 0; i < n; i++) { a[i*3] = d[i*4]; a[i*3+1] = d[i*4+1]; a[i*3+2] = d[i*4+2]; }
+        for(let pass = 0; pass < 2; pass++) {
+            for(let yy = 0; yy < size; yy++) for(let xx = 0; xx < size; xx++) {
+                let r = 0, g = 0, bl = 0, cnt = 0;
+                for(let dy = -1; dy <= 1; dy++) { let y2 = yy + dy; if(y2 < 0 || y2 >= size) continue;
+                    for(let dx = -1; dx <= 1; dx++) { let x2 = xx + dx; if(x2 < 0 || x2 >= size) continue; let k = (y2 * size + x2) * 3; r += a[k]; g += a[k+1]; bl += a[k+2]; cnt++; } }
+                let k = (yy * size + xx) * 3; b[k] = r / cnt; b[k+1] = g / cnt; b[k+2] = bl / cnt;
+            }
+            let t = a; a = b; b = t;
+        }
+        let lum = new Float32Array(n);
+        for(let i = 0; i < n; i++) lum[i] = 0.299 * a[i*3] + 0.587 * a[i*3+1] + 0.114 * a[i*3+2];
+        const sat = mood === 'sad' ? 0.12 : 1.45, bright = mood === 'sad' ? 0.82 : 1.06, step = 51;
+        for(let yy = 0; yy < size; yy++) for(let xx = 0; xx < size; xx++) {
+            let i = yy * size + xx, k = i * 3;
+            let gx = 0, gy = 0;
+            if(xx > 0 && yy > 0 && xx < size - 1 && yy < size - 1) {
+                gx = -lum[i-size-1] - 2*lum[i-1] - lum[i+size-1] + lum[i-size+1] + 2*lum[i+1] + lum[i+size+1];
+                gy = -lum[i-size-1] - 2*lum[i-size] - lum[i-size+1] + lum[i+size-1] + 2*lum[i+size] + lum[i+size+1];
+            }
+            let edge = Math.min(1, Math.max(0, (Math.sqrt(gx * gx + gy * gy) - 70) / 90));
+            let gray = lum[i], out = [0, 0, 0];
+            for(let c = 0; c < 3; c++) {
+                let v = gray + (a[k + c] - gray) * sat; v *= bright;
+                v = Math.round(v / step) * step;
+                if(mood === 'sad' && c === 2) v += 14;
+                out[c] = Math.max(0, Math.min(255, v)) * (1 - 0.88 * edge);
+            }
+            d[i*4] = out[0]; d[i*4+1] = out[1]; d[i*4+2] = out[2]; d[i*4+3] = 255;
+        }
+        x.putImageData(id, 0, 0);
+        return cv;
+    }
+
+    function fpStar(c, x, y, r, col) {
+        c.save(); c.fillStyle = col; c.beginPath();
+        for(let i = 0; i < 8; i++) { let ang = i * Math.PI / 4 - Math.PI / 2, rr = i % 2 ? r * 0.28 : r; c.lineTo(x + Math.cos(ang) * rr, y + Math.sin(ang) * rr); }
+        c.closePath(); c.fill(); c.restore();
+    }
+    function fpCrown(c, x, y, w, rot) {
+        let h = w * 0.72; c.save(); c.translate(x, y); c.rotate(rot || 0);
+        let g = c.createLinearGradient(0, -h, 0, 0); g.addColorStop(0, '#fff2a8'); g.addColorStop(1, '#f5a700');
+        c.beginPath(); c.moveTo(-w/2, 0); c.lineTo(-w/2, -h*0.6); c.lineTo(-w/4, -h*0.28); c.lineTo(0, -h); c.lineTo(w/4, -h*0.28); c.lineTo(w/2, -h*0.6); c.lineTo(w/2, 0); c.closePath();
+        c.fillStyle = g; c.fill(); c.lineWidth = 6; c.strokeStyle = '#b87900'; c.lineJoin = 'round'; c.stroke();
+        [[-w/2, -h*0.6], [0, -h], [w/2, -h*0.6]].forEach(p => { c.beginPath(); c.arc(p[0], p[1], 9, 0, 7); c.fillStyle = '#ff4d6d'; c.fill(); c.stroke(); });
+        c.beginPath(); c.arc(0, -h*0.3, 8, 0, 7); c.fillStyle = '#38bdf8'; c.fill(); c.restore();
+    }
+    // Badan kartun sederhana (kepala besar dari foto, badan dari kaus berwarna)
+    function fpBody(c, cx, top, w, h, color, label, pose) {
+        c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
+        const skin = '#f3c9a0';
+        let arm = (sx, sy, ex, ey) => {
+            c.strokeStyle = color; c.lineWidth = 38; c.beginPath(); c.moveTo(sx, sy); c.lineTo(ex, ey); c.stroke();
+            c.fillStyle = skin; c.beginPath(); c.arc(ex, ey, 24, 0, 7); c.fill(); c.lineWidth = 4; c.strokeStyle = 'rgba(0,0,0,.35)'; c.stroke();
+        };
+        let L = cx - w/2 + 12, R = cx + w/2 - 12, sy = top + 28;
+        if(pose === 'win2') { arm(L, sy, L - 70, top - 85); arm(R, sy, R + 70, top - 85); }
+        else if(pose === 'win1') { arm(L, sy, L - 38, top + h * 0.85); arm(R, sy, R + 70, top - 85); }
+        else if(pose === 'wave') { arm(R, sy, R + 62, top - 60); arm(L, sy, L - 30, top + h * 0.9); }
+        else { arm(L, sy, L - 6, top + h * 0.95); arm(R, sy, R + 6, top + h * 0.95); }
+        fpRR(c, cx - w/2, top, w, h + 4, 30); c.fillStyle = color; c.fill(); c.lineWidth = 5; c.strokeStyle = 'rgba(0,0,0,.35)'; c.stroke();
+        c.fillStyle = 'rgba(255,255,255,.9)'; c.beginPath(); c.moveTo(cx - 26, top); c.lineTo(cx, top + 30); c.lineTo(cx + 26, top); c.closePath(); c.fill();
+        if(label) { c.fillStyle = '#fff'; c.font = "900 52px Outfit, Arial Black, sans-serif"; c.textAlign = 'center'; c.textBaseline = 'middle'; c.shadowColor = 'rgba(0,0,0,.4)'; c.shadowBlur = 4; c.fillText(label, cx, top + h * 0.62); }
+        c.restore();
+    }
+    function fpHead(c, src, cx, cy, r, ring, tilt, shadow) {
+        c.save(); c.translate(cx, cy); c.rotate(tilt || 0);
+        if(shadow) { c.shadowColor = 'rgba(0,0,0,.45)'; c.shadowBlur = 24; c.shadowOffsetY = 10; }
+        c.beginPath(); c.arc(0, 0, r + 9, 0, 7); c.fillStyle = ring; c.fill(); c.shadowColor = 'transparent';
+        c.save(); c.beginPath(); c.arc(0, 0, r, 0, 7); c.clip(); c.drawImage(src, -r, -r, r * 2, r * 2); c.restore();
+        c.restore();
+    }
+    function fpCloud(c, cx, cy, s) {
+        c.save(); c.fillStyle = '#6b7487'; c.strokeStyle = '#3d4352'; c.lineWidth = 5;
+        c.beginPath(); [[-60,10,38],[-20,-14,50],[30,-6,46],[68,14,34],[0,20,44]].forEach(p => { c.moveTo(cx + p[0]*s + p[2]*s, cy + p[1]*s); c.arc(cx + p[0]*s, cy + p[1]*s, p[2]*s, 0, 7); });
+        c.fill(); c.restore();
+    }
+    function fpTear(c, x, y0, len) {
+        c.save(); c.strokeStyle = 'rgba(96,190,255,.85)'; c.lineWidth = 9; c.lineCap = 'round';
+        c.beginPath(); c.moveTo(x, y0); c.quadraticCurveTo(x + 6, y0 + len / 2, x, y0 + len); c.stroke();
+        c.fillStyle = 'rgba(96,190,255,.95)'; c.beginPath(); c.arc(x, y0 + len + 6, 10, 0, 7); c.fill();
+        c.fillStyle = 'rgba(255,255,255,.7)'; c.beginPath(); c.arc(x - 3, y0 + len + 3, 3.5, 0, 7); c.fill(); c.restore();
+    }
+
+    const FUN_WIN_CAP = [['SANG JUARA', 'Raja/Ratu lapangan 👑'], ['RUNNER-UP', 'Sedikit lagi... 🥈'], ['PODIUM!', 'Yang penting naik podium 🥉']];
+    const FUN_SAD_CAP = ['Nyaris naik podium... nyaris 😭', 'Bukan rezeki hari ini 💧', 'Besok latihan lagi ya 🥲', 'Podiumnya kok jauh amat 😢', 'Wasitnya pasti salah! 😤', 'Traktir juara dulu deh 🍜', 'Raket sudah berusaha, orangnya yang belum 😅'];
+
+    async function fpDraw(cv) {
+        const W = 1080, H = 1500; cv.width = W; cv.height = H;
+        const c = cv.getContext('2d'), rnd = fpRng(_fun.seed);
+        let ranked = [...data.players].filter(p => p.stats && p.stats.p > 0).sort((a, b) => b.stats.pts - a.stats.pts || b.stats.gd - a.stats.gd).slice(0, 5);
+        // gambar (paralel)
+        let imgs = await Promise.all(ranked.map(p => fpLoadImg(getAvatar(p))));
+        let faces = ranked.map((p, i) => {
+            let sad = i >= 3, im = imgs[i], real = p.img && p.img.length > 100;
+            if(!im) return null;
+            if(_fun.cartoon && real) { try { return fpCartoon(im, 256, sad ? 'sad' : 'happy'); } catch(e) { return im; } }
+            return im;
+        });
+        const FF = "Outfit, 'Segoe UI', Arial, sans-serif";
+
+        // ---- latar atas (pesta) ----
+        let g = c.createLinearGradient(0, 0, 0, 930); g.addColorStop(0, '#1a0b4d'); g.addColorStop(0.6, '#4a2394'); g.addColorStop(1, '#8a3fb8');
+        c.fillStyle = g; c.fillRect(0, 0, W, 930);
+        c.save(); c.globalAlpha = 0.10; c.fillStyle = '#fff';
+        [[540, -20, 260], [250, -20, 220], [830, -20, 220]].forEach(b => { c.beginPath(); c.moveTo(b[0] - 30, b[1]); c.lineTo(b[0] + 30, b[1]); c.lineTo(b[0] + b[2], 900); c.lineTo(b[0] - b[2], 900); c.closePath(); c.fill(); });
+        c.restore();
+        const cols = ['#ffd166', '#ef476f', '#06d6a0', '#4cc9f0', '#f72585', '#fff'];
+        for(let i = 0; i < 90; i++) { c.save(); c.translate(rnd() * W, 150 + rnd() * 700); c.rotate(rnd() * 6); c.fillStyle = cols[Math.floor(rnd() * cols.length)]; c.globalAlpha = 0.85; c.fillRect(-7, -3, 14, 6); c.restore(); }
+
+        // ---- judul ----
+        c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.fillStyle = '#fff'; c.shadowColor = 'rgba(0,0,0,.45)'; c.shadowBlur = 10;
+        c.fillText(fpFit(c, '🏆 PODIUM JUARA 🏆', 960, 78, 900, FF), W / 2, 92);
+        c.shadowBlur = 0; c.fillStyle = '#ffd166';
+        c.fillText(fpFit(c, (data.title || 'Happy Hitters').toUpperCase(), 940, 38, 800, FF), W / 2, 142);
+
+        // ---- podium juara 1-3 ----
+        const GROUND = 900;
+        const slots = [
+            { i: 1, x: 80,  w: 300, h: 220, col: '#aab4c4', dark: '#6f7a8c', jersey: '#3b82f6', pose: 'wave', r: 95, tilt: -0.06 },
+            { i: 0, x: 380, w: 320, h: 300, col: '#ffd24d', dark: '#d19300', jersey: '#ef4444', pose: 'win2', r: 112, tilt: 0.03 },
+            { i: 2, x: 700, w: 300, h: 170, col: '#d98a4a', dark: '#9a5a22', jersey: '#10b981', pose: 'wave', r: 95, tilt: 0.07 }
+        ];
+        c.save(); c.fillStyle = 'rgba(0,0,0,.28)'; c.beginPath(); c.ellipse(540, GROUND + 8, 500, 26, 0, 0, 7); c.fill(); c.restore();
+        slots.forEach(sl => {
+            let p = ranked[sl.i]; if(!p) return;
+            let top = GROUND - sl.h, cx = sl.x + sl.w / 2, bodyH = 130, torsoTop = top - bodyH;
+            fpBody(c, cx, torsoTop, 150, bodyH, sl.jersey, String(sl.i + 1), sl.pose);
+            // medali
+            c.save(); c.strokeStyle = sl.i === 0 ? '#ffd24d' : sl.col; c.lineWidth = 8; c.beginPath(); c.moveTo(cx - 28, torsoTop + 2); c.lineTo(cx, torsoTop + 60); c.lineTo(cx + 28, torsoTop + 2); c.stroke();
+            c.beginPath(); c.arc(cx, torsoTop + 78, 22, 0, 7); c.fillStyle = sl.i === 0 ? '#ffd24d' : sl.col; c.fill(); c.lineWidth = 4; c.strokeStyle = sl.dark; c.stroke(); c.restore();
+            let hy = torsoTop - sl.r * 0.62;
+            if(faces[sl.i]) fpHead(c, faces[sl.i], cx, hy, sl.r, sl.i === 0 ? '#ffd24d' : sl.col, sl.tilt, true);
+            if(sl.i === 0) { fpCrown(c, cx + 6, hy - sl.r + 8, 150, 0.1); fpStar(c, cx - 175, hy - 40, 26, '#fff'); fpStar(c, cx + 185, hy - 90, 20, '#ffd166'); fpStar(c, cx + 150, hy + 70, 16, '#fff'); }
+            // balok podium
+            let face = c.createLinearGradient(0, top, 0, GROUND); face.addColorStop(0, sl.col); face.addColorStop(1, sl.dark);
+            c.fillStyle = face; c.fillRect(sl.x, top, sl.w, sl.h);
+            c.fillStyle = 'rgba(255,255,255,.35)'; c.fillRect(sl.x, top, sl.w, 14);
+            c.strokeStyle = 'rgba(0,0,0,.25)'; c.lineWidth = 4; c.strokeRect(sl.x, top, sl.w, sl.h);
+            c.textAlign = 'center'; c.fillStyle = 'rgba(255,255,255,.95)'; c.shadowColor = 'rgba(0,0,0,.35)'; c.shadowBlur = 6;
+            c.font = `900 ${sl.i === 0 ? 120 : sl.i === 1 ? 92 : 70}px ${FF}`; c.textBaseline = 'alphabetic'; c.fillText(String(sl.i + 1), cx, top + (sl.i === 0 ? 128 : sl.i === 1 ? 100 : 68));
+            c.shadowBlur = 0; c.fillStyle = '#1b1b2f';
+            c.fillText(fpFit(c, p.name, sl.w - 28, sl.i === 2 ? 36 : 40, 900, FF), cx, top + (sl.i === 0 ? 184 : sl.i === 1 ? 142 : 114));
+            c.fillStyle = 'rgba(27,27,47,.85)'; c.font = `700 25px ${FF}`;
+            c.fillText(`${p.stats.pts} poin • ${p.stats.w}M ${p.stats.d}S ${p.stats.l}K`, cx, top + (sl.i === 0 ? 220 : sl.i === 1 ? 178 : 148));
+            if(sl.i === 0) { c.fillStyle = '#7a4a00'; c.font = `800 24px ${FF}`; c.fillText(FUN_WIN_CAP[0][1], cx, top + 262); }
+        });
+
+        // ---- pita pembatas ----
+        c.save(); c.translate(0, 926); c.fillStyle = '#ffd400'; c.fillRect(0, 0, W, 46);
+        c.beginPath(); c.rect(0, 0, W, 46); c.clip(); c.fillStyle = '#111';
+        for(let x = -60; x < W + 60; x += 56) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x + 28, 0); c.lineTo(x + 8, 46); c.lineTo(x - 20, 46); c.closePath(); c.fill(); }
+        c.restore();
+        c.fillStyle = '#111'; fpRR(c, W / 2 - 250, 920, 500, 58, 29); c.fill(); c.fillStyle = '#ffd400'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `900 32px ${FF}`;
+        c.fillText('😭 ZONA BELUM JUARA 😭', W / 2, 950);
+
+        // ---- latar bawah (hujan) ----
+        let g2 = c.createLinearGradient(0, 978, 0, H); g2.addColorStop(0, '#39404f'); g2.addColorStop(1, '#14171f');
+        c.fillStyle = g2; c.fillRect(0, 978, W, H - 978);
+        c.save(); c.strokeStyle = 'rgba(160,200,255,.18)'; c.lineWidth = 3;
+        for(let i = 0; i < 110; i++) { let x = rnd() * W, y = 990 + rnd() * 470; c.beginPath(); c.moveTo(x, y); c.lineTo(x - 10, y + 34); c.stroke(); }
+        c.restore();
+        c.fillStyle = 'rgba(110,150,200,.22)'; c.fillRect(0, 1375, W, H - 1375);
+
+        // ---- peringkat 4 & 5 (sedih) ----
+        const sadSlots = [{ i: 3, cx: 300, tilt: -0.2 }, { i: 4, cx: 780, tilt: 0.18 }];
+        const caps = FUN_SAD_CAP.slice(); for(let i = caps.length - 1; i > 0; i--) { let j = Math.floor(rnd() * (i + 1)); [caps[i], caps[j]] = [caps[j], caps[i]]; }
+        sadSlots.forEach((sl, k) => {
+            let p = ranked[sl.i]; if(!p) return;
+            let cx = sl.cx, torsoTop = 1250, hy = 1180, r = 90;
+            fpBody(c, cx, torsoTop, 130, 100, '#64748b', String(sl.i + 1), 'sad');
+            if(faces[sl.i]) fpHead(c, faces[sl.i], cx, hy, r, '#94a3b8', sl.tilt, true);
+            fpCloud(c, cx, 1060, 1.05);
+            c.save(); c.strokeStyle = 'rgba(120,180,255,.75)'; c.lineWidth = 5; c.lineCap = 'round';
+            for(let i = 0; i < 9; i++) { let x = cx - 90 + i * 22 + rnd() * 8, y = 1092 + rnd() * 20; c.beginPath(); c.moveTo(x, y); c.lineTo(x - 6, y + 34); c.stroke(); }
+            c.restore();
+            fpTear(c, cx - 34, hy + 8, 52); fpTear(c, cx + 34, hy + 8, 52);
+            // tetesan keringat
+            c.fillStyle = 'rgba(150,215,255,.9)'; c.beginPath(); c.moveTo(cx + r - 8, hy - 62); c.quadraticCurveTo(cx + r + 14, hy - 30, cx + r - 8, hy - 26); c.quadraticCurveTo(cx + r - 30, hy - 30, cx + r - 8, hy - 62); c.fill();
+            c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.fillStyle = '#e2e8f0';
+            c.fillText(fpFit(c, `#${sl.i + 1} ${p.name}`, 440, 40, 900, FF), cx, 1414);
+            c.fillStyle = '#9fb0c8'; c.font = `700 24px ${FF}`; c.fillText(`${p.stats.pts} poin`, cx, 1440);
+            c.fillStyle = '#cbd5e1'; c.fillText(fpFit(c, caps[k], 470, 24, 600, FF), cx, 1468);
+        });
+        if(ranked.length < 4) { c.fillStyle = '#cbd5e1'; c.textAlign = 'center'; c.font = `700 30px ${FF}`; c.fillText('Semua pemain naik podium. Tidak ada yang sedih! 🎉', W / 2, 1200); }
+
+        // footer
+        c.fillStyle = 'rgba(255,255,255,.45)'; c.textAlign = 'center'; c.font = `700 18px ${FF}`; c.textBaseline = 'alphabetic';
+        c.fillText('Happy Hitters • poster hiburan, bukan hasil resmi 😄', W / 2, 1494);
+        return ranked.length;
+    }
+
+    async function openFunPoster() {
+        playSfx('pop');
+        let n = data.players.filter(p => p.stats && p.stats.p > 0).length;
+        if(n < 3) return appAlert("Belum Cukup Data", "Poster podium butuh minimal 3 pemain yang sudah bermain.");
+        _fun.seed = Math.floor(Math.random() * 1e9);
+        document.getElementById('funPosterModal').classList.remove('hidden');
+        document.getElementById('funCartoonChk').checked = _fun.cartoon;
+        await renderFunPoster();
+    }
+    async function renderFunPoster() {
+        if(_fun.busy) return; _fun.busy = true;
+        let st = document.getElementById('funPosterStatus'); st.innerText = 'Membuat poster...';
+        try { await fpDraw(document.getElementById('funPosterCanvas')); st.innerText = ''; }
+        catch(e) { console.error(e); st.innerText = 'Gagal membuat poster: ' + (e && e.message ? e.message : e); }
+        _fun.busy = false;
+    }
+    function funPosterReroll() { playSfx('pop'); _fun.seed = Math.floor(Math.random() * 1e9); renderFunPoster(); }
+    function funPosterToggleCartoon(on) { _fun.cartoon = !!on; renderFunPoster(); }
+    function closeFunPoster() { document.getElementById('funPosterModal').classList.add('hidden'); }
+    function funPosterBlob(cb) {
+        let cv = document.getElementById('funPosterCanvas');
+        try { cv.toBlob(b => { if(b) cb(b); else appAlert("Error", "Gagal membuat gambar."); }, 'image/jpeg', 0.92); }
+        catch(e) { appAlert("Error", "Gambar tidak bisa diekspor: " + e.message); }
+    }
+    function funPosterDownload() { funPosterBlob(b => posterDownloadBlob(b, 'HappyHitters_PodiumLucu_' + Date.now() + '.jpg')); }
+    function funPosterShare() {
+        funPosterBlob(blob => {
+            let f = new File([blob], 'HappyHitters_PodiumLucu.jpg', { type: 'image/jpeg' });
+            let text = `😆 Podium lucu ${data.title || 'Happy Hitters'}! Yang di bawah jangan baper ya 😭`;
+            if(navigator.canShare && navigator.canShare({ files: [f] })) navigator.share({ files: [f], text, title: data.title || 'Happy Hitters' }).catch(err => { if(err && err.name !== 'AbortError') console.warn(err); });
+            else { posterDownloadBlob(blob, 'HappyHitters_PodiumLucu.jpg'); showToast('Gambar Disimpan', 'Perangkat ini tidak bisa melampirkan gambar otomatis. Lampirkan gambar yang baru diunduh.', 'primary'); }
+        });
     }
 
     // ======================= RATING ELO ANTAR TURNAMEN =======================
