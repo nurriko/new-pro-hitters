@@ -328,7 +328,10 @@
         .award-block img { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold); background:#fff; flex-shrink:0; }
         .award-label { font-size: 10px; font-weight: 900; letter-spacing: 1px; color: var(--gold); text-transform: uppercase; }
         .award-name { font-size: 16px; font-weight: 900; color: #fff; }
-        .award-sub { font-size: 11px; color: rgba(255,255,255,0.8); }
+        .award-sub { font-size: 11px; color: rgba(255,255,255,0.85); line-height:1.4; }
+        .award-why { font-size: 10px; color: rgba(255,255,255,0.7); margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.25); line-height:1.35; }
+        .award-mode { display:inline-block; font-size:10px; font-weight:800; letter-spacing:.5px; padding:3px 10px; border-radius:20px; background:rgba(255,255,255,0.15); margin:-8px 0 14px; }
+        .award-rules { margin-top:12px; font-size:10px; text-align:left; opacity:.75; line-height:1.45; }
         .small-act { background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-muted); border-radius:8px; padding:4px 8px; cursor:pointer; font-size:11px; font-weight:bold; }
         /* ===== LAYAR TV / LIVE BOARD ===== */
         #tvBoard { position: fixed; inset: 0; z-index: 10010; background: radial-gradient(circle at 20% 0%, #1e3a8a 0%, #0b1226 55%, #050816 100%); color: #fff; padding: 2vw; box-sizing: border-box; overflow-y: auto; display: flex; flex-direction: column; gap: 1.5vw; font-family: 'Outfit', sans-serif; }
@@ -3121,7 +3124,8 @@
             `🏆 *${data.title || 'Turnamen Happy Hitters'}*`,
             `Total ${data.matches.length} match dimainkan${data.roundNumber ? ' dalam ' + data.roundNumber + ' ronde' : ''}.`,
         ];
-        if(mvp) lines.push(`⭐ MVP: ${mvp.name} (${mvp.stats.pts} poin)`);
+        let _aw = computeAwards();
+        if(_aw.mvp) lines.push(`${_aw.mvp.label}: ${_aw.mvp.name}${_aw.mvp.members ? ' (' + _aw.mvp.members + ')' : ''} - ${_aw.mvp.lines[1] || _aw.mvp.lines[0]}`);
         lines.push('', 'Dibuat dengan Happy Hitters Tournament App 🎾');
         let text = encodeURIComponent(lines.join('\n'));
         window.open(`https://wa.me/?text=${text}`, '_blank');
@@ -4691,44 +4695,180 @@
         return null;
     }
 
-    function computeAwards() {
-        let ps = data.players.filter(p => p.stats.p > 0);
-        let mvp = ps.slice().sort((a, b) => b.stats.pts - a.stats.pts || b.stats.gd - a.stats.gd || b.stats.w - a.stats.w)[0] || null;
+    // Match ganda dengan pasangan TETAP (fixed partner)?
+    function isFixedDoublesMatch(m) {
+        if(m.format !== 'doubles' || !m.ids1 || !m.ids2 || m.ids1.length < 2 || m.ids2.length < 2) return false;
+        if(m.logic === 'fixed') return true;
+        if(m.logic === 'sparring') return !!(data.sparring && data.sparring.pairing === 'fixed');
+        if(m.logic === 'knockout') return !!(data.bracket && data.bracket.partnerMode === 'tetap');
+        return false;
+    }
+    function awardsMode() {
+        let ms = data.matches || [];
+        return (ms.length && ms.every(isFixedDoublesMatch)) ? 'pair' : 'solo';
+    }
+    function fmtSigned(n, dec) {
+        let v = dec ? Math.round(n * 10) / 10 : Math.round(n);
+        return (v > 0 ? '+' : '') + String(v).replace('.', ',');
+    }
+    function fmtNum(n, dec) { return String(dec ? Math.round(n * 10) / 10 : Math.round(n)).replace('.', ','); }
+    function pairLabelOf(ids, histName) {
+        let fp = (data.fixedPairs || []).find(f => pairKeyOf(f.p1, f.p2) === pairKeyOf(ids[0], ids[1]));
+        let a = playerById(ids[0]), b = playerById(ids[1]);
+        let names = (a ? a.name : '?') + ' & ' + (b ? b.name : '?');
+        let team = fp && fp.teamName ? fp.teamName : null;
+        if(!team && histName && histName.indexOf(' & ') === -1) team = histName;
+        return { team, names, avatarP: a || b || null };
+    }
 
+    // Urutan: poin per match -> selisih skor per match -> jumlah menang -> jumlah main
+    function mvpCmp(x, y) {
+        return (y.pts / y.g) - (x.pts / x.g) || (y.gd / y.g) - (x.gd / x.g) || y.w - x.w || y.g - x.g;
+    }
+    function mvpRank(ents) {
+        let maxG = ents.reduce((m, e) => Math.max(m, e.g), 0);
+        let minG = Math.max(1, Math.ceil(maxG * 0.5));
+        return { list: ents.filter(e => e.g >= minG).sort(mvpCmp), minG, maxG };
+    }
+    function mvpLines(e, runner, unit) {
+        let ppm = e.pts / e.g, lines = [];
+        lines.push(`${e.g} match: ${e.w} menang, ${e.d} seri, ${e.l} kalah`);
+        lines.push(`${e.pts} poin (${fmtNum(ppm, 1)} poin/match) • selisih skor ${fmtSigned(e.gd)} (${fmtSigned(e.gd / e.g, 1)}/match)`);
+        let why;
+        if(runner) {
+            let rppm = runner.pts / runner.g;
+            if(Math.abs(ppm - rppm) > 1e-9) why = `Unggul atas peringkat 2 (${runner.name}) yang meraih ${fmtNum(rppm, 1)} poin/match.`;
+            else why = `Poin/match sama dengan ${runner.name} (${fmtNum(rppm, 1)}), dimenangkan lewat selisih skor ${fmtSigned(e.gd / e.g, 1)} vs ${fmtSigned(runner.gd / runner.g, 1)} per match.`;
+        } else why = `Satu-satunya ${unit} yang memenuhi syarat penilaian.`;
+        return { lines, why };
+    }
+
+    function computeAwards() {
+        const ms = data.matches || [];
+        const mode = awardsMode();
+        const out = { mode, mvp: null, second: null, king: null, rules: [] };
+
+        // ---------- MODE FIXED PARTNER: semua penghargaan atas nama PASANGAN ----------
+        if(mode === 'pair') {
+            let pairs = {};
+            ms.forEach(m => {
+                [[m.ids1, m.s1, m.s2, m.t1, 1], [m.ids2, m.s2, m.s1, m.t2, 2]].forEach(([ids, a, b, hn, tm]) => {
+                    let k = pairKeyOf(ids[0], ids[1]);
+                    let e = pairs[k] || (pairs[k] = { key: k, ids: [ids[0], ids[1]], hist: hn, g: 0, w: 0, d: 0, l: 0, pts: 0, gd: 0, cb: 0, cbMax: 0 });
+                    e.g++; e.gd += (a - b);
+                    if(a > b) { e.w++; e.pts += 3; } else if(a === b) { e.d++; e.pts += 1; } else e.l++;
+                    if(m.comeback && m.comeback.team === tm) { e.cb++; e.cbMax = Math.max(e.cbMax, m.comeback.deficit); }
+                });
+            });
+            let ents = Object.values(pairs).map(e => {
+                let lb = pairLabelOf(e.ids, e.hist);
+                e.name = lb.team || lb.names; e.members = lb.team ? lb.names : ''; e.avatarP = lb.avatarP;
+                return e;
+            });
+            let rk = mvpRank(ents);
+            if(rk.list.length) {
+                let top = rk.list[0], r = mvpLines(top, rk.list[1], 'pasangan');
+                let lines = r.lines.slice();
+                out.mvp = { label: '⭐ MVP PASANGAN', name: top.name, members: top.members, avatarP: top.avatarP, lines, why: r.why };
+                // Penghargaan ke-2: pasangan paling dominan (selisih skor per match terbesar)
+                let dom = rk.list.slice().sort((x, y) => (y.gd / y.g) - (x.gd / x.g) || (y.pts / y.g) - (x.pts / x.g) || y.w - x.w)[0];
+                if(dom && dom.key !== top.key && dom.gd > 0) {
+                    out.second = { label: '💪 PASANGAN PALING DOMINAN', name: dom.name, members: dom.members, avatarP: dom.avatarP,
+                        lines: [`Rata-rata menang ${fmtSigned(dom.gd / dom.g, 1)} skor per match (total ${fmtSigned(dom.gd)} dalam ${dom.g} match)`, `${dom.w} menang, ${dom.d} seri, ${dom.l} kalah`],
+                        why: `Selisih skor per match terbesar di antara semua pasangan, artinya menang dengan margin paling lebar.` };
+                } else if(dom && dom.key === top.key && dom.gd > 0) {
+                    out.mvp.lines.push(`Sekaligus pasangan paling dominan (selisih skor ${fmtSigned(dom.gd / dom.g, 1)}/match)`);
+                }
+            }
+            let kings = ents.filter(e => e.cb > 0).sort((x, y) => y.cb - x.cb || y.cbMax - x.cbMax);
+            if(kings[0]) out.king = { label: '🔥 PASANGAN COMEBACK', name: kings[0].name, members: kings[0].members, avatarP: kings[0].avatarP,
+                lines: [`${kings[0].cb}x menang setelah sempat tertinggal (terbesar ${kings[0].cbMax} angka)`],
+                why: kings[1] ? `Comeback terbanyak; peringkat 2 (${kings[1].name}) baru ${kings[1].cb}x.` : `Satu-satunya pasangan yang berhasil comeback.` };
+            out.rules = [
+                'Mode Fixed Partner: yang dinilai adalah PASANGAN, bukan individu.',
+                `MVP = poin per match tertinggi (menang 3, seri 1, kalah 0); jika sama, selisih skor per match.${rk.minG > 1 ? ' Syarat main minimal ' + rk.minG + ' match.' : ''}`,
+                'Comeback = menang setelah sempat tertinggal 2 angka atau lebih.'
+            ];
+            return out;
+        }
+
+        // ---------- MODE ACAK / SINGLES: penghargaan atas nama INDIVIDU ----------
+        let ents = data.players.filter(p => p.stats && p.stats.p > 0).map(p => ({
+            key: p.id, name: p.name, members: '', avatarP: p, g: p.stats.p, w: p.stats.w, d: p.stats.d, l: p.stats.l, pts: p.stats.pts, gd: p.stats.gd
+        }));
+        let rk = mvpRank(ents);
+        if(rk.list.length) {
+            let top = rk.list[0], r = mvpLines(top, rk.list[1], 'pemain');
+            out.mvp = { label: '⭐ MVP', name: top.name, members: '', avatarP: top.avatarP, lines: r.lines, why: r.why };
+        }
+
+        // Duo terbaik: pasangan yang terbentuk dari pengacakan, dinilai dari win rate bersama
         let duo = {};
-        (data.matches || []).forEach(m => {
+        ms.forEach(m => {
             if(m.format !== 'doubles' || !m.ids1 || !m.ids2 || m.ids1.length < 2 || m.ids2.length < 2) return;
-            [[m.ids1, m.s1, m.s2], [m.ids2, m.s2, m.s1]].forEach(([ids, ms, os]) => {
+            [[m.ids1, m.s1, m.s2], [m.ids2, m.s2, m.s1]].forEach(([ids, a, b]) => {
                 let k = pairKeyOf(ids[0], ids[1]);
-                let d = duo[k] || (duo[k] = { ids: [ids[0], ids[1]], g: 0, w: 0, gd: 0 });
-                d.g++; d.gd += (ms - os); if(ms > os) d.w++;
+                let d = duo[k] || (duo[k] = { ids: [ids[0], ids[1]], g: 0, w: 0, d: 0, l: 0, gd: 0 });
+                d.g++; d.gd += (a - b);
+                if(a > b) d.w++; else if(a === b) d.d++; else d.l++;
             });
         });
         let duos = Object.values(duo).filter(d => playerById(d.ids[0]) && playerById(d.ids[1]));
-        let minG = duos.some(d => d.g >= 2) ? 2 : 1;
-        duos = duos.filter(d => d.g >= minG).sort((a, b) => (b.w / b.g) - (a.w / a.g) || b.w - a.w || b.gd - a.gd);
+        let minD = duos.some(d => d.g >= 2) ? 2 : 1;
+        duos = duos.filter(d => d.g >= minD).sort((x, y) => (y.w / y.g) - (x.w / x.g) || y.g - x.g || (y.gd / y.g) - (x.gd / x.g));
+        if(duos[0]) {
+            let d = duos[0], p1 = playerById(d.ids[0]), p2 = playerById(d.ids[1]), r = duos[1];
+            let rate = Math.round(d.w / d.g * 100);
+            let lines = [`Menang ${d.w} dari ${d.g} kali berpasangan (${rate}%)${d.d ? ', ' + d.d + ' seri' : ''}`, `Selisih skor bersama ${fmtSigned(d.gd)} (${fmtSigned(d.gd / d.g, 1)}/match)`];
+            let why;
+            if(r) {
+                let rr = Math.round(r.w / r.g * 100), rn = playerById(r.ids[0]).name + ' & ' + playerById(r.ids[1]).name;
+                if(rate > rr) why = `Win rate tertinggi; peringkat 2 (${rn}) ${rr}% dari ${r.g} match.`;
+                else if(d.g > r.g) why = `Win rate sama dengan ${rn} (${rr}%), tapi terbukti dalam lebih banyak match (${d.g} vs ${r.g}).`;
+                else why = `Win rate dan jumlah match sama dengan ${rn}; unggul di selisih skor per match.`;
+            } else why = 'Satu-satunya duo yang memenuhi syarat penilaian.';
+            if(minD === 1) why += ' Catatan: belum ada duo yang berpasangan 2x, jadi dinilai dari 1 match.';
+            out.second = { label: '🤝 DUO TERBAIK', name: p1.name + ' & ' + p2.name, members: '', avatarP: p1, lines, why };
+        }
 
         let cb = {};
-        (data.matches || []).forEach(m => {
+        ms.forEach(m => {
             if(!m.comeback) return;
             let ids = m.comeback.team === 1 ? m.ids1 : m.ids2;
             (ids || []).forEach(id => { let c = cb[id] || (cb[id] = { n: 0, max: 0 }); c.n++; c.max = Math.max(c.max, m.comeback.deficit); });
         });
-        let kingId = Object.keys(cb).filter(id => playerById(id)).sort((a, b) => cb[b].n - cb[a].n || cb[b].max - cb[a].max)[0];
-        return { mvp, duo: duos[0] || null, king: kingId ? { p: playerById(kingId), n: cb[kingId].n, max: cb[kingId].max } : null };
+        let kIds = Object.keys(cb).filter(id => playerById(id)).sort((x, y) => cb[y].n - cb[x].n || cb[y].max - cb[x].max);
+        if(kIds[0]) {
+            let kp = playerById(kIds[0]), c = cb[kIds[0]], r = kIds[1];
+            out.king = { label: '🔥 RAJA COMEBACK', name: kp.name, members: '', avatarP: kp,
+                lines: [`${c.n}x menang setelah sempat tertinggal (terbesar ${c.max} angka)`],
+                why: r ? `Comeback terbanyak; peringkat 2 (${playerById(r).name}) ${cb[r].n}x.` : 'Satu-satunya pemain yang berhasil comeback.' };
+        }
+        out.rules = [
+            'Pasangan diacak, jadi MVP dinilai per INDIVIDU.',
+            `MVP = poin per match tertinggi (menang 3, seri 1, kalah 0); jika sama, selisih skor per match.${rk.minG > 1 ? ' Syarat main minimal ' + rk.minG + ' match.' : ''}`,
+            `Duo Terbaik = win rate bersama tertinggi (minimal ${minD}x berpasangan).`,
+            'Comeback = menang setelah sempat tertinggal 2 angka atau lebih.'
+        ];
+        return out;
     }
 
     function openAwards() {
         playSfx('pop');
         let a = computeAwards();
-        const blk = (label, avatar, name, sub) => `<div class="award-block"><img src="${avatar}"><div><div class="award-label">${label}</div><div class="award-name">${name}</div><div class="award-sub">${sub}</div></div></div>`;
-        let html = `<div class="ticket-header">🏆 PENGHARGAAN AKHIR</div><div style="font-size:14px; font-weight:bold; margin-bottom:16px; text-transform:uppercase; color:#fff;">${escapeHtml(data.title || 'Happy Hitters')}</div>`;
-        html += a.mvp ? blk('⭐ MVP', getAvatar(a.mvp), escapeHtml(a.mvp.name), `${a.mvp.stats.pts} poin • ${a.mvp.stats.w}W ${a.mvp.stats.d}D ${a.mvp.stats.l}L`) : blk('⭐ MVP', DEF_M, '-', 'Belum ada data');
-        if(a.duo) {
-            let p1 = playerById(a.duo.ids[0]), p2 = playerById(a.duo.ids[1]);
-            html += blk('🤝 DUO TERBAIK', getAvatar(p1), escapeHtml(p1.name + ' & ' + p2.name), `Win rate ${Math.round(a.duo.w / a.duo.g * 100)}% (${a.duo.w}/${a.duo.g} menang bersama)`);
-        } else html += blk('🤝 DUO TERBAIK', DEF_M, '-', 'Butuh pertandingan ganda');
-        html += a.king ? blk('🔥 RAJA COMEBACK', getAvatar(a.king.p), escapeHtml(a.king.p.name), `${a.king.n}x bangkit dari tertinggal (maks. ${a.king.max} poin)`) : blk('🔥 RAJA COMEBACK', DEF_M, '-', 'Belum ada comeback tercatat');
+        const blk = (aw, emptyLabel, emptyMsg) => {
+            if(!aw) return `<div class="award-block"><img src="${DEF_M}"><div><div class="award-label">${emptyLabel}</div><div class="award-name">-</div><div class="award-sub">${escapeHtml(emptyMsg)}</div></div></div>`;
+            let nm = escapeHtml(aw.name) + (aw.members ? `<div style="font-size:11px; font-weight:700; opacity:.85;">${escapeHtml(aw.members)}</div>` : '');
+            return `<div class="award-block"><img src="${aw.avatarP ? getAvatar(aw.avatarP) : DEF_M}"><div style="min-width:0;"><div class="award-label">${aw.label}</div><div class="award-name">${nm}</div><div class="award-sub">${aw.lines.map(escapeHtml).join('<br>')}</div>${aw.why ? `<div class="award-why">💡 ${escapeHtml(aw.why)}</div>` : ''}</div></div>`;
+        };
+        let isPair = a.mode === 'pair';
+        let html = `<div class="ticket-header">🏆 PENGHARGAAN AKHIR</div><div style="font-size:14px; font-weight:bold; margin-bottom:12px; text-transform:uppercase; color:#fff;">${escapeHtml(data.title || 'Happy Hitters')}</div>`;
+        html += `<div class="award-mode">${isPair ? '🔗 FIXED PARTNER • dinilai per pasangan' : '🎲 PASANGAN ACAK • dinilai per individu'}</div>`;
+        html += blk(a.mvp, isPair ? '⭐ MVP PASANGAN' : '⭐ MVP', 'Belum ada data');
+        if(isPair) { if(a.second) html += blk(a.second); }
+        else html += blk(a.second, '🤝 DUO TERBAIK', 'Butuh pertandingan ganda');
+        html += blk(a.king, isPair ? '🔥 PASANGAN COMEBACK' : '🔥 RAJA COMEBACK', 'Belum ada comeback tercatat');
+        html += `<div class="award-rules"><b>CARA PENILAIAN</b><br>${a.rules.map(r => '• ' + escapeHtml(r)).join('<br>')}</div>`;
         html += `<div style="margin-top:14px; font-size:10px; opacity:0.6; border-top:1px dashed rgba(255,255,255,0.3); padding-top:10px;">Generated by Happy Hitters App</div>`;
         document.getElementById('awardsTicket').innerHTML = html;
         document.getElementById('awardsModal').classList.remove('hidden');
@@ -4744,11 +4884,15 @@
         });
     }
     function shareAwardsWhatsApp() {
-        let a = computeAwards(), lines = [`🏆 *Penghargaan ${data.title || 'Happy Hitters'}*`];
-        if(a.mvp) lines.push(`⭐ MVP: ${a.mvp.name} (${a.mvp.stats.pts} poin)`);
-        if(a.duo) lines.push(`🤝 Duo Terbaik: ${playerById(a.duo.ids[0]).name} & ${playerById(a.duo.ids[1]).name} (${Math.round(a.duo.w / a.duo.g * 100)}% win rate)`);
-        if(a.king) lines.push(`🔥 Raja Comeback: ${a.king.p.name} (${a.king.n}x comeback)`);
-        lines.push('', 'Dibuat dengan Happy Hitters Tournament App 🎾');
+        let a = computeAwards(), lines = [`🏆 *Penghargaan ${data.title || 'Happy Hitters'}*`, a.mode === 'pair' ? '_Fixed Partner: dinilai per pasangan_' : '_Pasangan acak: dinilai per individu_', ''];
+        [a.mvp, a.second, a.king].forEach(aw => {
+            if(!aw) return;
+            lines.push(`${aw.label}: *${aw.name}*${aw.members ? ' (' + aw.members + ')' : ''}`);
+            aw.lines.forEach(l => lines.push('   • ' + l));
+            if(aw.why) lines.push('   💡 ' + aw.why);
+            lines.push('');
+        });
+        lines.push('Dibuat dengan Happy Hitters Tournament App 🎾');
         window.open('https://wa.me/?text=' + encodeURIComponent(lines.join('\n')), '_blank');
     }
 
