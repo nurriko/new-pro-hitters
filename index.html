@@ -799,12 +799,23 @@
         </div>
 
         <div id="playerArea" class="hidden">
+            <div id="archiveBanner" class="card true-owner-only hidden" style="border:2px solid var(--success); background:rgba(16,185,129,0.08); padding:12px 14px;">
+                <div style="font-size:11px; font-weight:900; color:var(--success); letter-spacing:1px;"><i class="fas fa-folder-open"></i> ANDA SEDANG MEMBUKA ARSIP</div>
+                <div id="archiveBannerTitle" style="font-weight:900; color:var(--text-main); font-size:15px; margin:3px 0 10px;"></div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-primary" style="padding:9px; font-size:12px; flex:1;" onclick="openArchives()"><i class="fas fa-archive"></i> Arsip Lain</button>
+                    <button class="btn btn-ghost" style="padding:9px; font-size:12px; flex:1;" onclick="closeOpenedArchive()"><i class="fas fa-xmark"></i> Tutup Arsip</button>
+                </div>
+            </div>
             <div class="card" style="display:flex; justify-content:space-between; align-items:center; border: 2px dashed var(--primary);">
                 <div style="display:flex; flex-direction:column;">
                     <span style="font-size:11px; color:var(--text-muted); font-weight:bold;">NAMA TURNAMEN:</span>
                     <b id="tourTitleDisplay" style="color:var(--primary); font-size:16px;"></b>
                 </div>
-                <button onclick="editTitle()" class="owner-only" style="background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-main); border-radius:8px; padding:6px 12px; font-weight:bold; cursor:pointer;">Ubah</button>
+                <div style="display:flex; gap:6px;">
+                    <button onclick="openArchives()" class="true-owner-only" style="background:var(--input-bg); border:1px solid var(--border-color); color:var(--primary); border-radius:8px; padding:6px 12px; font-weight:bold; cursor:pointer;"><i class="fas fa-archive"></i> Arsip</button>
+                    <button onclick="editTitle()" class="owner-only" style="background:var(--input-bg); border:1px solid var(--border-color); color:var(--text-main); border-radius:8px; padding:6px 12px; font-weight:bold; cursor:pointer;">Ubah</button>
+                </div>
             </div>
 
             <div class="card owner-only">
@@ -1105,9 +1116,26 @@
     let prevFriendReqs = null;
     let prevViewReqs = null;
     
+    function newArcId() { return 'A' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+    function archiveSig(a) {
+        let ms = a.matches || [], last = ms[ms.length - 1];
+        return [a.title || '', (a.players || []).map(p => p.id).join(','), ms.length, last ? (last.id || '') : ''].join('|');
+    }
+    // Ambil arsip. Sekalian: beri ID untuk arsip lama dan buang duplikat (turnamen yang sama tersimpan 2x akibat bug lama).
     function getSafeArchives() {
-        try { return JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]'); } 
+        let arr;
+        try { arr = JSON.parse(localStorage.getItem('HH_ARCHIVES') || '[]'); if (!Array.isArray(arr)) arr = []; }
         catch(e) { return []; }
+        let changed = false, seen = new Set(), out = [];
+        arr.forEach(a => {
+            if (!a || typeof a !== 'object') { changed = true; return; }
+            if (!a.arcId) { a.arcId = newArcId(); changed = true; }
+            let sig = archiveSig(a);
+            if (seen.has(sig)) { changed = true; return; }
+            seen.add(sig); out.push(a);
+        });
+        if (changed) { try { localStorage.setItem('HH_ARCHIVES', JSON.stringify(out)); } catch(e) {} }
+        return out;
     }
 
     function escapeHtml(str) {
@@ -1995,6 +2023,7 @@
                         data.currentMatches = loadedData.currentMatches || (loadedData.currentMatch ? [loadedData.currentMatch] : []);
                         data.activeTab = loadedData.activeTab || 'home';
                         data.dateArchived = loadedData.dateArchived || null;
+                        data.fromArchiveId = loadedData.fromArchiveId || null;
                         data.tournamentMode = loadedData.tournamentMode || 'league';
                         data.bracket = loadedData.bracket || null;
                         data.sport = loadedData.sport || null;
@@ -2087,7 +2116,7 @@
     // Dulu SEMUA field ditulis ulang setiap save -> 2 HP yang memakai akun sama saling menimpa data.
     // Sekarang hanya field yang benar-benar berubah (dibanding data server terakhir) yang dikirim.
     const LOCAL_ONLY_KEYS = ['activeTab'];
-    const SYNC_KEYS = ['title','players','matches','fixedPairs','isFinished','currentMatches','tournamentMode','bracket','sport','plannedRounds','roundNumber','partnerMode','schedule','scheduleMeta','dateArchived','eloRatings','eloBefore','eloApplied','eloLocked','eloDeltas','sparring'];
+    const SYNC_KEYS = ['title','players','matches','fixedPairs','isFinished','currentMatches','tournamentMode','bracket','sport','plannedRounds','roundNumber','partnerMode','schedule','scheduleMeta','dateArchived','fromArchiveId','eloRatings','eloBefore','eloApplied','eloLocked','eloDeltas','sparring'];
     let _syncedJson = {};
     function jsonOf(v) { try { return JSON.stringify(v === undefined ? null : v); } catch(e) { return ''; } }
     function markSynced() { SYNC_KEYS.forEach(k => { _syncedJson[k] = jsonOf(data[k]); }); }
@@ -2286,6 +2315,7 @@
         dialog.style.display = 'flex';
     }
     function renderTitleSetup() {
+        renderArchiveBanner();
         if(data.title) {
             document.getElementById('titleArea').classList.add('hidden');
             document.getElementById('playerArea').classList.remove('hidden');
@@ -2295,6 +2325,72 @@
             document.getElementById('playerArea').classList.add('hidden');
             renderQuickArchives();
         }
+    }
+
+    function hasTournamentContent() { return !!(data.title || (data.players && data.players.length)); }
+
+    // Simpan turnamen yang sedang tampil ke arsip.
+    // Kalau turnamen ini dibuka dari arsip, entri arsip aslinya DIPERBARUI (tidak dibuat dobel).
+    function archiveCurrentTournament() {
+        if (!hasTournamentContent()) return true;
+        try {
+            let archives = getSafeArchives();
+            let i = data.fromArchiveId ? archives.findIndex(a => a.arcId === data.fromArchiveId) : -1;
+            let snap = JSON.parse(JSON.stringify(data));
+            snap.fromArchiveId = null;
+            if (i >= 0) {
+                snap.arcId = archives[i].arcId;
+                snap.dateArchived = archives[i].dateArchived || new Date().toLocaleString('id-ID');
+                archives[i] = snap;
+            } else {
+                snap.arcId = newArcId();
+                snap.dateArchived = new Date().toLocaleString('id-ID');
+                archives.push(snap);
+            }
+            localStorage.setItem('HH_ARCHIVES', JSON.stringify(archives));
+            return true;
+        } catch(e) {
+            console.error('Gagal mengarsipkan:', e);
+            appAlert("Gagal Mengarsipkan", "Penyimpanan di perangkat ini penuh sehingga turnamen tidak bisa diarsipkan. Hapus arsip lama atau simpan dulu lewat Pengaturan > Simpan Game (.json).");
+            return false;
+        }
+    }
+
+    function emptyTournamentData(keepElo) {
+        let d = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [], tournamentMode: 'league', bracket: null, sport: null, plannedRounds: null, roundNumber: 0, partnerMode: 'fair', schedule: [], scheduleMeta: null, eloRatings: {}, eloBefore: null, eloApplied: false, eloLocked: false, eloDeltas: {}, fromArchiveId: null };
+        d.sparring = null; d.eloRatings = keepElo || {};
+        return d;
+    }
+
+    function createNewTournament() {
+        appConfirm("Buat Turnamen Baru", "Turnamen saat ini akan diarsipkan secara lokal. Lanjutkan?", () => {
+            if (archiveCurrentTournament() === false) return;
+            data = emptyTournamentData(data.eloRatings);
+            save(true);
+            appSuccess("Berhasil", "Turnamen baru siap dimulai!");
+            nav('home');
+            renderTitleSetup();
+            renderSportGate();
+        });
+    }
+
+    // Selesai melihat arsip: simpan perubahan (jika ada) ke entri arsip yang sama, lalu kembali ke layar awal.
+    function closeOpenedArchive() {
+        if (archiveCurrentTournament() === false) return;
+        data = emptyTournamentData(data.eloRatings);
+        save(true);
+        nav('home');
+        renderTitleSetup();
+        renderSportGate();
+        showToast('Arsip Ditutup', 'Silakan buka arsip lain atau buat turnamen baru.', 'success');
+    }
+
+    function renderArchiveBanner() {
+        let el = document.getElementById('archiveBanner');
+        if (!el) return;
+        let on = !!(data.fromArchiveId && data.title);
+        el.classList.toggle('hidden', !on);
+        if (on) document.getElementById('archiveBannerTitle').innerText = data.title;
     }
 
     function renderQuickArchives() {
@@ -2310,7 +2406,7 @@
                 <div style="background:var(--input-bg); padding:12px; border-radius:12px; border:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
                     <div style="flex:1;">
                         <div style="font-weight:bold; color:var(--primary); font-size:15px;">${escapeHtml(arc.title || 'Tanpa Judul')}</div>
-                        <div style="font-size:11px; color:var(--text-muted);">${arc.players.length} Pemain | ${arc.matches.length} Match</div>
+                        <div style="font-size:11px; color:var(--text-muted);">${(arc.players || []).length} Pemain | ${(arc.matches || []).length} Match</div>
                     </div>
                     <div style="display:flex; gap:8px;">
                         <button class="btn btn-success" style="padding:6px 12px; font-size:12px; width:auto;" onclick="viewArchive(${i})"><i class="fas fa-folder-open"></i> Buka</button>
@@ -2321,23 +2417,6 @@
             listContainer.innerHTML = html;
         }
     }
-    
-    function createNewTournament() {
-        appConfirm("Buat Turnamen Baru", "Turnamen saat ini akan diarsipkan secara lokal. Lanjutkan?", () => {
-            let archives = getSafeArchives();
-            data.dateArchived = new Date().toLocaleString('id-ID');
-            let _keepElo = data.eloRatings || {};
-            archives.push(data);
-            localStorage.setItem('HH_ARCHIVES', JSON.stringify(archives));
-            
-            data = { title: "", players: [], matches: [], fixedPairs: [], isFinished: false, currentMatches: [], activeTab: 'home', viewRequests: [], approvedViewers: [], matchAdmins: [], tournamentMode: 'league', bracket: null, sport: null, plannedRounds: null, roundNumber: 0, partnerMode: 'fair', schedule: [], scheduleMeta: null, eloRatings: {}, eloBefore: null, eloApplied: false, eloLocked: false, eloDeltas: {} };
-            data.sparring = null; data.eloRatings = _keepElo; save(true);
-            appSuccess("Berhasil", "Turnamen baru siap dimulai!");
-            nav('home');
-            renderTitleSetup();
-            renderSportGate();
-        });
-    }
 
     function openArchives() {
         let archives = getSafeArchives();
@@ -2345,17 +2424,19 @@
         if(archives.length === 0) {
             html = '<p style="color:var(--text-muted); font-size:13px;">Belum ada turnamen yang diarsipkan.</p>';
         } else {
-            html = archives.map((arc, i) => `
-                <div class="card" style="padding:15px; margin-bottom:10px; text-align:left; background:var(--input-bg);">
-                    <div style="font-weight:900; color:var(--primary); font-size:16px;">${escapeHtml(arc.title || 'Turnamen Tanpa Judul')}</div>
+            html = archives.map((arc, i) => {
+                let isOpen = !!(data.fromArchiveId && arc.arcId === data.fromArchiveId);
+                return `
+                <div class="card" style="padding:15px; margin-bottom:10px; text-align:left; background:var(--input-bg); ${isOpen ? 'border:2px solid var(--success);' : ''}">
+                    <div style="font-weight:900; color:var(--primary); font-size:16px;">${escapeHtml(arc.title || 'Turnamen Tanpa Judul')}${isOpen ? ' <span style="font-size:10px; color:var(--success); font-weight:900;">● SEDANG DIBUKA</span>' : ''}</div>
                     <div style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Diarsipkan: ${arc.dateArchived || '-'}</div>
-                    <div style="font-size:13px; margin-bottom:10px;">Total Pemain: ${arc.players.length} | Match Dimainkan: ${arc.matches.length}</div>
+                    <div style="font-size:13px; margin-bottom:10px;">Total Pemain: ${(arc.players || []).length} | Match Dimainkan: ${(arc.matches || []).length}</div>
                     <div style="display:flex; gap:10px;">
-                        <button class="btn btn-primary" style="padding:8px; font-size:12px; flex:1;" onclick="viewArchive(${i})"><i class="fas fa-folder-open"></i> Buka Arsip</button>
+                        <button class="btn btn-primary" style="padding:8px; font-size:12px; flex:1;" onclick="viewArchive(${i})" ${isOpen ? 'disabled' : ''}><i class="fas fa-folder-open"></i> ${isOpen ? 'Sedang Dibuka' : 'Buka Arsip'}</button>
                         <button class="btn btn-danger" style="padding:8px; font-size:12px;" onclick="deleteArchive(${i})"><i class="fas fa-trash"></i></button>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
         document.getElementById('archiveListContent').innerHTML = html;
         document.getElementById('archivesDialog').classList.remove('hidden');
@@ -2364,29 +2445,50 @@
     function deleteArchive(idx) {
         appConfirm("Hapus Arsip", "Yakin ingin menghapus arsip turnamen ini secara permanen?", () => {
             let archives = getSafeArchives();
+            let gone = archives[idx];
             archives.splice(idx, 1);
             localStorage.setItem('HH_ARCHIVES', JSON.stringify(archives));
+            // Kalau yang dihapus sedang dibuka, lepaskan tautannya supaya tidak "menghidupkan" arsip yang sudah dihapus
+            if (gone && data.fromArchiveId && gone.arcId === data.fromArchiveId) { data.fromArchiveId = null; save(); renderArchiveBanner(); }
             openArchives(); 
             renderQuickArchives();
         });
     }
 
     function viewArchive(idx) {
+        let archives0 = getSafeArchives();
+        let target = archives0[idx];
+        if (!target) return;
+        let targetId = target.arcId;
+        if (data.fromArchiveId && data.fromArchiveId === targetId) {
+            document.getElementById('archivesDialog').classList.add('hidden');
+            nav('home');
+            return;
+        }
+        let hasCurrent = hasTournamentContent();
         let loadData = () => {
-            let archives = getSafeArchives();
-            let _keepElo2 = data.eloRatings || {};
-            data = archives[idx];
-            data.eloRatings = _keepElo2;
+            // Turnamen yang sedang tampil diarsipkan dulu (atau arsipnya diperbarui) supaya tidak hilang / dobel.
+            if (hasCurrent && archiveCurrentTournament() === false) return;
+            let t = getSafeArchives().find(a => a.arcId === targetId);
+            if (!t) return appAlert("Error", "Arsip tidak ditemukan.");
+            let keepElo = data.eloRatings || {};
+            data = JSON.parse(JSON.stringify(t));
+            delete data.arcId;
+            data.fromArchiveId = targetId;
+            data.eloRatings = keepElo;
             if(data.eloApplied) { data.eloBefore = null; data.eloLocked = true; }
             save();
             document.getElementById('archivesDialog').classList.add('hidden');
-            appSuccess("Berhasil", "Data turnamen berhasil dimuat.");
+            appSuccess("Berhasil", "Arsip dibuka. Gunakan tombol Arsip untuk berpindah ke turnamen lain.");
             nav('home');
             renderTitleSetup();
         };
 
-        if (data.title || data.players.length > 0) {
-            appConfirm("Buka Turnamen", "Ini akan mengganti turnamen yang sedang berjalan dengan data dari arsip. Lanjutkan?", loadData);
+        if (hasCurrent) {
+            let msg = data.fromArchiveId
+                ? "Perubahan pada arsip yang sedang dibuka akan disimpan, lalu arsip yang Anda pilih akan dibuka. Lanjutkan?"
+                : "Turnamen yang sedang tampil akan diarsipkan otomatis (tidak hilang), lalu arsip yang Anda pilih akan dibuka. Lanjutkan?";
+            appConfirm("Buka Arsip", msg, loadData);
         } else {
             loadData();
         }
