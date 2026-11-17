@@ -132,6 +132,47 @@
         .dialog-msg { font-size: 14px; color: var(--text-muted); margin-bottom: 25px; line-height: 1.5; }
         .dialog-actions { display: flex; gap: 10px; }
 
+
+        /* ===== DASHBOARD MULTI-LAPANGAN ===== */
+        .ct-bar { position: sticky; top: 0; z-index: 30; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 10px; margin: 0 0 22px 0; box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
+        .ct-sum { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; font-size:11px; font-weight:800; color:var(--text-muted); }
+        .ct-sum b { color: var(--text-main); }
+        .ct-view { display:flex; gap:4px; }
+        .ct-view button { width:auto; padding:5px 10px; font-size:11px; font-weight:800; border-radius:10px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-muted); cursor:pointer; }
+        .ct-view button.on { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .ct-chips { display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; scrollbar-width:thin; }
+        .ct-chip { flex:0 0 auto; min-width:78px; padding:7px 10px; border-radius:12px; border:2px solid var(--border-color); background:var(--input-bg); color:var(--text-main); cursor:pointer; text-align:center; font-family:inherit; width:auto; }
+        .ct-chip b { display:block; font-size:12px; font-weight:900; letter-spacing:.5px; }
+        .ct-chip small { display:block; font-size:15px; font-weight:800; font-family:'Rajdhani','Outfit',sans-serif; margin-top:1px; }
+        .ct-chip.live { border-color: var(--cc); box-shadow: inset 0 3px 0 var(--cc); }
+        .ct-chip.live b { color: var(--cc); }
+        .ct-chip.empty { border-style:dashed; opacity:.75; }
+        .ct-chip.empty small { font-size:11px; color:var(--text-muted); }
+        .ct-chip.cur { background: var(--cc); color:#fff; border-color: var(--cc); }
+        .ct-chip.cur b, .ct-chip.cur small { color:#fff; }
+        .court-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px 14px; }
+        .court-grid .match-card { margin-bottom: 0 !important; padding: 14px 12px 12px; border-top: 5px solid var(--cc, var(--primary)) !important; }
+        .court-grid .match-card h4, .court-grid .match-card .mc-livebadge { display:none !important; }
+        .court-grid .match-card .mc-edit { top: 8px !important; right: 8px !important; }
+        .court-grid .live-scoreboard { gap: 8px; margin-top: 6px; }
+        .court-grid .score-row { padding: 10px; }
+        .court-grid .point-display { width: 52px; height: 46px; font-size: 26px; }
+        .court-grid .btn-score { width: 44px; height: 44px; }
+        .court-grid .mc-actions { margin-top: 12px !important; }
+        .court-grid .mc-actions .btn { padding: 10px 8px; font-size: 12px; }
+        .court-empty { border: 2px dashed var(--border-color); text-align:center; padding: 22px 14px; display:flex; flex-direction:column; gap:8px; align-items:center; justify-content:center; min-height:150px; }
+        .court-empty .t { font-weight:900; color:var(--cc, var(--text-muted)); letter-spacing:1px; }
+        .court-empty .s { font-size:12px; color:var(--text-muted); }
+        .ct-panel { margin-top: 22px; padding: 14px; }
+        .ct-panel h5 { margin:0 0 10px; font-size:12px; font-weight:900; letter-spacing:1px; color:var(--text-muted); }
+        .ct-q { display:flex; align-items:center; gap:10px; padding:9px 10px; border:1px solid var(--border-color); border-radius:12px; background:var(--input-bg); margin-bottom:8px; }
+        .ct-q .no { font-weight:900; font-size:11px; color:var(--primary); min-width:52px; }
+        .ct-q .tm { flex:1; font-size:12px; font-weight:700; line-height:1.35; min-width:0; }
+        .ct-q .tm i { font-style:normal; color:var(--text-muted); font-weight:800; margin:0 4px; }
+        .ct-q button { width:auto; padding:7px 10px; font-size:11px; font-weight:800; border-radius:10px; flex:0 0 auto; }
+        .ct-q .wait { font-size:10px; font-weight:800; color:var(--warning); flex:0 0 auto; text-align:right; max-width:90px; }
+        .ct-rest { display:flex; flex-wrap:wrap; gap:6px; }
+        .ct-rest span { font-size:11px; font-weight:800; padding:4px 10px; border-radius:20px; background:var(--input-bg); border:1px solid var(--border-color); }
         .live-scoreboard { display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
         .score-row { display: flex; justify-content: space-between; align-items: center; background: var(--input-bg); padding: 15px; border-radius: 16px; border: 1px solid var(--border-color); }
         .score-team-info { display: flex; flex-direction: column; flex: 1; }
@@ -2873,6 +2914,8 @@
     function goToLiveMatch(matchId) {
         document.getElementById('bracketViewModal').classList.add('hidden');
         nav('play');
+        let _gm = (data.currentMatches || []).find(x => x.id === matchId);
+        if (_gm) window._courtFocus = _gm.court;
         renderMatches();
         setTimeout(() => {
             let el = document.getElementById('courtCard_' + matchId);
@@ -3788,13 +3831,128 @@
         document.getElementById('setupArea').style.display = 'none';
         
         let html = '';
-        data.currentMatches.forEach((m) => {
-            try { html += generateMatchHTML(m); }
-            catch(e) { console.error('Gagal merender match:', m, e); }
-        });
+        if (isMultiCourt()) {
+            try { html = renderCourtDashboard(); }
+            catch(e) { console.error('Gagal merender dashboard lapangan:', e); html = ''; }
+        }
+        if (!html) {
+            data.currentMatches.forEach((m) => {
+                try { html += generateMatchHTML(m); }
+                catch(e) { console.error('Gagal merender match:', m, e); }
+            });
+        }
         
         document.getElementById('multiCourtContainer').innerHTML = html;
         document.getElementById('matchArea').classList.remove('hidden');
+    }
+
+    // ================= DASHBOARD MULTI-LAPANGAN =================
+    const COURT_COLORS = ['#06b6d4', '#f72585', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#3b82f6', '#14b8a6', '#d946ef', '#84cc16'];
+    function courtColor(c) { return COURT_COLORS[((parseInt(c) || 1) - 1) % COURT_COLORS.length]; }
+    window._courtView = (function(){ try { return localStorage.getItem('hh_courtView') || 'grid'; } catch(e) { return 'grid'; } })();
+    window._courtFocus = null;
+
+    function totalCourtCount() {
+        let n = (data.scheduleMeta && data.scheduleMeta.courts) || 1;
+        (data.currentMatches || []).forEach(m => { if (m.court > n) n = m.court; });
+        return n;
+    }
+    function isMultiCourt() { return totalCourtCount() > 1 || (data.currentMatches || []).length > 1; }
+
+    function courtSetView(v) {
+        window._courtView = v;
+        try { localStorage.setItem('hh_courtView', v); } catch(e) {}
+        renderMatches();
+    }
+    function courtFocus(c) {
+        if (window._courtView === 'focus') { window._courtFocus = c; renderMatches(); return; }
+        let m = (data.currentMatches || []).find(x => x.court === c);
+        let el = document.getElementById(m ? 'courtCard_' + m.id : 'courtEmpty_' + c);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.remove('highlight-pulse'); void el.offsetWidth; el.classList.add('highlight-pulse');
+        }
+    }
+
+    function fillCourtSlot(c) {
+        let busy = new Set();
+        (data.currentMatches || []).forEach(m => m.t1.concat(m.t2).forEach(p => busy.add(p.id)));
+        let item = pendingSorted(data.schedule || []).find(s => s.t1.concat(s.t2).every(id => playerById(id) && !busy.has(id)));
+        if (!item) return showToast('Belum Bisa', 'Belum ada match di antrean yang semua pemainnya siap (pemain masih main di lapangan lain).', 'warning');
+        activateScheduleItem(item, c);
+        data.currentMatches.sort((a, b) => a.court - b.court);
+        window._courtFocus = c;
+        save(); renderMatches(); renderRoundInfo();
+    }
+
+    function renderCourtDashboard() {
+        const total = totalCourtCount();
+        const cms = data.currentMatches || [];
+        const byCourt = {}; cms.forEach(m => byCourt[m.court] = m);
+        const sch = data.schedule || [];
+        const pending = pendingSorted(sch);
+        const view = window._courtView === 'focus' ? 'focus' : 'grid';
+        let focus = window._courtFocus;
+        if (!focus || focus > total) focus = (cms[0] && cms[0].court) || 1;
+        window._courtFocus = focus;
+
+        let chips = '';
+        for (let c = 1; c <= total; c++) {
+            let m = byCourt[c];
+            let cur = (view === 'focus' && c === focus) ? ' cur' : '';
+            chips += `<button class="ct-chip ${m ? 'live' : 'empty'}${cur}" style="--cc:${courtColor(c)};" onclick="courtFocus(${c})"><b>LAP ${c}</b><small id="chipScore_${c}">${m ? m.g1 + ' - ' + m.g2 : 'kosong'}</small></button>`;
+        }
+        const bar = `<div class="ct-bar">
+            <div class="ct-sum"><span><b>${cms.length}/${total}</b> lapangan aktif${sch.length ? ' • <b>' + pending.length + '</b> match antre' : ''}</span>
+                <div class="ct-view"><button class="${view === 'grid' ? 'on' : ''}" onclick="courtSetView('grid')"><i class="fas fa-table-cells-large"></i> Semua</button><button class="${view === 'focus' ? 'on' : ''}" onclick="courtSetView('focus')"><i class="fas fa-expand"></i> Fokus</button></div>
+            </div>
+            <div class="ct-chips">${chips}</div>
+        </div>`;
+
+        const emptyCard = c => `<div id="courtEmpty_${c}" class="card court-empty" style="--cc:${courtColor(c)};">
+            <div class="t">LAPANGAN ${c}</div>
+            <div class="s">${pending.length ? 'Kosong - siap diisi match berikutnya' : 'Kosong - tidak ada match menunggu'}</div>
+            ${pending.length ? `<button class="btn btn-primary admin-only" style="width:auto; padding:9px 16px; font-size:12px;" onclick="fillCourtSlot(${c})"><i class="fas fa-play"></i> Isi dari antrean</button>` : ''}
+        </div>`;
+        const cardFor = c => {
+            let m = byCourt[c];
+            if (!m) return emptyCard(c);
+            try { return generateMatchHTML(m); } catch(e) { console.error('Gagal merender match:', m, e); return ''; }
+        };
+
+        let body = '';
+        if (view === 'focus') {
+            body = `<div style="max-width:560px; margin:14px auto 0;">${cardFor(focus)}</div>`;
+        } else {
+            let cards = '';
+            for (let c = 1; c <= total; c++) cards += cardFor(c);
+            body = `<div class="court-grid" style="margin-top:14px;">${cards}</div>`;
+        }
+
+        // Antrean berikutnya + pemain istirahat
+        let panel = '';
+        if (sch.length) {
+            const nameOf = id => { let p = playerById(id); return p ? p.name : '(dihapus)'; };
+            const teamStr = (ids, custom) => escapeHtml(custom || ids.map(nameOf).join(' & '));
+            const busy = {};
+            cms.forEach(m => m.t1.concat(m.t2).forEach(p => busy[p.id] = m.court));
+            let freeCourt = 0;
+            for (let c = 1; c <= total; c++) { if (!byCourt[c]) { freeCourt = c; break; } }
+            let q = pending.slice(0, 4).map(s => {
+                let ids = s.t1.concat(s.t2);
+                let blocked = ids.filter(id => busy[id]).map(nameOf);
+                let act = blocked.length
+                    ? `<span class="wait">Menunggu ${escapeHtml(blocked.join(', '))}</span>`
+                    : (freeCourt ? `<button class="btn btn-primary admin-only" onclick="playScheduleNow('${s.id}', true)">Lap ${freeCourt}</button>` : `<span class="wait">Menunggu lapangan kosong</span>`);
+                return `<div class="ct-q"><span class="no">MATCH ${s.no}<br><small style="font-weight:700; color:var(--text-muted);">Ronde ${s.round}</small></span><span class="tm">${teamStr(s.t1, s.t1Name)}<i>VS</i>${teamStr(s.t2, s.t2Name)}</span>${act}</div>`;
+            }).join('');
+            let resting = (data.players || []).filter(p => p.isPresent !== false && !busy[p.id]);
+            panel = `<div class="card ct-panel">
+                ${q ? `<h5><i class="fas fa-list-ol"></i> ANTREAN BERIKUTNYA</h5>${q}` : ''}
+                ${resting.length ? `<h5 style="${q ? 'margin-top:14px;' : ''}"><i class="fas fa-mug-hot"></i> ISTIRAHAT (${resting.length})</h5><div class="ct-rest">${resting.map(p => '<span>' + escapeHtml(p.name) + '</span>').join('')}</div>` : ''}
+            </div>`;
+        }
+        return bar + body + panel;
     }
 
     function generateMatchHTML(m) {
@@ -3804,14 +3962,14 @@
         let sportColorVar = m.sport === 'padel' ? '--padel-glow' : '--tennis-glow';
 
         return `
-        <div id="courtCard_${m.id}" class="card match-card ${sportClass}" style="margin-bottom: 25px; border: 2px solid var(--border-color); position:relative;">
+        <div id="courtCard_${m.id}" class="card match-card ${sportClass}" style="margin-bottom: 25px; border: 2px solid var(--border-color); position:relative; --cc:${courtColor(m.court)};">
             <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:var(${sportColorVar}); color:#04202b; padding:4px 15px; border-radius:20px; font-weight:900; font-size:13px; box-shadow:0 4px 10px rgba(0,0,0,0.25);">LAPANGAN ${m.court}${m.matchNo ? ' • MATCH ' + m.matchNo : ''}</div>
 
-            <div style="display:flex; justify-content:center; margin-top:10px;">
+            <div class="mc-livebadge" style="display:flex; justify-content:center; margin-top:10px;">
                 <span class="live-badge"><span class="live-dot"></span>LIVE</span>
             </div>
 
-            <div style="position:absolute; top:10px; right:15px; z-index:10;">
+            <div class="mc-edit" style="position:absolute; top:10px; right:15px; z-index:10;">
                 <button class="btn btn-ghost admin-only" style="padding:4px 8px; font-size:11px; background:var(--input-bg);" onclick="openEditMatchPlayers('${m.id}')"><i class="fas fa-user-edit"></i> Edit Pemain</button>
             </div>
 
@@ -3845,7 +4003,7 @@
                     </div>
                 </div>
 
-                <div style="display:flex; gap:10px; margin-top:20px;">
+                <div class="mc-actions" style="display:flex; gap:10px; margin-top:20px;">
                     <button class="btn btn-ghost admin-only" onclick="cancelCourtConfirm('${m.id}')">Batal Lap ${m.court}</button>
                     <button class="btn btn-success admin-only" onclick="submitCourtConfirm('${m.id}')"><i class="fas fa-check-circle"></i> Selesai Lap ${m.court}</button>
                 </div>
@@ -3945,6 +4103,8 @@
         let gD2 = document.getElementById(`gDisp2_${matchId}`);
         if (gD1 && gD1.innerText != m.g1) { gD1.innerText = m.g1; gD1.classList.remove('score-pop'); void gD1.offsetWidth; gD1.classList.add('score-pop'); }
         if (gD2 && gD2.innerText != m.g2) { gD2.innerText = m.g2; gD2.classList.remove('score-pop'); void gD2.offsetWidth; gD2.classList.add('score-pop'); }
+        let cs = document.getElementById('chipScore_' + m.court);
+        if (cs) cs.textContent = m.g1 + ' - ' + m.g2;
     }
 
     function adjGame(matchId, team, change) {
